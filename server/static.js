@@ -28,6 +28,8 @@ var data = {
       city: "marck",
       sport: "tennis",
       type: "singles",
+      score: "6,2;4,3",
+      status: "ongoing",
       players: [
         {
           id: "76ab42cdab3ee54563beb45a",
@@ -61,6 +63,8 @@ var data = {
       city: "marck",
       sport: "tennis",
       type: "singles",
+      score: "4,6;4,5",
+      status: "ongoing",
       players: [
         {
           id: "8cba5235783ccb45634534c5",
@@ -94,6 +98,8 @@ var data = {
       city: "marck",
       sport: "tennis",
       type: "singles",
+      score: "2,0",
+      status: "ongoing",
       players: [
         {
           id: "05230b679634254563cca32a",
@@ -127,6 +133,8 @@ var data = {
       city: "marck",
       sport: "tennis",
       type: "singles",
+      score: "6,2;6,4",
+      status: "finished",
       players: [
         {
           id: "7970ac23549425ac76dd465a",
