@@ -2,6 +2,11 @@
 var express = require('express')
   , app = express();
 
+// undefined if nothing is found
+var searchById = function (collection, id) {
+   return collection.filter(function (o) { return o.id === id }).pop();
+}
+  
 /*
   * SEARCHING GAMES :
   * 
@@ -46,19 +51,17 @@ var express = require('express')
 app.get('/v1/games/', function(req, res){
   // inlining DB data.
   var games = DB.games.map(function (game) {
-    var playerA = DB.players.filter(function (p) { return p.id === game.players[0] }).pop();
-    var playerB = DB.players.filter(function (p) { return p.id === game.players[1] }).pop();
-    var clubA = DB.clubs.filter(function (c) { return c.id === playerA.club }).pop();
-    var clubB = DB.clubs.filter(function (c) { return c.id === playerB.club }).pop();
+    var playerA = searchById(DB.players, game.players[0]);
+    var playerB = searchById(DB.players, game.players[1]);
+    var clubA = searchById(DB.clubs, playerA.club);
+    var clubB = searchById(DB.clubs, playerB.club);
     return {
       id: game.id,
       date_creation: game.date_creation,
       date_start: game.date_start,
       date_end: game.date_end,
       pos: game.pos,
-      country: game.country,
       city: game.city,
-      sport: game.sport,
       type: game.type,
       sets: game.sets,
       score: game.score,
@@ -92,6 +95,112 @@ app.get('/v1/games/', function(req, res){
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.end(body);
 });
+
+// searching a specific game
+app.get('/v1/games/:id', function(req, res){
+  var game = searchById(DB.games, req.params.id);
+  var result = {};
+  if (game) {
+    // cloning game
+    for (var i in game) {
+      result[i] = game[i];
+    }
+    // inlining player.
+    var playerA = searchById(DB.players, game.players[0]);
+    var playerB = searchById(DB.players, game.players[1]);
+    var clubA = searchById(DB.clubs, playerA.club);
+    var clubB = searchById(DB.clubs, playerB.club);
+    
+    result = {
+      id: game.id,
+      date_creation: game.date_creation,
+      date_start: game.date_start,
+      date_end: game.date_end,
+      pos: game.pos,
+      city: game.city,
+      type: game.type,
+      sets: game.sets,
+      score: game.score,
+      status: game.status,
+      players: [
+        {
+          id: playerA.id,
+          pseudo: playerA.pseudo,
+          name: playerA.name,
+          rank: playerA.rank,
+          club: {
+            id: clubA.id,
+            name: clubA.name
+          }
+        },
+        {
+          id: playerB.id,
+          pseudo: playerB.pseudo,
+          name: playerB.name,
+          rank: playerB.rank,
+          club: {
+            id: clubB.id,
+            name: clubB.name
+          }
+        }
+      ]
+    };
+  };
+  
+  var body = JSON.stringify(result);
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.end(body);
+});
+
+// searching a specific player
+app.get('/v1/players/:id', function(req, res){
+  var player = searchById(DB.players, req.params.id);
+  var result = {};
+  if (player) {
+    // cloning game
+    for (var i in player) {
+      result[i] = player[i];
+    }
+    // inlining player.
+    var club = searchById(DB.clubs, player.club);
+    result = {
+      id: player.id,
+      pseudo: player.pseudo,
+      name: player.name,
+      rank: player.rank,
+      club: {
+        id: club.id,
+        name: club.name
+      }
+    };
+  };
+  
+  var body = JSON.stringify(result);
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.end(body);
+});
+
+// searching a specific club
+app.get('/v1/clubs/:id', function(req, res){
+  var club = searchById(DB.clubs, req.params.id);
+  var result = {};
+  if (club) {
+    // cloning game
+    for (var i in club) {
+      result[i] = club[i];
+    }
+    // FIXME: liste des joueurs du club, etc
+    result = {
+      id: club.id,
+      name: club.name
+    };
+  }
+  
+  var body = JSON.stringify(result);
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.end(body);
+});
+
 app.listen(8080);
 
 //
