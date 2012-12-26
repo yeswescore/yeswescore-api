@@ -1,12 +1,40 @@
 // simple static server
 var express = require('express')
   , app = express();
+  
+var port = 8080;
 
 // undefined if nothing is found
 var searchById = function (collection, id) {
    return collection.filter(function (o) { return o.id === id }).pop();
 }
-  
+
+/*
+ * client will call :
+ * /bootstrap/conf.json?version=xx.xx.xx.xx to get a new dynamic configuration.
+ */
+app.get('/bootstrap/conf.json', function(req, res){
+  var conf;
+
+  switch (req.query.version) {
+    case "0.0.0.2":
+      console.log('FIXME: not yet implemented');
+      break;
+    default:
+      conf = [
+        { key: 'bootstrap.update_interval', value: 3 * 24 * 3600 * 1000, metadata: {} }, // default=3 days
+        { key: 'url.data.games', value: 'http://reachtheflow.com:'+port+'/v1/games/', metadata: {} },
+        { key: 'url.data.players', value: 'http://reachtheflow.com:'+port+'/v1/players/', metadata: {} },
+        { key: 'url.data.clubs', value: 'http://reachtheflow.com:'+port+'/v1/clubs/', metadata: {} },
+        { key: 'fixme', value: 'fixme', metadata: { deprecated: false } }
+      ];
+      break;
+  }
+  // 
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.end(JSON.stringify(conf));
+});
+
 /*
   * SEARCHING GAMES :
   * 
@@ -191,7 +219,7 @@ app.get('/v1/clubs/:id', function(req, res){
   res.end(body);
 });
 
-app.listen(8080);
+app.listen(port);
 
 //
 // Generating Fake Data
