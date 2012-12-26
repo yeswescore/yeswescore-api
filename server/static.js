@@ -205,7 +205,8 @@ app.get('/v1/games/:id', function(req, res){
             name: playerB.club.name
           }
         }
-      ]
+      ],
+      stream: game.stream
     };
   };
   
@@ -371,6 +372,32 @@ var generateFakeCity = function () {
   return [ "Bayeux", "Falaise", "Caen", "Honfleur", "Deauville", "Arromanches les Bains", "Lisieux", "Cabourg",
            "Trouville sur Mer", "Mont Saint Michel", "Cherbourg" ].random();
 }
+var generateFakeComment = function () {
+  return [
+   "Merci!",
+   "Je t'ai ajouté! :D",
+   "Lol, c'te gros tocard.",
+   "j'arrive pas à faire venir Roger à mon Open 13 et ça me fout les boules.",
+   "C'est EXACTEMENT ça, Franchement pour dire ça faut vraiment être d'une mauvaise foi incomparable ou n'y rien connaître au tennis. On peut ne pas aimer Federer mais ne pas reconnaître qu'il fait le show...",
+   "Sous entendu : Désolé de cette interview de merde. je dois vite me retirer et crever très vite. Ciao. ",
+   "Haha on sent le mec frustré qui veut se démarquer de la masse en critiquant Federer alors que tout le monde l'adule. \
+\
+Ou alors c'est juste que pour lui, spectacle = faire le gorille et le clown sur le terrain... \
+\
+Et le \"s'il n'était pas numéro 3 on en parlerait pas autant\"   dans le genre \"j'ai aucun argument pour descendre Federer, donc j'en invente un bien débile\" \
+\
+Ah mais c'est sûr, si Federer n'avait pas gagné 17 GC, on n'en parlerait pas autant ! ",
+   "C'était pas lui qui disait que la victoire de Federer à Bercy était sa plus belle édition parce qu'il était fan et tout et tout ?",
+   "Ah ben comme ça on est fixé sur la venue de Federer à l'open 13 (bon y avait pas trop de suspens   ) ",
+   "Enfin quelqu'un qui ose dire les vrais choses   \
+Lui c'est un vrai connaisseur  ",
+   "Jean-François Couillemolle.",
+   "Il a fait le bon choix le Caujolle, je préfère qu'il nous achète Berdych, Delpo et Tipsarevic plutôt que l'autre mannequin pour montres. Cela aurait été clairement mieux qu'il se débarasse aussi de Tsonga et Gasquet qui génèrent vraiment trop de vacarme dans les gradins (pour les remplacer par des joueurs moins chers et moins bruyants comme par exemple Cilic, Nishikori, Haas), mais on ne peut pas trop lui en vouloir, c'est du bon boulot pour JF.",
+   "Bah, vas-y, ramène Djokovic alors.  ",
+   "Enfin quelqu'un qui ose le critiquer. \
+    Bravo très bon article"
+  ].random();
+}
 var generateFakeLocation = function () {
   // trying to generate longitude / latitude inside france :)
   return { long: 45 + Math.random() * 10, lat: Math.random() * 4 }
@@ -495,7 +522,22 @@ var generateGames = function () {
    *     string  // id
    *   ],
    *   stream: [
-   *       FIXME: historique du match, action / date / heure / commentaire / video / photo etc
+   *       // FIXME: historique du match, action / date / heure / commentaire / video / photo etc
+   *       // FIXME: ip, comment "signalé", stats,
+   *       {
+   *          id: ...,      //
+   *          date: string, // date iso 8601
+   *          type: string, // "comment|picture|video|..."
+   *          owner: string, // checksum hexa
+   *          data: { } // depends of type 
+   *       },
+   *       {
+   *          id: checksum,
+   *          date: string,
+   *          type: "comment",
+   *          owner: id,
+   *          data: { text: "...." }
+   *        }
    *   ]
    * */
   
@@ -558,6 +600,23 @@ var generateGames = function () {
     // associating game to players
     player1.games.push(game.id);
     player2.games.push(game.id);
+    
+    // generating 0 to 10 comments
+    var nbComments = Math.floor(Math.random() * 11);
+    var delta = 0;
+    for (var j = 0; j < nbComments; ++j) {
+      // adding random (1 to 5) minutes
+      delta += 1000 * 60 * (1 + Math.floor(Math.random(5)));
+      var date = new Date(new Date(game.date_start).getTime() + delta);
+      var comment = {
+        id: generateFakeId(),
+        type: "comment",
+        date: ISODateString(date),
+        owner: DB.players.random().id,
+        data: { text: generateFakeComment() }
+      }
+      game.stream.push(comment);
+    }
     
     DB.games.push(game);
   }
