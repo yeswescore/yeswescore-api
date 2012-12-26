@@ -15,14 +15,23 @@ var searchById = function (collection, id) {
  */
 app.get('/bootstrap/conf.json', function(req, res){
   var conf;
+  var latest = "0.0.0.2";
 
   switch (req.query.version) {
     case "0.0.0.2":
-      console.log('FIXME: not yet implemented');
+      conf = [
+        { key: 'version.latest', value: latest, metadata: {} },
+        { key: 'bootstrap.update_interval', value: 3 * 24 * 3600 * 1000, metadata: {} }, // default=3 days
+        { key: 'url.data.games', value: 'http://reachtheflow.com:'+port+'/v1/games/', metadata: {} },
+        { key: 'url.data.players', value: 'http://reachtheflow.com:'+port+'/v1/players/', metadata: {} },
+        { key: 'url.data.clubs', value: 'http://reachtheflow.com:'+port+'/v1/clubs/', metadata: {} },
+        { key: 'fixme', value: 'fixme', metadata: { deprecated: false } }
+      ];
       break;
     default:
       conf = [
-        { key: 'bootstrap.update_interval', value: 3 * 24 * 3600 * 1000, metadata: {} }, // default=3 days
+        { key: 'version.latest', value: latest, metadata: {} },
+        { key: 'bootstrap.update_interval', value: 24 * 3600 * 1000, metadata: {} }, // every day
         { key: 'url.data.games', value: 'http://reachtheflow.com:'+port+'/v1/games/', metadata: {} },
         { key: 'url.data.players', value: 'http://reachtheflow.com:'+port+'/v1/players/', metadata: {} },
         { key: 'url.data.clubs', value: 'http://reachtheflow.com:'+port+'/v1/clubs/', metadata: {} },
