@@ -64,7 +64,7 @@ app.get('/bootstrap/conf.json', function(req, res){
   *    players: [
   *      {
   *        id: string,
-  *        pseudo: string,
+  *        nickname: string,
   *        name: string,
   *        rank: string,
   *        club: {
@@ -74,7 +74,7 @@ app.get('/bootstrap/conf.json', function(req, res){
   *      },
   *      {
   *        id: string,
-  *        pseudo: string,
+  *        nickname: string,
   *        name: string,
   *        rank: string,
   *        club: {
@@ -99,7 +99,7 @@ app.get('/v1/games/', function(req, res){
     console.log(games.length + " games matchent");
     // query inside players (couteux!)
     var players = DB.players.filter(function (p) {
-      return p.pseudo.removeDiacritics().toLowerCase().indexOf(query) !== -1 ||
+      return p.nickname.removeDiacritics().toLowerCase().indexOf(query) !== -1 ||
              p.name.removeDiacritics().toLowerCase().indexOf(query) !== -1;
     });
     console.log(players.length + " players matchent");
@@ -133,7 +133,7 @@ app.get('/v1/games/', function(req, res){
       players: [
         {
           id: playerA.id,
-          pseudo: playerA.pseudo,
+          nickname: playerA.nickname,
           name: playerA.name,
           rank: playerA.rank,
           club: {
@@ -143,7 +143,7 @@ app.get('/v1/games/', function(req, res){
         },
         {
           id: playerB.id,
-          pseudo: playerB.pseudo,
+          nickname: playerB.nickname,
           name: playerB.name,
           rank: playerB.rank,
           club: {
@@ -187,7 +187,7 @@ app.get('/v1/games/:id', function(req, res){
       players: [
         {
           id: playerA.id,
-          pseudo: playerA.pseudo,
+          nickname: playerA.nickname,
           name: playerA.name,
           rank: playerA.rank,
           club: {
@@ -197,7 +197,7 @@ app.get('/v1/games/:id', function(req, res){
         },
         {
           id: playerB.id,
-          pseudo: playerB.pseudo,
+          nickname: playerB.nickname,
           name: playerB.name,
           rank: playerB.rank,
           club: {
@@ -436,7 +436,7 @@ DB.players = [
    * document player :
    * {
    *   id: string, // checksum hexa
-   *   pseudo: string,
+   *   nickname: string,
    *   name: string,
    *   password: string, // checksum hexa
    *   rank: string,
@@ -494,7 +494,7 @@ var generatePlayers = function () {
     var club = DB.clubs.random();
     var player = {
       id: generateFakeId(),
-      pseudo: generateFakePseudo(),
+      nickname: generateFakePseudo(),
       name: generateFakeFirstName() + " " + generateFakeName(),
       rank: "15/2",
       club: { id: club.id, name: club.name },
