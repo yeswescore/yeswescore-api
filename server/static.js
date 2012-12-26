@@ -1,13 +1,16 @@
 // simple static server
 var express = require('express')
   , app = express();
-  
+    
 var port = 8080;
 
 // undefined if nothing is found
 var searchById = function (collection, id) {
    return collection.filter(function (o) { return o.id === id }).pop();
 }
+
+// static directory, will be used for tests.
+app.use("/static", express.static(__dirname + '/static'));
 
 /*
  * client will call :
@@ -117,8 +120,6 @@ app.get('/v1/games/', function(req, res){
   
   // formating DB data.
   games = games.map(function (game) {
-    var playerA = searchById(DB.players, game.players[0]);
-    var playerB = searchById(DB.players, game.players[1]);
     return {
       id: game.id,
       date_creation: game.date_creation,
@@ -130,28 +131,22 @@ app.get('/v1/games/', function(req, res){
       sets: game.sets,
       score: game.score,
       status: game.status,
-      players: [
-        {
-          id: playerA.id,
-          nickname: playerA.nickname,
-          name: playerA.name,
-          rank: playerA.rank,
-          club: {
-            id: playerA.club.id,
-            name: playerA.club.name
-          }
-        },
-        {
-          id: playerB.id,
-          nickname: playerB.nickname,
-          name: playerB.name,
-          rank: playerB.rank,
-          club: {
-            id: playerB.club.id,
-            name: playerB.club.name
-          }
+      players: game.players.map(function (playerInfo) {
+        if (typeof playerInfo.id !== "undefined") {
+          var player = searchById(DB.players, playerInfo.id);
+          return {
+            id: player.id,
+            nickname: player.nickname,
+            name: player.name,
+            rank: player.rank,
+            club: {
+              id: player.club.id,
+              name: player.club.name
+            }
+          };
         }
-      ]
+        return playerInfo; // { name: ... }
+      })
     }
   });
   // 
@@ -165,14 +160,6 @@ app.get('/v1/games/:id', function(req, res){
   var game = searchById(DB.games, req.params.id);
   var result = {};
   if (game) {
-    // cloning game
-    for (var i in game) {
-      result[i] = game[i];
-    }
-    // inlining player.
-    var playerA = searchById(DB.players, game.players[0]);
-    var playerB = searchById(DB.players, game.players[1]);
-    
     result = {
       id: game.id,
       date_creation: game.date_creation,
@@ -184,33 +171,117 @@ app.get('/v1/games/:id', function(req, res){
       sets: game.sets,
       score: game.score,
       status: game.status,
-      players: [
-        {
-          id: playerA.id,
-          nickname: playerA.nickname,
-          name: playerA.name,
-          rank: playerA.rank,
-          club: {
-            id: playerA.club.id,
-            name: playerA.club.name
-          }
-        },
-        {
-          id: playerB.id,
-          nickname: playerB.nickname,
-          name: playerB.name,
-          rank: playerB.rank,
-          club: {
-            id: playerB.club.id,
-            name: playerB.club.name
-          }
+      players: game.players.map(function (playerInfo) {
+        if (typeof playerInfo.id !== "undefined") {
+          var player = searchById(DB.players, playerInfo.id);
+          return {
+            id: player.id,
+            nickname: player.nickname,
+            name: player.name,
+            rank: player.rank,
+            club: {
+              id: player.club.id,
+              name: player.club.name
+            }
+          };
         }
-      ],
+        return playerInfo; // { name: ... }
+      }),
       stream: game.stream
     };
   };
   
   var body = JSON.stringify(result);
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.end(body);
+});
+
+// simpliste. non secur, car <=> d'une session infinie
+var isAuthenticated = function (body) {
+  var player = searchById(DB.players, body.owner);
+  return player && player.token === body.token;
+}
+
+/* creation partie
+ * json posted :
+ * {
+ *   players : [
+ *      {
+ *        id: null/string
+ *        nickname: string
+ *        rank:
+ *      }
+ *   ]
+ * }
+ */
+app.post('/v1/games/', express.bodyParser(), function (req, res) {  
+  // verifs minimalistes
+  if (!Array.isArray(req.body.players) ||
+      req.body.players.length !== 2 ||  // singles only.
+      typeof req.body.owner !== "string") {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.end(JSON.stringify({"error": "wrong format"}));
+    return; // FIXME: error
+  }
+  // on verifie que l'owner est authentifie
+  if (!isAuthenticated(req.body)) {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.end(JSON.stringify({"error": "unauthorized"}));
+    return; // FIXME: error
+  }
+  
+  /*
+   * document game:
+   * {
+   *   id: string, // checksum hexa
+   *   date_creation: string, // date iso 8601
+   *   date_start: string, // date iso 8601
+   *   date_end: string, // date iso 8601
+   *   owner,
+   *   pos: { long: float, lat: float }, // index geospatial
+   *   country: string,
+   *   city: string,
+   *   type: string, // singles / doubles
+   *   sets: string, // ex: 6,2;6,3  (precomputed)
+   *   status: string, // ongoing, canceled, finished (precomputed)
+   *   players: [
+   *     string, // id
+   *     string  // id
+   *   ],
+   *   stream: [
+   *       FIXME: historique du match, action / date / heure / commentaire / video / photo etc
+   *   ]
+   */
+  // on cree la partie
+  var game = {
+    id: generateFakeId(),
+    date_creation: ISODateString(new Date()),
+    date_start: ISODateString(new Date()),
+    date_end: null,
+    owner: req.body.owner,
+    players: req.body.players.map(function (playerInfo) {
+        if (typeof playerInfo.id !== "undefined" &&
+            searchById(DB.players, playerInfo.id))
+          return { id: playerInfo.id };
+        return { name: playerInfo.name };
+    }),
+    type: "singles",
+    status: "ongoing",
+    stream: []
+  };
+  // ttes les autres options que le client peut surcharger
+  // FIXME: whitelist.
+  ["pos", "country", "city", "sets", "status"].forEach(function (i) {
+    if (typeof req.body[i] !== "undefined") {
+      game[i] = req.body[i];
+    }
+  });
+  
+  // sauvegarde
+  DB.games.push(game);
+
+  // sending back saved data to the client
+  var body = JSON.stringify(game);
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.end(body);
 });
@@ -458,6 +529,7 @@ DB.games = [
    *   date_creation: string, // date iso 8601
    *   date_start: string, // date iso 8601
    *   date_end: string, // date iso 8601
+   *   owner,
    *   pos: { long: float, lat: float }, // index geospatial
    *   country: string,
    *   city: string,
@@ -486,7 +558,7 @@ var generateClubs = function () {
       city: generateFakeCity()
     }
   });
-}
+};
 
 var generatePlayers = function () {
   // generating 20 players
@@ -498,11 +570,14 @@ var generatePlayers = function () {
       name: generateFakeFirstName() + " " + generateFakeName(),
       rank: "15/2",
       club: { id: club.id, name: club.name },
-      games: [ ]
+      games: [ ],
+      //
+      password: null,
+      token: String(Math.floor(Math.random()*10000000)),
     };
     DB.players.push(player);
   }
-}
+};
 
 var generateGames = function () {
   // generating 20 games
@@ -511,6 +586,7 @@ var generateGames = function () {
    *   date_creation: string, // date iso 8601
    *   date_start: string, // date iso 8601
    *   date_end: string, // date iso 8601
+   *   owner: string, // checksum hexa
    *   pos: { long: float, lat: float }, // index geospatial
    *   country: string,
    *   city: string,
@@ -518,8 +594,8 @@ var generateGames = function () {
    *   sets: string, // ex: 6,2;6,3  (precomputed)
    *   status: string, // ongoing, canceled, finished (precomputed)
    *   players: [
-   *     string, // id
-   *     string  // id
+   *     { id: string },  // authentified player
+   *     { name: string } // unknown player
    *   ],
    *   stream: [
    *       // FIXME: historique du match, action / date / heure / commentaire / video / photo etc
@@ -548,6 +624,7 @@ var generateGames = function () {
       date_creation: date_creation,
       date_start: date_creation, // different ?
       date_end: null,
+      owner: DB.players.random().id, // utilisateur ayant saisi le match.
       pos: generateFakeLocation(),
       country: "france",
       city: generateFakeCity(),
@@ -596,11 +673,26 @@ var generateGames = function () {
     while (player1 === player2) {
       player2 = DB.players.random();
     }
-    game.players = [ player1.id, player2.id ];
-    // associating game to players
-    player1.games.push(game.id);
-    player2.games.push(game.id);
-    
+    // sometimes, players are "anonymous"
+    if (Math.random() < 0.2) {
+      if (Math.random() < 0.3) {
+        game.players = [ { name: generateFakePseudo() }, { name: generateFakePseudo() } ];
+      } else {
+         if (Math.random() < 0.5) {
+           game.players = [ { name: generateFakePseudo() }, { id : player2.id } ];
+           player2.games.push(game.id);
+         } else {
+           game.players = [ { id: player1.id } , { name: generateFakePseudo() } ];
+           player1.games.push(game.id);
+         }
+      }
+    } else {
+      game.players = [ { id: player1.id }, { id: player2.id } ];
+      // associating game to players
+      player1.games.push(game.id);
+      player2.games.push(game.id);
+    }
+ 
     // generating 0 to 10 comments
     var nbComments = Math.floor(Math.random() * 11);
     var delta = 0;
@@ -620,7 +712,7 @@ var generateGames = function () {
     
     DB.games.push(game);
   }
-}
+};
 
 // generating fake data at startup
 generateClubs();
