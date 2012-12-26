@@ -2,7 +2,7 @@
 var express = require('express')
   , app = express();
     
-var port = 8080;
+var port = 8081;
 
 // undefined if nothing is found
 var searchById = function (collection, id) {
@@ -286,6 +286,37 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
   res.end(body);
 });
 
+app.post('/v1/games/:id', express.bodyParser(), function(req, res){
+  if (!isAuthenticated(req.body)) {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.end(JSON.stringify({"error": "unauthorized"}));
+    return; // FIXME: error
+  }
+  //
+  var game = searchById(DB.games, req.params.id);
+  if (!game) {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.end(JSON.stringify({"error": "game doesn't exist"}));
+    return; // FIXME: error
+  }
+  if (req.body.owner !== game.owner) {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.end(JSON.stringify({"error": "you are not the owner of the game"}));
+    return; // FIXME: error
+  }
+  // update des champs updatables.
+  [ "city", "type", "sets", "score", "status", "players" ].forEach(
+    function (o) {
+      if (typeof req.body[o] !== "undefined")
+        game[o] = req.body[o];
+    }
+  );
+  // sending back saved data to the client
+  var body = JSON.stringify(game);
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.end(body);
+});
+
 // searching a specific player
 app.get('/v1/players/:id', function(req, res){
   var body = JSON.stringify(searchById(DB.players, req.params.id));
@@ -298,6 +329,25 @@ app.get('/v1/clubs/:id', function(req, res){
   var body = JSON.stringify(searchById(DB.clubs, req.params.id));
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.end(body);
+});
+
+// FIXME: non destine a la prod.
+app.get('/documents/games/:id', function (req, res) {
+  var game = searchById(DB.games, req.params.id);
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.end(JSON.stringify(game));
+});
+
+app.get('/documents/players/:id', function (req, res) {
+  var player = searchById(DB.players, req.params.id);
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.end(JSON.stringify(player));
+});
+
+app.get('/documents/clubs/:id', function (req, res) {
+  var club = searchById(DB.clubs, req.params.id);
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.end(JSON.stringify(club));
 });
 
 app.listen(port);

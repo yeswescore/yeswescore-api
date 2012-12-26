@@ -41,5 +41,45 @@ $("#create_game").click(function () {
   $.post("/v1/games/", data, function (data) { $("#result").html(JSON.stringify(data)); });
 });
 </script>
+
+
+<hr>
+
+<h2>Mise à jour d'un document Game</h2>
+Game id: <input type="text" id="gameId"/><input type="button" value="charger" id="charger"/><br/>
+<textarea style="width:800px;height:150px;" id="game"></textarea><input type="button" value="updater" id="updater"/><br/>
+
+<script>
+$("#charger").click(function () {
+  if ($("#gameId").val() !== "") {
+     $.getJSON("/v1/games/"+$("#gameId").val())
+      .then(function (data) {
+        if (data && typeof data.id !== "undefined") {
+           // il manque le owner et le token...
+           $.getJSON("/documents/games/"+$("#gameId").val())
+            .then(function (d) {
+               var owner = d.owner;
+               $.getJSON("/documents/players/"+owner)
+                .then(function (e) {
+                   var token = e.token;
+                   delete data.stream;
+                   data.owner = owner;
+                   data.token = token;
+                   $("#game").val(JSON.stringify(data));
+                });
+            });
+        }
+      });
+  }
+});
+
+$("#updater").click(function () {
+  var game = JSON.parse($("#game").val());
+  $.post("/v1/games/"+game.id, game, function (data) {
+    $("#game").val(JSON.stringify(data));
+  });
+});
+</script>
+
 </body>
 </html>
