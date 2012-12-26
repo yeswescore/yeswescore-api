@@ -1,0 +1,45 @@
+<html>
+<head>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+  <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.2/css/bootstrap-combined.min.css" rel="stylesheet">
+</head>
+<body>
+<h2>creation document "game":</h2>
+<table class="table" style="width:600px;">
+<tr class="error"><td>Owner (user id de celui qui soumet)</td><td><input type="text" value="" id="owner"></td></tr>
+<tr class="error"><td>token</td><td><input type="text" value="" id="token"/></td></tr>
+<tr><td>player A (id)</td><td><input type="text" value="" id="playerA"/></td></tr>
+<!-- <tr><td>player A (name)</td><td><input type="text" value="" id="playerA-name"></td></tr> -->
+<tr><td>player B (id)</td><td><input type="text" value="" id="playerB"/></td></tr>
+<!-- <tr><td>player B (name)</td><td><input type="text" value="" id="playerB-name"></td></tr> -->
+<tr><td>position (long, lat)</td><td><input type="text" value="" id="long"/><input type="text" value="" id="lat"/></td></tr>
+<tr><td>country</td><td><input type="text" value="" id="country"/></td></tr>
+<tr><td>city</td><td><input type="text" value="" id="city"/></td></tr>
+<tr><td>sets</td><td><input type="text" value="" id="sets"/></td></tr>
+<tr><td>status</td><td><input type="text" value="" id="status"/></td></tr>
+<tr><td>type</td><td><input type="text" value="singles" id="type"/></td></tr>
+</table>
+<input type="button" id="create_game" value="creer">
+
+<div id="result"></div>
+
+<script type="text/javascript">
+$("#create_game").click(function () {
+  var data = {
+    players : [
+      { id: $("#playerA").val() }, // { name : 'toto' }
+      { id: $("#playerB").val() }  // { name : 'titi' }
+    ],
+    owner: $("#owner").val(),
+    token: $("#token").val()
+  };
+  ["country", "city", "sets", "status", "type"].forEach(function (o) {
+     if ($("#"+o).val()) {
+        data[o] = $("#"+o).val();
+     }
+  });
+  $.post("/v1/games/", data, function (data) { $("#result").html(JSON.stringify(data)); });
+});
+</script>
+</body>
+</html>
