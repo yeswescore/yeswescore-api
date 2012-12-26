@@ -2,7 +2,7 @@
 var express = require('express')
   , app = express();
     
-var port = 8081;
+var port = 8080;
 
 // undefined if nothing is found
 var searchById = function (collection, id) {
@@ -313,6 +313,53 @@ app.post('/v1/games/:id', express.bodyParser(), function(req, res){
   );
   // sending back saved data to the client
   var body = JSON.stringify(game);
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.end(body);
+});
+
+app.post('/v1/players/', express.bodyParser(), function(req, res){
+  // creating a new player
+  var player = {
+      id: generateFakeId(),
+      nickname: null,
+      name: null,
+      rank: null,
+      club: { id: null, name: null },
+      games: [],
+      password: null,
+      token:  String(Math.floor(Math.random()*10000000)),
+  };
+  ["nickname", "name", "rank", "club", "password"].forEach(function (o) {
+    if (typeof req.body[o] !== "undefined")
+      player[o] = req.body[o];
+  });
+  //
+  DB.players.push(player);
+  // sending back saved data to the client
+  var body = JSON.stringify(player);
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.end(body);
+});
+
+app.post('/v1/players/:id', express.bodyParser(), function(req, res){
+  var player = searchById(DB.players, req.body.id);
+  if (!player) {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.end(JSON.stringify({"error": "player doesn't exist"}));
+    return; // FIXME: error
+  }
+  if (player.token !== req.body.token) {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.end(JSON.stringify({"error": "unauthorized"}));
+    return; // FIXME: error
+  }
+  // updating player
+  ["nickname", "name", "rank", "club", "password"].forEach(function (o) {
+    if (typeof req.body[o] !== "undefined")
+      player[o] = req.body[o];
+  });
+  // sending back saved data to the client
+  var body = JSON.stringify(player);
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.end(body);
 });
