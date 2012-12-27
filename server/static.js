@@ -197,13 +197,13 @@ app.get('/v1/games/:id', function(req, res){
 });
 
 // simpliste. non secur, car <=> d'une session infinie
-var isAuthenticated = function (body) {
-  var player = searchById(DB.players, body.owner);
-  return player && player.token === body.token;
+var isAuthenticated = function (query) {
+  var player = searchById(DB.players, query.playerid);
+  return player && player.token === query.token;
 }
 
 /* creation partie
- * json posted :
+ * POST /v1/games/?playerid=...&token=...
  * {
  *   players : [
  *      {
@@ -215,21 +215,20 @@ var isAuthenticated = function (body) {
  * }
  */
 app.post('/v1/games/', express.bodyParser(), function (req, res) {  
-  // verifs minimalistes
-  if (!Array.isArray(req.body.players) ||
-      req.body.players.length !== 2 ||  // singles only.
-      typeof req.body.owner !== "string") {
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.end(JSON.stringify({"error": "wrong format"}));
-    return; // FIXME: error
-  }
   // on verifie que l'owner est authentifie
-  if (!isAuthenticated(req.body)) {
+  if (!isAuthenticated(req.query)) {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.end(JSON.stringify({"error": "unauthorized"}));
     return; // FIXME: error
   }
-  
+  // verifs
+  if (!Array.isArray(req.body.players) ||
+      req.body.players.length !== 2) {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.end(JSON.stringify({"error": "missing players"}));
+    return; // FIXME: error
+  }
+
   /*
    * document game:
    * {
@@ -258,7 +257,7 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
     date_creation: ISODateString(new Date()),
     date_start: ISODateString(new Date()),
     date_end: null,
-    owner: req.body.owner,
+    owner: req.query.playerid,
     players: req.body.players.map(function (playerInfo) {
         if (typeof playerInfo.id !== "undefined" &&
             searchById(DB.players, playerInfo.id))
@@ -287,7 +286,7 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
 });
 
 app.post('/v1/games/:id', express.bodyParser(), function(req, res){
-  if (!isAuthenticated(req.body)) {
+  if (!isAuthenticated(req.query)) {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.end(JSON.stringify({"error": "unauthorized"}));
     return; // FIXME: error
@@ -299,7 +298,7 @@ app.post('/v1/games/:id', express.bodyParser(), function(req, res){
     res.end(JSON.stringify({"error": "game doesn't exist"}));
     return; // FIXME: error
   }
-  if (req.body.owner !== game.owner) {
+  if (req.query.playerid !== game.owner) {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.end(JSON.stringify({"error": "you are not the owner of the game"}));
     return; // FIXME: error
@@ -317,6 +316,7 @@ app.post('/v1/games/:id', express.bodyParser(), function(req, res){
   res.end(body);
 });
 
+// POST /v1/players/
 app.post('/v1/players/', express.bodyParser(), function(req, res){
   // creating a new player
   var player = {
@@ -341,11 +341,22 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
   res.end(body);
 });
 
+// POST /v1/players/:id/?id=...&token=...
 app.post('/v1/players/:id', express.bodyParser(), function(req, res){
-  var player = searchById(DB.players, req.body.id);
+  if (!isAuthenticated(req.query)) {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.end(JSON.stringify({"error": "unauthorized"}));
+    return; // FIXME: error
+  }
+  var player = searchById(DB.players, req.params.id);
   if (!player) {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
     res.end(JSON.stringify({"error": "player doesn't exist"}));
+    return; // FIXME: error
+  }
+  if (req.params.id !== req.body.id) {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.end(JSON.stringify({"error": "wrong format"}));
     return; // FIXME: error
   }
   if (player.token !== req.body.token) {
