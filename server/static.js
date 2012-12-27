@@ -316,6 +316,39 @@ app.post('/v1/games/:id', express.bodyParser(), function(req, res){
   res.end(body);
 });
 
+// writing a new entry in the stream
+// POST /v1/games/:id/stream/?id=...&token=...
+app.post('/v1/games/:id/stream/', express.bodyParser(), function(req, res){
+  /*       {
+   *          id: checksum,
+   *          date: string,
+   *          type: "comment",
+   *          owner: id,
+   *          data: { text: "...." }
+   *        }
+   */
+  if (!isAuthenticated(req.query)) {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.end(JSON.stringify({"error": "unauthorized"}));
+    return; // FIXME: error
+  }
+  // we can post anything in a stream
+  var streamObj = {
+    id: generateFakeId(),
+    date: ISODateString(new Date().getTime()),
+    owner: req.query.playerid
+  };
+  // should copy type & data
+  for (var i in req.body) {
+     if (typeof streamObj[i] === "undefined")
+       streamObj[i] = req.body[i];
+  }
+  // sending back saved data to the client
+  var body = JSON.stringify(game);
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.end(body);
+});
+
 // POST /v1/players/
 app.post('/v1/players/', express.bodyParser(), function(req, res){
   // creating a new player
