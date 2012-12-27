@@ -796,7 +796,7 @@ var generateGames = function () {
     };
 
     // random pick match status, finished ? or ongoing ?
-    game.status = ["ongoing", "finihed"].random();
+    game.status = ["ongoing", "finished"].random();
     // 
     if (game.status === "finished") {
       // status finished
