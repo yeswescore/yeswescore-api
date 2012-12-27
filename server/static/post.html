@@ -4,14 +4,89 @@
   <link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.2.2/css/bootstrap-combined.min.css" rel="stylesheet">
 </head>
 <body>
+<!--
+<h2> creation d'un joueur </h2>
+<table class="table" style="width:600px;">
+  <tr><td>nickname</td><td><input type="text" value="" id="player_nickname"></td></tr>
+  <tr><td>name</td><td><input type="text" value="" id="player_name"></td></tr>
+  <tr><td>rank</td><td><input type="text" value="" id="player_rank"/></td></tr>
+  <tr><td>club id</td><td><input type="text" value="" id="player_club_id"/></td></tr>
+  <tr><td>password</td><td><input type="text" value="" id="player_password"/></td></tr>
+</table>
+<input type="button" id="create_player" value="creer"/>
+
+<div id="result_player"></div>
+
+<script type="text/javascript">
+$("#create_player").click(function () {
+  var player = {
+     nickname : $("#player_nickname").val(),
+     name : $("#player_name").val(),
+     rank : $("#player_rank").val(),
+     password : $("#player_password").val()
+  };
+  var dfd = new jQuery.Deferred();
+  if ($("#player_club_id").val()) {
+     $.getJSON("/documents/clubs/"+$("#player_club_id").val())
+      .then(function (d) {
+        player.club = { id: d.id, name: d.name };
+        dfd.resolve()
+      });
+  } else {
+     dfd.resolve();
+  }
+  $.when(dfd.promise()).then(function () {
+     $.post("/v1/players/", player, function (newPlayer) {
+       $("#result_player").html(JSON.stringify(newPlayer));
+     });
+  });
+});
+</script>
+
+<hr/>
+<hr/>
+
+<h2> toute autre opération necessite un playerid + token </h2>
+
+<table class="table" style="width:600px;">
+<tr class="error"><td>playerid</td><td><input type="text" value="" id="playerid"></td></tr>
+<tr class="error"><td>token</td><td><input type="text" value="" id="token"></td></tr>
+</table>
+
+
+<h2>Mise à jour d'un document Player</h2>
+Game id: <input type="text" id="playerId"/><input type="button" value="charger" id="charger_player"/><br/>
+<textarea style="width:800px;height:150px;" id="playertextarea"></textarea><input type="button" value="updater" id="updater_player"/><br/>
+
+<script>
+// chargement d'un joueur
+$("#charger_player").click(function () {
+  if ($("#playerId").val() !== "") {
+     $.getJSON("/v1/players/"+$("#playerId").val())
+      .then(function (data) {
+         delete data.games;
+         $("#playertextarea").val(JSON.stringify(data));
+     });
+  }
+});
+
+// mise a jour
+$("#updater_player").click(function () {
+  var player = JSON.parse($("#playertextarea").val());
+  $.post("/v1/players/"+player.id, player, function (data) {
+    $("#playertextarea").val("OK");
+  });
+});
+</script>
+
+
+
 <h2>creation document "game":</h2>
 <table class="table" style="width:600px;">
-<tr class="error"><td>Owner (user id de celui qui soumet)</td><td><input type="text" value="" id="owner"></td></tr>
+<tr class="error"><td>playerid</td><td><input type="text" value="" id="owner"></td></tr>
 <tr class="error"><td>token</td><td><input type="text" value="" id="token"/></td></tr>
 <tr><td>player A (id)</td><td><input type="text" value="" id="playerA"/></td></tr>
-<!-- <tr><td>player A (name)</td><td><input type="text" value="" id="playerA-name"></td></tr> -->
 <tr><td>player B (id)</td><td><input type="text" value="" id="playerB"/></td></tr>
-<!-- <tr><td>player B (name)</td><td><input type="text" value="" id="playerB-name"></td></tr> -->
 <tr><td>position (long, lat)</td><td><input type="text" value="" id="long"/><input type="text" value="" id="lat"/></td></tr>
 <tr><td>country</td><td><input type="text" value="" id="country"/></td></tr>
 <tr><td>city</td><td><input type="text" value="" id="city"/></td></tr>
@@ -83,52 +158,23 @@ $("#updater").click(function () {
 
 <hr>
 
-<h2> creation d'un joueur </h2>
+
+
+<hr>
+<h2>Ajout d'un element dans le stream d'une game</h2>
 <table class="table" style="width:600px;">
-<tr><td>nickname</td><td><input type="text" value="" id="player_nickname"></td></tr>
-<tr><td>name</td><td><input type="text" value="" id="player_name"></td></tr>
-<tr><td>rank</td><td><input type="text" value="" id="player_rank"/></td></tr>
-<tr><td>club id</td><td><input type="text" value="" id="player_club_id"/></td></tr>
-<tr><td>password</td><td><input type="text" value="" id="player_password"/></td></tr>
+<tr class="error"><td>playerid</td><td><input type="text" value="" id="stream_playerid"></td></tr>
+<tr class="error"><td>token</td><td><input type="text" value="" id="stream_token"></td></tr>
+<tr><td>gameid</td><td><input type="text" value="" id="stream_game_id"></td></tr>
+<tr><td>type</td><td><input type="text" value="text" id="stream_type"></td></tr>
+<tr><td>data</td><td><input type="text" value='{text:""}' id="stream_data"/></td></tr>
 </table>
-<input type="button" id="create_player" value="creer">
-
-<div id="result_player"></div>
+<input type="button" id="create_stream_entry" value="creer">
 
 
-<script type="text/javascript">
-$("#create_player").click(function () {
-  var player = {
-     nickname : $("#player_nickname").val(),
-     name : $("#player_name").val(),
-     rank : $("#player_rank").val(),
-     password : $("#player_password").val()
-  };
-  var dfd = new jQuery.Deferred();
-  if ($("#player_club_id").val()) {
-     $.getJSON("/documents/clubs/"+$("#player_club_id").val())
-      .then(function (d) {
-        player.club = { id: d.id, name: d.name };
-        dfd.resolve()
-      });
-  } else {
-     dfd.resolve();
-  }
-  $.when(dfd.promise()).then(function () {
-     $.post("/v1/players/", player, function (newPlayer) {
-       $("#result_player").html(JSON.stringify(newPlayer));
-     });
-  });
-});
-</script>
-
-
-<h2>Mise à jour d'un document Player</h2>
-Game id: <input type="text" id="playerId"/><input type="button" value="charger" id="charger_player"/><br/>
-<textarea style="width:800px;height:150px;" id="playertextarea"></textarea><input type="button" value="updater" id="updater_player"/><br/>
 
 <script>
-$("#charger_player").click(function () {
+$("#create_stream_entry").click(function () {
   if ($("#playerId").val() !== "") {
      $.getJSON("/v1/players/"+$("#playerId").val())
       .then(function (data) {
@@ -144,14 +190,9 @@ $("#charger_player").click(function () {
      });
   }
 });
-
-$("#updater_player").click(function () {
-  var player = JSON.parse($("#playertextarea").val());
-  $.post("/v1/players/"+player.id, player, function (data) {
-    $("#playertextarea").val("OK");
-  });
-});
 </script>
+-->
+
 
 </body>
 </html>
