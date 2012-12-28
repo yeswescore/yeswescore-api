@@ -394,10 +394,21 @@ app.post('/v1/games/:id/stream/', express.bodyParser(), function(req, res){
     res.end(JSON.stringify({"error": "unauthorized"}));
     return; // FIXME: error
   }
+  var game = searchById(DB.games, req.params.id);
+  if (!game) {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.end(JSON.stringify({"error": "game not found"}));
+    return; // FIXME: error
+  }
+  if (req.body.type !== "comment" || typeof req.body.data === "undefined") {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    res.end(JSON.stringify({"error": "wrong format"}));
+    return; // FIXME: error
+  }
   // we can post anything in a stream
   var streamObj = {
     id: generateFakeId(),
-    date: ISODateString(new Date().getTime()),
+    date: ISODateString(new Date()),
     owner: req.query.playerid
   };
   // should copy type & data
@@ -405,8 +416,10 @@ app.post('/v1/games/:id/stream/', express.bodyParser(), function(req, res){
      if (typeof streamObj[i] === "undefined")
        streamObj[i] = req.body[i];
   }
+  // adding comment to stream
+  game.stream.push(streamObj);
   // sending back saved data to the client
-  var body = JSON.stringify(game);
+  var body = JSON.stringify(streamObj);
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.end(body);
 });
