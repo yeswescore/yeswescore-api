@@ -430,7 +430,8 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
       player[o] = req.body[o];
   });
   // cas particulier club
-  if (typeof req.body["club"] === "object" &&
+  if (req.body["club"] &&
+      typeof req.body["club"] === "object" &&
       typeof req.body["club"].id !== "undefined" &&
       typeof req.body["club"].name !== "undefined") {
     player.club = req.body["club"];
