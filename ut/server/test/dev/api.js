@@ -421,4 +421,56 @@ describe('dev:games', function(){
       });
     });
   });
+  
+  describe('create a single game, then modify it', function () {
+    it('should create & give the game (not empty & valid)', function (done){
+      // read a player
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.players"]+"random"
+      };
+      http.getJSON(options, function (randomPlayer) {
+        assert.isPlayerWithToken(randomPlayer);
+      
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["api.games"]+"?playerid="+randomPlayer.id+"&token="+randomPlayer.token
+        };
+        
+        var newGame = { score: "0/0" };
+        http.post(options, newGame, function (game) {
+          assert.isGame(game);
+          assert(game.score === newGame.score, "score should be the same");
+
+          var options = {
+            host: Conf["http.host"],
+            port: Conf["http.port"],
+            path: Conf["api.games"]+game.id+"/?playerid="+randomPlayer.id+"&token="+randomPlayer.token
+          };
+          
+          var newScore = "15/0";
+          game.score = newScore;
+          
+          http.post(options, game, function (game) {
+            assert.isGame(game);
+            assert(game.score === newScore, "score should be updated");
+            
+            // reading the game from DB to be sure !
+            var options = {
+              host: Conf["http.host"],
+              port: Conf["http.port"],
+              path: Conf["api.games"]+game.id
+            };
+            http.getJSON(options, function (g) {
+              assert.isGame(g);
+              assert(g.score === newScore, "score should be updated in DB");
+              done();
+            });
+          });
+        });
+      });
+    });
+  });
 });
