@@ -303,15 +303,36 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
     }),
     type: "singles",
     status: "ongoing",
+    pos: null,
+    country: null,
+    city: null,
+    sets: null,
+    status: "ongoing",
+    score: null,
+    sport: "tennis",
     stream: []
   };
   // ttes les autres options que le client peut surcharger
   // FIXME: whitelist.
-  ["pos", "country", "city", "sets", "status"].forEach(function (i) {
-    if (typeof req.body[i] !== "undefined") {
-      game[i] = req.body[i];
-    }
+  ["country", "city", "sets"].forEach(function (i) {
+     if (typeof req.body[i] !== "undefined")
+       game[i] = req.body[i];
   });
+  // status
+  if (typeof req.body["status"] !== "undefined" &&
+      (req.body["status"] === "finished"  ||
+       req.body["status"] === "ongoing")) {
+    game["status"] = req.body.status;
+  }
+  // pos
+  if (typeof req.body["pos"] !== "undefined" &&
+      typeof req.body["pos"].long !== "undefined" &&
+      typeof req.body["pos"].lat !== "undefined") {
+    game["pos"] = {
+      long: req.body["pos"].long,
+      lat: req.body["pos"].lat
+    };
+  }
   
   // sauvegarde
   DB.games.push(game);
