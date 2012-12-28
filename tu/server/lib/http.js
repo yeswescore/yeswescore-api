@@ -29,7 +29,7 @@ http.getJSON = function (options, f) {
             var data = JSON.parse(json);
             f(data, res);
           } catch (e) {
-            assert(false, "invalid json");
+            assert(false, "invalid json ("+e+")");
           }
         });
   }).on("error", function (e) { throw e });
