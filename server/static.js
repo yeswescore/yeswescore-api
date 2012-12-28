@@ -398,15 +398,22 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
       nickname: null,
       name: null,
       rank: null,
-      club: { id: null, name: null },
+      club: null,
       games: [],
       password: null,
       token:  String(Math.floor(Math.random()*10000000)),
   };
-  ["nickname", "name", "rank", "club", "password"].forEach(function (o) {
+  //
+  ["nickname", "name", "rank", "password"].forEach(function (o) {
     if (typeof req.body[o] !== "undefined")
       player[o] = req.body[o];
   });
+  // cas particulier club
+  if (typeof req.body["club"] === "object" &&
+      typeof req.body["club"].id !== "undefined" &&
+      typeof req.body["club"].name !== "undefined") {
+    player.club = req.body["club"];
+  }
   //
   DB.players.push(player);
   // sending back saved data to the client
