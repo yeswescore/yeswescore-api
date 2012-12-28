@@ -55,7 +55,7 @@ describe('dev:players', function(){
           done();
         });
       });
-    })
+    });
   });
   
   describe('create basic player, then read it.', function () {
@@ -304,8 +304,72 @@ describe('dev:games', function(){
           done();
         });
       });
-    })
+    });
+  });
+
+  describe('create a single game without info, without token', function () {
+    it('should be an error', function (done) {
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["api.games"]
+      };
+      
+      var newGame = { };
+      http.post(options, newGame, function (error) {
+        assert.isError(error);
+        done();
+      });
+    });
   });
   
+  describe('create a single game without info, then read it', function () {
+    it('should create & give a game (not empty & valid)', function (done){
+      // read a player
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.players"]+"random"
+      };
+      http.getJSON(options, function (randomPlayer) {
+        assert.isPlayerWithToken(randomPlayer);
+      
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["api.games"]+"?playerid="+randomPlayer.id+"&token="+randomPlayer.token
+        };
+        
+        var newGame = { };
+        http.post(options, newGame, function (game) {
+          assert.isGame(game);
+          done();
+        });
+      });
+    });
+  });
   
+  describe('create a single game between 2 anonymous players, then read it', function () {
+    it('should create & give the game (not empty & valid)', function (done){
+      /*
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["api.games"]
+        };
+        
+        var newGame = {
+          teams : [ 
+          nickname : "TU-"+Math.random(),
+          name: "TU-"+Math.random(),
+          rank: "15/2",
+          password: null,
+          club: null
+        };
+        http.post(options, newPlayer, function (player) {
+          assert.isPlayerWithToken(player);
+      */
+      done();
+    });
+  });
 });
