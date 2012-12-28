@@ -349,27 +349,76 @@ describe('dev:games', function(){
     });
   });
   
-  describe('create a single game between 2 anonymous players, then read it', function () {
+  describe('create a single game, no teams, then read it', function () {
     it('should create & give the game (not empty & valid)', function (done){
-      /*
+      // read a player
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.players"]+"random"
+      };
+      http.getJSON(options, function (randomPlayer) {
+        assert.isPlayerWithToken(randomPlayer);
+      
         var options = {
           host: Conf["http.host"],
           port: Conf["http.port"],
-          path: Conf["api.games"]
+          path: Conf["api.games"]+"?playerid="+randomPlayer.id+"&token="+randomPlayer.token
         };
         
         var newGame = {
-          teams : [ 
-          nickname : "TU-"+Math.random(),
-          name: "TU-"+Math.random(),
-          rank: "15/2",
-          password: null,
-          club: null
+          pos: { long: 42.4242, lat: 43.4343 },
+          country: "FRANCE",
+          city: "marck",
+          type: "singles",
+          sets: "0/0",
+          score: "0/0",
+          status: "ongoing"
         };
-        http.post(options, newPlayer, function (player) {
-          assert.isPlayerWithToken(player);
-      */
-      done();
+        http.post(options, newGame, function (game) {
+          assert.isGame(game);
+          assert(game.pos.long === newGame.pos.long, "long should be the same");
+          assert(game.pos.lat === newGame.pos.lat, "lat should be the same");
+          assert(game.country === newGame.country, "country should be the same");
+          assert(game.city === newGame.city, "city should be the same");
+          assert(game.sets === newGame.sets, "sets should be the same");
+          assert(game.score === newGame.score, "score should be the same");
+          assert(game.status === newGame.status, "status should be the same");
+          done();
+        });
+      });
+    });
+  });
+  
+  describe('create a single game between 2 teams of anonymous players, then read it', function () {
+    it('should create & give the game (not empty & valid)', function (done){
+      // read a player
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.players"]+"random"
+      };
+      http.getJSON(options, function (randomPlayer) {
+        assert.isPlayerWithToken(randomPlayer);
+      
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["api.games"]+"?playerid="+randomPlayer.id+"&token="+randomPlayer.token
+        };
+        
+        var newGame = {
+          teams: [ { id: null, players: [ { name : "toto" } ] },
+                   { id: null, players: [ { name : "titi" } ] } ]
+        };
+        http.post(options, newGame, function (game) {
+          assert.isGame(game);
+          assert(Array.isArray(game.teams) && game.teams.length === 2, "two teams");
+          assert(game.teams[0].players[0].name === "toto", "first player is toto");
+          assert(game.teams[1].players[0].name === "titi", "second player is titi");
+          done();
+        });
+      });
     });
   });
 });
