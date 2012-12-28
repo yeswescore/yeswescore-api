@@ -99,23 +99,24 @@ assert.isClub = function (club) {
     token: "8871617"
   }
 */
-assert.isPlayer = function (player) {
-  assert.isObject(player, "isPlayer: player must be an object");
+assert.isPlayerScheme = function (player, m) {
+  assert.isObject(player, "isPlayerScheme: player must be an object");
   // mandatory
-  assert.isId(player.id, "isPlayer: id must be an hexa string");
-  assert.isId(player.token, "isPlayer: token must be an hexa string");
+  assert.isId(player.id, "isPlayerScheme: id must be an hexa string");
+  // token is optionnal
+  assert.isNullableString(player.token, "isPlayerScheme: token");
   // optionnals
-  assert.isNullableString(player.nickname, "isPlayer: nickname");
-  assert.isNullableString(player.name, "isPlayer: name");
-  assert.isNullableString(player.rank, "isPlayer: rank");
-  assert.isNullableString(player.password, "isPlayer: password");
+  assert.isNullableString(player.nickname, "isPlayerScheme: nickname");
+  assert.isNullableString(player.name, "isPlayerScheme: name");
+  assert.isNullableString(player.rank, "isPlayerScheme: rank");
+  assert.isNullableString(player.password, "isPlayerScheme: password");
   // club
   assert(player.club === null || 
-         (typeof player.club === "object" && player.club.id), "isPlayer: club must be null or object");
+         (typeof player.club === "object" && player.club.id), "isPlayerScheme: club must be null or object");
   // games
-  assert.isArray(player.games, "isPlayer: games must be an array");
+  assert.isArray(player.games, "isPlayerScheme: games must be an array");
   player.games.forEach(function (gameId) {
-    assert.isId(gameId, "isPlayer: games[*] must be id");
+    assert.isId(gameId, "isPlayerScheme: games[*] must be id");
   });
   //
   assert.allowedFields(player, ["id", "nickname", "name", "rank", "club", "games", "password", "token"]);
@@ -123,6 +124,17 @@ assert.isPlayer = function (player) {
   // - rank format
   // - no password => allowed blank fields
   // - password => unallowed fields ?
+};
+
+assert.isPlayer = function (player) {
+  assert.isPlayerScheme(player, "isPlayer: must be a player");
+  assert(player.token === null, "isPlayer: token must be null");
+  assert(player.password === null, "isPlayer: password must be null");
+};
+
+assert.isPlayerWithToken = function (player) {
+  assert.isPlayerScheme(player, "isPlayerWithToken: must be a player");
+  assert.isId(player.token, "isPlayerWithToken: token must be an hexa string");
 };
 
 /*
@@ -259,6 +271,12 @@ assert.isStreamComment = function (comment) {
   assert.isStreamObject(comment, "must be a stream object");
   assert(comment.type === "comment", "isStreamComment: streamObject.type must === comment");
   assert.isString(comment.data.text, "isStreamComment: streamObject.data.text must be a string");
+};
+
+
+assert.isError = function (error, m) {
+  assert.isObject(error, "error must be an object");
+  assert(typeof error.error === "string", "must have error field");
 };
 
 module.exports = assert;

@@ -74,7 +74,7 @@ describe('dev:players', function(){
         club: null
       };
       http.post(options, newPlayer, function (player) {
-        assert.isPlayer(player);
+        assert.isPlayerWithToken(player);
         assert(newPlayer.nickname === player.nickname, "must have same nickname");
         assert(newPlayer.name === player.name, "must have same name");
         assert(newPlayer.rank === player.rank, "must have same rank");
@@ -118,7 +118,7 @@ describe('dev:players', function(){
           club: { id: randomClub.id, name: randomClub.name }
         };
         http.post(options, newPlayer, function (player) {
-          assert.isPlayer(player);
+          assert.isPlayerWithToken(player);
           assert(newPlayer.nickname === player.nickname, "must have same nickname");
           assert(newPlayer.name === player.name, "must have same name");
           assert(newPlayer.rank === player.rank, "must have same rank");
@@ -137,6 +137,88 @@ describe('dev:players', function(){
             assert(newPlayer.club.name === p.club.name, "must have same club name");
             done();
           });
+        });
+      });
+    });
+  });
+  
+  describe('create player with club, then modify it.', function () {
+    it('should create the player (not empty & valid)', function (done) {
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.clubs"]+"random"
+      };
+      http.getJSON(options, function (randomClub) {
+        assert.isClub(randomClub);
+        
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["api.players"]
+        };
+        
+        var newPlayer = {
+          nickname : "TU-"+Math.random(),
+          name: "TU-"+Math.random(),
+          rank: "15/2",
+          password: null,
+          club: { id: randomClub.id, name: randomClub.name }
+        };
+        http.post(options, newPlayer, function (player) {
+          assert.isPlayerWithToken(player);
+          assert(newPlayer.nickname === player.nickname, "must have same nickname");
+          assert(newPlayer.name === player.name, "must have same name");
+          assert(newPlayer.rank === player.rank, "must have same rank");
+          
+          // modify the player
+          player.name = "foobar";
+          // saving
+          var options = {
+            host: Conf["http.host"],
+            port: Conf["http.port"],
+            path: Conf["api.players"]+player.id+"/?playerid="+player.id+"&token="+player.token
+          };
+          http.post(options, player, function (modifiedPlayer) {
+            assert.isPlayerWithToken(modifiedPlayer, "must be a player");
+            assert(modifiedPlayer.id === player.id, "must be same player");
+            assert(modifiedPlayer.name === player.name, "must have the same modified name");
+            
+            // reading from DB
+            http.getJSON(options, function (p) {
+              assert.isPlayer(p, "must be a player");
+              assert(p.id === player.id, "must be same player");
+              assert(p.name === player.name, "must have the same modified name");
+              done();
+            });
+          });
+        });
+      });
+    });
+  });
+  
+  describe('try to modify player without token', function () {
+    it('should generate an unauthrorized error', function (done) {
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.players"]+"random"
+      };
+      http.getJSON(options, function (randomPlayer) {
+        assert.isPlayerWithToken(randomPlayer);
+        
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["api.players"]+randomPlayer.id
+        };
+        
+        // modify player
+        randomPlayer.name = "foobar";
+        // try post without auth tokens
+        http.post(options, randomPlayer, function (error) {
+          assert.isError(error);
+          done();
         });
       });
     });

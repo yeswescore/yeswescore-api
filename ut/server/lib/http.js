@@ -30,7 +30,7 @@ http.getJSON = function (options, f) {
             var data = JSON.parse(json);
             f(data, res);
           } catch (e) {
-            assert(false, "invalid json ("+e+")");
+            assert(false, "invalid json ("+e+") = "+json);
           }
         });
   }).on("error", function (e) { throw e });
@@ -39,13 +39,18 @@ http.getJSON = function (options, f) {
 http.post = function (options, data, f) {
   // node default querystring.stringify doesn't handle nested objects.
   data = qs.stringify(data);
-  // options
-  options.method = "POST";
-  options.headers = {
-    'Content-Type': 'application/x-www-form-urlencoded',
-    'Content-Length': data.length
+  // extending options [oldSchool]
+  var postOptions = { 
+    method : "POST",
+    headers : {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Length': data.length
+    }
   };
-  var req = http.request(options, function(res) {
+  for (var i in options) {
+    postOptions[i] = options[i];
+  }
+  var req = http.request(postOptions, function(res) {
     var json = "";
     res.on("data", function (chunk) { json += chunk })
        .on("end", function () {
@@ -53,7 +58,7 @@ http.post = function (options, data, f) {
             var data = JSON.parse(json);
             f(data, res);
           } catch (e) {
-            assert(false, "invalid json ("+e+")");
+            assert(false, "invalid json ("+e+") = "+json);
           }
         });
   });
