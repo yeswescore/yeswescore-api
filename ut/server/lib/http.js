@@ -1,6 +1,6 @@
 var http = require("http")
   , assert = require("assert")
-  , request = require("request"); // @see https://github.com/mikeal/request
+  , qs = require("qs");
    
 
 // simple high level funcs
@@ -37,18 +37,29 @@ http.getJSON = function (options, f) {
 };
 
 http.post = function (options, data, f) {
-  request.post("http://" + options.host + ":" + options.port + options.path,
-    function (e, r, body) {
-      if (e)
-        throw e;
-      try {
-        var data = JSON.parse(body);
-        f(data);
-      } catch (e) {
-        assert(false, "invalid json ("+e+")");
-      }
-    }
-  ).form(data);
+  // node default querystring.stringify doesn't handle nested objects.
+  data = qs.stringify(data);
+  // options
+  options.method = "POST";
+  options.headers = {
+    'Content-Type': 'application/x-www-form-urlencoded',
+    'Content-Length': data.length
+  };
+  var req = http.request(options, function(res) {
+    var json = "";
+    res.on("data", function (chunk) { json += chunk })
+       .on("end", function () {
+          try {
+            var data = JSON.parse(json);
+            f(data, res);
+          } catch (e) {
+            assert(false, "invalid json ("+e+")");
+          }
+        });
+  });
+  req.on("error", function (e) { throw e });
+  req.write(data);
+  req.end();
 };
 
 module.exports = http;
