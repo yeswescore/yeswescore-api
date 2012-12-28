@@ -50,9 +50,11 @@ assert.isDate = function (s, m) {
 };
 
 assert.isPos = function (s, m) {
-  assert(isObject(s), m+" >isPos: must be an object");
-  assert(typeof s.long !== "undefined", m+" >isPos: must have { pos: ... } attribute");
-  assert(typeof s.lat !== "undefined", m+" >isPos: must have { lat: ... } attribute");
+  assert(typeof s === "object" || s === null, m+" >isPos: must be an object");
+  if (s) {
+    assert(typeof s.long !== "undefined", m+" >isPos: must have { pos: ... } attribute");
+    assert(typeof s.lat !== "undefined", m+" >isPos: must have { lat: ... } attribute");
+  }
 };
 
 assert.allowedFields = function (o, fields, m) {
