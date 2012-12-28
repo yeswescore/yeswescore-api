@@ -1,8 +1,9 @@
 // simple static server
 var express = require('express')
-  , app = express();
+  , app = express()
+  , mongoose = require('mongoose');
     
-var port = 8080;
+var port = 8081;
 
 // undefined if nothing is found
 var searchById = function (collection, id) {

@@ -1,6 +1,6 @@
 var assert = require("../lib/assert.js")
   , http = require("../lib/http.js")
-  , Conf = require("../lib/conf.js");
+  , Conf = require("../../../server/lib/conf.js");
 
 describe('clubs', function(){
   describe('http status', function(){
