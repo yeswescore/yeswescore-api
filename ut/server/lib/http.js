@@ -1,6 +1,5 @@
 var http = require("http")
-  , assert = require("assert")
-  , qs = require("qs");
+  , assert = require("assert");
    
 
 // simple high level funcs
@@ -38,12 +37,16 @@ http.getJSON = function (options, f) {
 
 http.post = function (options, data, f) {
   // node default querystring.stringify doesn't handle nested objects.
-  data = qs.stringify(data);
+  // we post using Content-Type: application/json.
+  // If we used Content-Type: application/x-www-form-urlencoded
+  //   we should have qs.stringify(data).
+  //   but we would have transfered "null" as string !
+  data = JSON.stringify(data);//qs.stringify(data);
   // extending options [oldSchool]
   var postOptions = { 
     method : "POST",
     headers : {
-      'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Type': 'application/json',
       'Content-Length': data.length
     }
   };
