@@ -1,5 +1,6 @@
 var http = require("http")
-  , assert = require("assert");
+  , assert = require("assert")
+  , request = require("request"); // @see https://github.com/mikeal/request
    
 
 // simple high level funcs
@@ -33,6 +34,21 @@ http.getJSON = function (options, f) {
           }
         });
   }).on("error", function (e) { throw e });
+};
+
+http.post = function (options, data, f) {
+  request.post("http://" + options.host + ":" + options.port + options.path,
+    function (e, r, body) {
+      if (e)
+        throw e;
+      try {
+        var data = JSON.parse(body);
+        f(data);
+      } catch (e) {
+        assert(false, "invalid json ("+e+")");
+      }
+    }
+  ).form(data);
 };
 
 module.exports = http;
