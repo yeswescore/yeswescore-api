@@ -2,7 +2,7 @@
 var express = require('express')
   , app = express();
     
-var port = 8080;
+var port = 8081;
 
 // undefined if nothing is found
 var searchById = function (collection, id) {
@@ -64,27 +64,37 @@ app.get('/bootstrap/conf.json', function(req, res){
   *    sets: string,
   *    score: string,
   *    status: string,
-  *    players: [
+  *    teams: [
   *      {
-  *        id: string,
-  *        nickname: string,
-  *        name: string,
-  *        rank: string,
-  *        club: {
-  *          id: string,
-  *          name: string
-  *        }
+  *        id: null,
+  *        players: [
+  *          {
+  *            id: string,
+  *            nickname: string,
+  *            name: string,
+  *            rank: string,
+  *            club: {
+  *              id: string,
+  *              name: string
+  *            }
+  *          }
+  *        ]
   *      },
   *      {
-  *        id: string,
-  *        nickname: string,
-  *        name: string,
-  *        rank: string,
-  *        club: {
-  *          id: string,
-  *          name: string
-  *        }
-  *      }
+  *        id: null,
+  *        players: [
+  *          {
+  *            id: string,
+  *            nickname: string,
+  *            name: string,
+  *            rank: string,
+  *            club: {
+  *              id: string,
+  *              name: string
+  *            }
+  *          }
+  *        ]
+  *      },
   *    ]
   * }
   */
@@ -126,26 +136,38 @@ app.get('/v1/games/', function(req, res){
       date_start: game.date_start,
       date_end: game.date_end,
       pos: game.pos,
+      country: game.country,
       city: game.city,
       type: game.type,
       sets: game.sets,
       score: game.score,
+      sport: game.sport,
       status: game.status,
-      players: game.players.map(function (playerInfo) {
-        if (typeof playerInfo.id !== "undefined") {
-          var player = searchById(DB.players, playerInfo.id);
-          return {
-            id: player.id,
-            nickname: player.nickname,
-            name: player.name,
-            rank: player.rank,
-            club: {
-              id: player.club.id,
-              name: player.club.name
-            }
-          };
-        }
-        return playerInfo; // { name: ... }
+      owner: game.owner,
+      stream: [], // empty
+      teams: game.teams.map(function (teamInfo) {
+        //
+        var players = teamInfo.players.map(function (playerInfo) {
+          if (typeof playerInfo.id !== "undefined") {
+            var player = searchById(DB.players, playerInfo.id);
+            return {
+                id: player.id,
+                nickname: player.nickname,
+                name: player.name,
+                rank: player.rank,
+                club: {
+                  id: player.club.id,
+                  name: player.club.name
+                }
+              };
+          }
+          return playerInfo;
+        });
+        //
+        return { 
+          id: null,
+          players: players
+        };
       })
     }
   });
@@ -166,26 +188,37 @@ app.get('/v1/games/:id', function(req, res){
       date_start: game.date_start,
       date_end: game.date_end,
       pos: game.pos,
+      country: game.country,
       city: game.city,
       type: game.type,
       sets: game.sets,
       score: game.score,
+      sport: game.sport,
       status: game.status,
-      players: game.players.map(function (playerInfo) {
-        if (typeof playerInfo.id !== "undefined") {
-          var player = searchById(DB.players, playerInfo.id);
-          return {
-            id: player.id,
-            nickname: player.nickname,
-            name: player.name,
-            rank: player.rank,
-            club: {
-              id: player.club.id,
-              name: player.club.name
-            }
-          };
-        }
-        return playerInfo; // { name: ... }
+      owner: game.owner,
+      teams: game.teams.map(function (teamInfo) {
+        //
+        var players = teamInfo.players.map(function (playerInfo) {
+          if (typeof playerInfo.id !== "undefined") {
+            var player = searchById(DB.players, playerInfo.id);
+            return {
+                id: player.id,
+                nickname: player.nickname,
+                name: player.name,
+                rank: player.rank,
+                club: {
+                  id: player.club.id,
+                  name: player.club.name
+                }
+              };
+          }
+          return playerInfo;
+        });
+        //
+        return { 
+          id: null,
+          players: players
+        };
       }),
       stream: game.stream
     };
@@ -222,10 +255,10 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
     return; // FIXME: error
   }
   // verifs
-  if (!Array.isArray(req.body.players) ||
-      req.body.players.length !== 2) {
+  if (!Array.isArray(req.body.teams) ||
+      req.body.teams.length !== 2) {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.end(JSON.stringify({"error": "missing players"}));
+    res.end(JSON.stringify({"error": "missing teams"}));
     return; // FIXME: error
   }
 
@@ -243,7 +276,7 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
    *   type: string, // singles / doubles
    *   sets: string, // ex: 6,2;6,3  (precomputed)
    *   status: string, // ongoing, canceled, finished (precomputed)
-   *   players: [
+   *   teams: [
    *     string, // id
    *     string  // id
    *   ],
@@ -258,11 +291,19 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
     date_start: ISODateString(new Date()),
     date_end: null,
     owner: req.query.playerid,
-    players: req.body.players.map(function (playerInfo) {
-        if (typeof playerInfo.id !== "undefined" &&
-            searchById(DB.players, playerInfo.id))
-          return { id: playerInfo.id };
-        return { name: playerInfo.name };
+    teams: req.body.teams.map(function (teamInfo) {
+        if (typeof teamInfo.players !== "undefined" &&
+            Array.isArray(teamInfo.players) &&
+            typeof teamInfo.players[0] !== "undefined" &&
+            typeof teamInfo.players[0].id !== "undefined" &&
+            searchById(DB.players, teamInfo.players[0].id))
+          return { id:null, players: [ { id: teamInfo.players[0].id } ] };
+        if (typeof teamInfo.players !== "undefined" &&
+            Array.isArray(teamInfo.players) &&
+            typeof teamInfo.players[0] !== "undefined" &&
+            typeof teamInfo.players[0].name !== "undefined")
+          return { id:null, players: [ { name: teamInfo.players[0].name } ] };
+        return { id:null, players: [ { name: "" } ] };
     }),
     type: "singles",
     status: "ongoing",
@@ -304,7 +345,7 @@ app.post('/v1/games/:id', express.bodyParser(), function(req, res){
     return; // FIXME: error
   }
   // update des champs updatables.
-  [ "city", "type", "sets", "score", "status", "players" ].forEach(
+  [ "city", "type", "sets", "score", "status", "teams" ].forEach(
     function (o) {
       if (typeof req.body[o] !== "undefined")
         game[o] = req.body[o];
@@ -695,9 +736,9 @@ DB.games = [
    *   type: string, // singles / doubles
    *   sets: string, // ex: 6,2;6,3  (precomputed)
    *   status: string, // ongoing, canceled, finished (precomputed)
-   *   players: [
-   *     string, // id
-   *     string  // id
+   *   teams: [
+   *     { id: null, players: [ { id: string }, ... ] },
+   *     { id: null, players: [ { name: string }, ... ] }
    *   ],
    *   stream: [
    *       FIXME: historique du match, action / date / heure / commentaire / video / photo etc
@@ -752,9 +793,9 @@ var generateGames = function () {
    *   type: string, // singles / doubles
    *   sets: string, // ex: 6,2;6,3  (precomputed)
    *   status: string, // ongoing, canceled, finished (precomputed)
-   *   players: [
-   *     { id: string },  // authentified player
-   *     { name: string } // unknown player
+   *   teams: [
+   *     { id: null, players: [ { id: string }, ... ] },   // authentified player
+   *     { id: null, players: [ { name: string }, ... ] }  // anonymous
    *   ],
    *   stream: [
    *       // FIXME: historique du match, action / date / heure / commentaire / video / photo etc
@@ -790,8 +831,9 @@ var generateGames = function () {
       type: "singles",
       sets: "",
       score: "",
+      sport: "tennis",
       status: "unknown",
-      players: [ ],
+      teams: [ ],
       stream: [ ]
     };
 
@@ -806,7 +848,7 @@ var generateGames = function () {
         game.score = "2/0";
       } else {
         game.sets = Math.floor(Math.random() * 5)+"/6;"+Math.floor(Math.random() * 5)+"/6";
-        game.sore = "0/2";
+        game.score = "0/2";
       }
     } else {
       // status ongoing
@@ -835,18 +877,30 @@ var generateGames = function () {
     // sometimes, players are "anonymous"
     if (Math.random() < 0.2) {
       if (Math.random() < 0.3) {
-        game.players = [ { name: generateFakePseudo() }, { name: generateFakePseudo() } ];
+        game.teams = [ 
+          { id: null, players: [ { name: generateFakePseudo() } ] },
+          { id: null, players: [ { name: generateFakePseudo() } ] } 
+        ];
       } else {
          if (Math.random() < 0.5) {
-           game.players = [ { name: generateFakePseudo() }, { id : player2.id } ];
+           game.teams = [
+             { id: null, players: [ { name: generateFakePseudo() } ] },
+             { id: null, players: [ { id : player2.id } ] }
+           ];
            player2.games.push(game.id);
          } else {
-           game.players = [ { id: player1.id } , { name: generateFakePseudo() } ];
+           game.teams = [
+             { id: null, players: [ { id: player1.id } ] },
+             { id: null, players: [ { name: generateFakePseudo() } ] }
+           ];
            player1.games.push(game.id);
          }
       }
     } else {
-      game.players = [ { id: player1.id }, { id: player2.id } ];
+      game.teams = [
+        { id: null, players: [ { id: player1.id } ] },
+        { id: null, players: [ { id: player2.id } ] }
+      ];
       // associating game to players
       player1.games.push(game.id);
       player2.games.push(game.id);
