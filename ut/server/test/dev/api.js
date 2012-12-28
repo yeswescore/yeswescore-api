@@ -473,4 +473,54 @@ describe('dev:games', function(){
       });
     });
   });
+  
+  describe('write a comment on a stream', function () {
+    it('should create a comment, size of stream +1 (not empty & valid)', function (done){
+      // read a game
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.games"]+"random"
+      };
+      http.getJSON(options, function (randomGame) {
+        assert.isGame(randomGame);
+        // nb Element ds le stream.
+        var nbElementInStream = randomGame.stream.length;
+        // request random player
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["documents.players"]+"random"
+        };
+        http.getJSON(options, function (randomPlayer) {
+          assert.isPlayerWithToken(randomPlayer);
+          // adding comment in game stream
+          var streamObj = {
+            type: "comment",
+            data: { text : "test" }
+          };
+          var options = {
+            host: Conf["http.host"],
+            port: Conf["http.port"],
+            path: Conf["api.games"]+randomGame.id+"/stream/?playerid="+randomPlayer.id+"&token="+randomPlayer.token
+          };
+          http.post(options, streamObj, function (s) {
+            assert.isStreamComment(s);
+            // reading game from DB
+            var options = {
+              host: Conf["http.host"],
+              port: Conf["http.port"],
+              path: Conf["api.games"]+randomGame.id
+            };
+            http.getJSON(options, function (game) {
+              assert.isGame(game);
+              assert(game.stream.length === nbElementInStream + 1, "stream size should have grown by one");
+              assert(game.stream.pop().id === s.id, "stream last obj should be s");
+              done();
+            });
+          });
+        });
+      });
+    });
+  });
 });
