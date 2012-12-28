@@ -218,7 +218,63 @@ describe('dev:players', function(){
         // try post without auth tokens
         http.post(options, randomPlayer, function (error) {
           assert.isError(error);
+          assert(error.error === "unauthorized", "must be an unauthorized error");
           done();
+        });
+      });
+    });
+  });
+  
+  describe('try to modify other player (without good token)', function () {
+    it('should generate an unauthrorized error', function (done) {
+      // first, read a randomPlayer
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.players"]+"random"
+      };
+      http.getJSON(options, function (randomPlayer) {
+        assert.isPlayerWithToken(randomPlayer);
+
+        // second, create a new player
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["api.players"]
+        };
+        
+        var newPlayer = {
+          nickname : "TU-"+Math.random(),
+          name: "TU-"+Math.random(),
+          rank: "15/2",
+          password: null,
+          club: null
+        };
+        http.post(options, newPlayer, function (player) {
+          assert.isPlayerWithToken(player);
+          
+          // third, new player try to modify randomPlayer
+          var options = {
+            host: Conf["http.host"],
+            port: Conf["http.port"],
+            path: Conf["api.players"]+randomPlayer.id+"/?playerid="+player.id+"&token="+player.token
+          };
+
+          var i = 0;
+          var cb = function () { i++; if (i == 2) done() };
+          
+          // try post
+          http.post(options, player, function (error) {
+            assert.isError(error);
+            assert(error.error === "wrong format", "wrong format error");
+            cb();
+          });
+          player.id = randomPlayer.id;
+          http.post(options, player, function (error) {
+            assert.isError(error);
+            assert(error.error === "unauthorized", "unauthorized error");
+            cb();
+          });
         });
       });
     });
@@ -250,4 +306,6 @@ describe('dev:games', function(){
       });
     })
   });
+  
+  
 });
