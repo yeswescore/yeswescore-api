@@ -94,7 +94,53 @@ describe('dev:players', function(){
     });
   });
   
-  
+  describe('create player with club, then read it.', function () {
+    it('should create the player (not empty & valid)', function (done) {
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.clubs"]+"random"
+      };
+      http.getJSON(options, function (randomClub) {
+        assert.isClub(randomClub);
+        
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["api.players"]
+        };
+        
+        var newPlayer = {
+          nickname : "TU-"+Math.random(),
+          name: "TU-"+Math.random(),
+          rank: "15/2",
+          password: null,
+          club: { id: randomClub.id, name: randomClub.name }
+        };
+        http.post(options, newPlayer, function (player) {
+          assert.isPlayer(player);
+          assert(newPlayer.nickname === player.nickname, "must have same nickname");
+          assert(newPlayer.name === player.name, "must have same name");
+          assert(newPlayer.rank === player.rank, "must have same rank");
+          
+          // verify player exist in DB.
+          var options = {
+            host: Conf["http.host"],
+            port: Conf["http.port"],
+            path: Conf["api.players"]+player.id
+          };
+          http.getJSON(options, function (p) {
+            assert.isPlayer(p, "must be a player");
+            assert(p.id === player.id, "must be same player");
+            assert.isObject(newPlayer.club, "newPlayer.club must be an object");
+            assert(newPlayer.club.id === p.club.id, "must be same club");
+            assert(newPlayer.club.name === p.club.name, "must have same club name");
+            done();
+          });
+        });
+      });
+    });
+  });
 });
 
 describe('dev:games', function(){
