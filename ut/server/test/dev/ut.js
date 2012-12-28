@@ -7,7 +7,7 @@ if (Conf.env !== "DEV")
 
 describe('documents', function(){
   describe('clubs', function(){
-    it('clubs/random should return 200 OK, and be readable throw api', function (done){
+    it('clubs/random should return 200 OK, and be readable through api', function (done){
       var options = {
         host: Conf["http.host"],
         port: Conf["http.port"],
@@ -29,7 +29,7 @@ describe('documents', function(){
   });
   
   describe('players', function(){
-    it('players/random should return 200 OK, and be readable throw api', function (done){
+    it('players/random should return 200 OK, and be readable through api', function (done){
       var options = {
         host: Conf["http.host"],
         port: Conf["http.port"],
@@ -52,7 +52,7 @@ describe('documents', function(){
   });
   
   describe('games', function(){
-    it('games/random should return 200 OK, and be readable throw api', function (done){
+    it('games/random should return 200 OK, and be readable through api', function (done){
       var options = {
         host: Conf["http.host"],
         port: Conf["http.port"],
