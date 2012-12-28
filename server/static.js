@@ -458,7 +458,18 @@ app.post('/v1/players/:id', express.bodyParser(), function(req, res){
 
 // searching a specific player
 app.get('/v1/players/:id', function(req, res){
-  var body = JSON.stringify(searchById(DB.players, req.params.id));
+  var player = searchById(DB.players, req.params.id);
+  if (player) {
+    // removing token from player. (private data)
+    var p = { };
+    for (var i in player) {
+      p[i] = player[i];
+    }
+    p["token"] = null;
+    p["password"] = null;
+    player = p;
+  }
+  var body = JSON.stringify(player);
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
   res.end(body);
 });
