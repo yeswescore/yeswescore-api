@@ -254,13 +254,6 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
     res.end(JSON.stringify({"error": "unauthorized"}));
     return; // FIXME: error
   }
-  // verifs
-  if (!Array.isArray(req.body.teams) ||
-      req.body.teams.length !== 2) {
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.end(JSON.stringify({"error": "missing teams"}));
-    return; // FIXME: error
-  }
 
   /*
    * document game:
@@ -284,6 +277,9 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
    *       FIXME: historique du match, action / date / heure / commentaire / video / photo etc
    *   ]
    */
+  // si aucune teams, on cree 2
+  if (!Array.isArray(req.body.teams))
+    req.body.teams = [{}, {}]; // double team vide.s
   // on cree la partie
   var game = {
     id: generateFakeId(),
