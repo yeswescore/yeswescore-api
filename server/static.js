@@ -314,7 +314,7 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
   };
   // ttes les autres options que le client peut surcharger
   // FIXME: whitelist.
-  ["country", "city", "sets"].forEach(function (i) {
+  ["country", "city", "sets", "score"].forEach(function (i) {
      if (typeof req.body[i] !== "undefined")
        game[i] = req.body[i];
   });
@@ -328,9 +328,13 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
   if (typeof req.body["pos"] !== "undefined" &&
       typeof req.body["pos"].long !== "undefined" &&
       typeof req.body["pos"].lat !== "undefined") {
+    var long = parseFloat(req.body["pos"].long);
+    var lat = parseFloat(req.body["pos"].lat);
+    if (long >= -180 && long <= 180 &&
+        lat >= -90 && lat <= 90)
     game["pos"] = {
-      long: req.body["pos"].long,
-      lat: req.body["pos"].lat
+      long: long,
+      lat: lat
     };
   }
   
