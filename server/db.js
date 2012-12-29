@@ -1,5 +1,135 @@
-// on simule une DB mongo
-var DB = {};
+var mongoose = require("mongoose"),
+    Schema = mongoose.Schema,
+    Conf = require("./conf.js"),
+    Q = require("q");
+
+mongoose.connection.on('error', function () { DB.status = "disconnected" });
+mongoose.connection.on('connected', function () { DB.status = "connected" });
+mongoose.connect(Conf.get("mongo.url"));
+
+var DB = {
+  status : "disconnected",
+  Model : {
+  },
+  /*
+   * Saving one or many mongo documents.
+   * 
+   * ex: 
+   *   var player = new DB.Model.Player({ "name" : "vincent" });
+   *   DB.save(player, function (err, success) {
+   *     console.log(err?"error":"saved");
+   *   });
+   * 
+   * ex:
+   *   var playerA = new DB.Model.Player({ "name" : "vincent" });
+   *   var playerB = new DB.Model.Player({ "name" : "marc" });
+   *   DB.save([playerA, playerB], function (err, success) {
+   *     console.log(err?"error":"all models saved");
+   *   });
+   */
+  save: function (doc, callback) {
+    var promises;
+    if (!Array.isArray(doc)) {
+      doc = [ doc ];
+    }
+    promises = doc.map(function _save(doc) {
+      var simpleDeferred = Q.defer();
+      // saving
+      doc.save(function (err) {
+        if (err) {
+          simpleDeferred.reject(err);
+        } else {
+          simpleDeferred.resolve(doc);
+        }
+      });
+      return simpleDeferred.promise;
+    });
+    //
+    Q.all(promises).then(
+      function onsuccess(results) { callback(null, results) },
+      function onerror() { callback("error saving object") } // FIXME: be more precise
+    );
+  }
+};
+
+var defaultSchemaOptions = {
+  toObject : {
+    transform : function (doc, ret, options) {
+      if (options.hide) {
+        options.hide.forEach(function (prop) {
+          delete ret[prop];
+        });
+      }
+    }
+  }
+};
+
+//
+// Schemas:
+//
+var clubSchema = Schema({
+  sport: String,
+  date_creation: { type: Date, default: Date.now },
+  name: String,
+  city: String
+});
+clubSchema.virtual('id').get(function() { return this._id.toHexString() });
+clubSchema.options = defaultSchemaOptions;
+
+var playerSchema = Schema({
+  nickname: String,
+  name: String,
+  date_creation: { type: Date, default: Date.now },
+  date_modification: Date,
+  password: String,
+  rank: String,
+  club: Schema.Types.ObjectId,
+  games: [Schema.Types.ObjectId]
+});
+playerSchema.virtual('id').get(function() { return this._id.toHexString() });
+playerSchema.options = defaultSchemaOptions;
+
+var gameplayerSchema = Schema({
+  id: Schema.Types.ObjectId,
+  name: String
+});
+
+var teamSchema = Schema({
+  id: Schema.Types.ObjectId,
+  players: [ gameplayerSchema ]
+});
+
+var streamObjSchema = Schema({
+  id: Schema.Types.ObjectId,
+  date_creation: { type: Date, default: Date.now },
+  date_modification: Date,
+  type: { type: String, enum: [ "comment" ] },
+  owner: Schema.Types.ObjectId,
+  data: Schema.Types.Mixed
+});
+
+var gameSchema = Schema({
+  date_creation: { type: Date, default: Date.now },
+  date_modification: Date,
+  date_start: { type: Date, default: Date.now },
+  date_end: Date,
+  owner: Schema.Types.ObjectId,
+  pos: {type: [Number], index: '2d'},
+  country: String,
+  city: String,
+  sport: { type: String, enum: ["tennis"] },
+  type: { type: String, enum: [ "singles", "doubles" ] },
+  sets: String,
+  teams: [ teamSchema ],
+  stream: [ streamObjSchema ]
+});
+gameSchema.virtual('id').get(function() { return this._id.toHexString() });
+gameSchema.options = defaultSchemaOptions;
+
+// creating models
+DB.Model.Game = mongoose.model("Game", gameSchema);
+DB.Model.Player = mongoose.model("Player", playerSchema);
+DB.Model.Club = mongoose.model("Club", clubSchema);
 
 // @see http://lehelk.com/2011/05/06/script-to-remove-diacritics/
 // evaluated once; using closure.
@@ -226,13 +356,23 @@ DB.games = [
 
 var generateClubs = function () {
   var names = ["CAEN TC", "CAEN LA BUTTE", "LOUVIGNY TC", "MONDEVILLE USO", "CONDE SUR NOIREAU TC", "ARROMANCHE TENNIS PORT WILSON", "FLEURY TENNIS CLUB"];
-  DB.clubs = names.map(function (clubName) {
-    return {
-      id: generateFakeId(),
+  var clubs = names.map(function (clubName) {
+    return new DB.Model.Club({
       sport: "tennis",
       name: clubName,
       city: generateFakeCity()
-    }
+    });
+  });
+  DB.save(clubs, function (err, result) {
+    if (err)
+      console.log('error saving clubs:' + err);
+    console.log("clubs saved! ");
+    
+    result.forEach(function (club, i) {
+      try {
+      console.log(JSON.stringify(club.toObject({ virtuals: true, hide: ['_id'], transform: true })));
+      } catch (e) { console.log('error: ' + e); }
+    });
   });
 };
 
@@ -403,15 +543,50 @@ var generateGames = function () {
   }
 };
 
+DB.dropCollection = function (collectionName) {
+  var deferred = Q.defer();
+  if (Conf.env === "DEV") {
+    if (DB.status === "connected") {
+      mongoose.connection.collections[collectionName].drop( function(err) {
+        if (err)
+          deferred.reject("error dropping collection");
+        deferred.resolve("collection dropped");
+      });
+    } else {
+      deferred.reject("not connected");
+    }
+  }
+  else {
+    deferred.reject("drop collection only allowed on dev environment");
+  }
+  return deferred.promise;
+};
+
+DB.reset = function () {
+  return Q.allResolved([
+    DB.dropCollection("clubs"),
+    DB.dropCollection("players"),
+    DB.dropCollection("games")
+  ]);
+};
+
 // generating fake data at startup
-generateClubs();
-generatePlayers();
-generateGames();
+mongoose.connection.once("open", function () {
+  DB.reset().then(function () {
+    DB.generateFakeData();
+  });
+});
+
+DB.generateFakeData = function () {
+  Q.fcall(generateClubs);
+//   .then(generatePlayers)
+//   .then(generateGames);
+};
 
 // undefined if nothing is found
 DB.searchById = function (collection, id) {
    return collection.filter(function (o) { return o.id === id }).pop();
-}
+};
 
 DB.isAuthenticated = function (query) {
   var player = DB.searchById(DB.players, query.playerid);
