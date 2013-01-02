@@ -110,10 +110,7 @@ app.get('/v1/games/', function(req, res){
                 nickname: player.nickname,
                 name: player.name,
                 rank: player.rank,
-                club: {
-                  id: player.club.id,
-                  name: player.club.name
-                }
+                club: player.club
               };
           }
           return playerInfo;
@@ -161,10 +158,7 @@ app.get('/v1/games/:id', function(req, res){
                 nickname: player.nickname,
                 name: player.name,
                 rank: player.rank,
-                club: {
-                  id: player.club.id,
-                  name: player.club.name
-                }
+                club: player.club
               };
           }
           return playerInfo;
