@@ -6,7 +6,7 @@ app.get('/v1/players/', function(req, res){
   var players, club = req.query.club
   if (club) {
     players = DB.players.filter(function (p) {
-      return p.club.id === club;
+      return p && p.club && p.club.id === club;
     });
   } else {
     players = DB.players;
@@ -113,10 +113,17 @@ app.post('/v1/players/:id', express.bodyParser(), function(req, res){
     return; // FIXME: error
   }
   // updating player
-  ["nickname", "name", "rank", "club", "password"].forEach(function (o) {
+  ["nickname", "name", "rank", "password"].forEach(function (o) {
     if (typeof req.body[o] !== "undefined")
       player[o] = req.body[o];
   });
+  // cas particulier club
+  if (req.body["club"] &&
+      typeof req.body["club"] === "object" &&
+      typeof req.body["club"].id !== "undefined" &&
+      typeof req.body["club"].name !== "undefined") {
+    player.club = req.body["club"];
+  }
   // sending back saved data to the client
   var body = JSON.stringify(player);
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
