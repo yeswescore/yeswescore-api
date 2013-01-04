@@ -2,6 +2,32 @@ var DB = require("../db.js")
   , express = require("express")
   , app = require("../app.js");
 
+app.get('/v1/players/', function(req, res){
+  var players, club = req.query.club
+  if (club) {
+    players = DB.players.filter(function (p) {
+      return p.club.id === club;
+    });
+  } else {
+    players = DB.players;
+  }
+  // do not display password / token
+  players = players.map(function (player) {
+    return {
+      id: player.id,
+      nickname: player.nickname,
+      name: player.name,
+      rank: player.rank,
+      club: player.club,
+      games: player.games
+    }
+  });
+  //
+  var body = JSON.stringify(players);
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.end(body);
+});
+  
 // POST /v1/players/
 app.post('/v1/players/', express.bodyParser(), function(req, res){
   // creating a new player
