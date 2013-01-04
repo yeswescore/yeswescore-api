@@ -89,7 +89,7 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
   res.end(body);
 });
 
-// POST /v1/players/:id/?id=...&token=...
+// POST /v1/players/:id/?playerid=...&token=...
 app.post('/v1/players/:id', express.bodyParser(), function(req, res){
   if (!DB.isAuthenticated(req.query)) {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
