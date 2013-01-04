@@ -140,7 +140,8 @@ app.get('/v1/games/', function(req, res){
         //
         return { 
           id: null,
-          players: players
+          players: players,
+          points: teamInfo.points
         };
       })
     }
@@ -188,7 +189,8 @@ app.get('/v1/games/:id', function(req, res){
         //
         return { 
           id: null,
-          players: players
+          players: players,
+          points: teamInfo.points
         };
       }),
       stream: game.stream
@@ -260,13 +262,13 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
             typeof teamInfo.players[0] !== "undefined" &&
             typeof teamInfo.players[0].id !== "undefined" &&
             DB.searchById(DB.players, teamInfo.players[0].id))
-          return { id:null, players: [ { id: teamInfo.players[0].id } ] };
+          return { id:null, points:null, players: [ { id: teamInfo.players[0].id } ] };
         if (typeof teamInfo.players !== "undefined" &&
             Array.isArray(teamInfo.players) &&
             typeof teamInfo.players[0] !== "undefined" &&
             typeof teamInfo.players[0].name !== "undefined")
-          return { id:null, players: [ { name: teamInfo.players[0].name } ] };
-        return { id:null, players: [ { name: "" } ] };
+          return { id:null, points:null, players: [ { name: teamInfo.players[0].name } ] };
+        return { id:null, points:null, players: [ { name: "" } ] };
     }),
     type: "singles",
     status: "ongoing",

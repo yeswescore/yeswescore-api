@@ -28,6 +28,34 @@ app.get('/v1/players/', function(req, res){
   res.end(body);
 });
   
+app.get('/v1/players/autocomplete/', function(req, res){
+  var players, query = req.query.q
+  if (query) {
+    players = DB.players.filter(function (p) {
+      return p.name.removeDiacritics().toLowerCase().indexOf(query) !== -1 ||
+             p.nickname.removeDiacritics().toLowerCase().indexOf(query) !== -1;
+    });
+  } else {
+    players = [];
+  }
+  // do not display password / token
+  players = players.map(function (player) {
+    return {
+      id: player.id,
+      nickname: player.nickname,
+      name: player.name,
+      rank: player.rank,
+      club: player.club,
+      games: player.games
+    }
+  });
+  //
+  var body = JSON.stringify(players);
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.end(body);
+});
+  
+
 // POST /v1/players/
 app.post('/v1/players/', express.bodyParser(), function(req, res){
   // creating a new player
