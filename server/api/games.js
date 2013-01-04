@@ -55,12 +55,12 @@ var DB = require("../db.js")
   */
 app.get('/v1/games/', function(req, res){
   console.log("query="+req.query.q);
-  var games, query = req.query.q;
+  var games = DB.games, query = req.query.q, club = req.query.club;
 
   // params de recherche ?
   if (query) {
     // query inside games
-    games = DB.games.filter(function (g) {
+    games = games.filter(function (g) {
       // FIXME: trim, removeDiacritics, security
       return g.city.removeDiacritics().toLowerCase().indexOf(query) !== -1;
     });
@@ -78,9 +78,31 @@ app.get('/v1/games/', function(req, res){
           games.push(DB.searchById(DB.games, gameId));
       });
     });
-  } else {
-    games = DB.games;
   }
+  
+  // filtre par club ?
+  if (club) {
+    games = games.filter(function (game) {
+      var fromClub = false;
+      if (game.teams) {
+        game.teams.forEach(function (team) {
+          if (team) {
+            team.players.forEach(function (playerInfo) {
+              if (playerInfo && playerInfo.id) {
+                var player = DB.searchById(DB.players, playerInfo.id);
+                if (player && player.club &&
+                    player.club.id && club === player.club.id) {
+                  fromClub = true;
+                }
+              }
+            });
+          }
+        });
+      }
+      return fromClub;
+    });
+  }
+  
   console.log(games.length + ' games');
   
   // formating DB data.
