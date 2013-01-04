@@ -58,6 +58,18 @@ describe('dev:players', function(){
     });
   });
   
+  describe('FIXME: read players filtering by club', function() {
+    it('should read players using filter ?club=:id', function (done) {
+      done("FIXME");
+    });
+  });
+  
+  describe('FIXME: autocomplete players ', function() {
+    it('should read players', function (done) {
+      done("FIXME");
+    });
+  });
+  
   describe('create basic player, then read it.', function () {
     it('should create the player (not empty & valid)', function (done) {
       var options = {
@@ -304,6 +316,18 @@ describe('dev:games', function(){
           done();
         });
       });
+    });
+  });
+  
+  describe('FIXME: test game query', function () {
+    it ('should be able to query games using q=...', function (done) {
+      done("FIXME");
+    });
+  });
+  
+  describe('FIXME: test game query club', function () {
+    it ('should be able to query games using club=...', function (done) {
+      done("FIXME");
     });
   });
 

@@ -55,12 +55,12 @@ var DB = require("../db.js")
   */
 app.get('/v1/games/', function(req, res){
   console.log("query="+req.query.q);
-  var games, query = req.query.q;
+  var games = DB.games, query = req.query.q, club = req.query.club;
 
   // params de recherche ?
   if (query) {
     // query inside games
-    games = DB.games.filter(function (g) {
+    games = games.filter(function (g) {
       // FIXME: trim, removeDiacritics, security
       return g.city.removeDiacritics().toLowerCase().indexOf(query) !== -1;
     });
@@ -78,9 +78,31 @@ app.get('/v1/games/', function(req, res){
           games.push(DB.searchById(DB.games, gameId));
       });
     });
-  } else {
-    games = DB.games;
   }
+  
+  // filtre par club ?
+  if (club) {
+    games = games.filter(function (game) {
+      var fromClub = false;
+      if (game.teams) {
+        game.teams.forEach(function (team) {
+          if (team) {
+            team.players.forEach(function (playerInfo) {
+              if (playerInfo && playerInfo.id) {
+                var player = DB.searchById(DB.players, playerInfo.id);
+                if (player && player.club &&
+                    player.club.id && club === player.club.id) {
+                  fromClub = true;
+                }
+              }
+            });
+          }
+        });
+      }
+      return fromClub;
+    });
+  }
+  
   console.log(games.length + ' games');
   
   // formating DB data.
@@ -110,10 +132,7 @@ app.get('/v1/games/', function(req, res){
                 nickname: player.nickname,
                 name: player.name,
                 rank: player.rank,
-                club: {
-                  id: player.club.id,
-                  name: player.club.name
-                }
+                club: player.club
               };
           }
           return playerInfo;
@@ -121,7 +140,8 @@ app.get('/v1/games/', function(req, res){
         //
         return { 
           id: null,
-          players: players
+          players: players,
+          points: teamInfo.points
         };
       })
     }
@@ -161,10 +181,7 @@ app.get('/v1/games/:id', function(req, res){
                 nickname: player.nickname,
                 name: player.name,
                 rank: player.rank,
-                club: {
-                  id: player.club.id,
-                  name: player.club.name
-                }
+                club: player.club
               };
           }
           return playerInfo;
@@ -172,7 +189,8 @@ app.get('/v1/games/:id', function(req, res){
         //
         return { 
           id: null,
-          players: players
+          players: players,
+          points: teamInfo.points
         };
       }),
       stream: game.stream
@@ -244,13 +262,13 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
             typeof teamInfo.players[0] !== "undefined" &&
             typeof teamInfo.players[0].id !== "undefined" &&
             DB.searchById(DB.players, teamInfo.players[0].id))
-          return { id:null, players: [ { id: teamInfo.players[0].id } ] };
+          return { id:null, points:null, players: [ { id: teamInfo.players[0].id } ] };
         if (typeof teamInfo.players !== "undefined" &&
             Array.isArray(teamInfo.players) &&
             typeof teamInfo.players[0] !== "undefined" &&
             typeof teamInfo.players[0].name !== "undefined")
-          return { id:null, players: [ { name: teamInfo.players[0].name } ] };
-        return { id:null, players: [ { name: "" } ] };
+          return { id:null, points:null, players: [ { name: teamInfo.players[0].name } ] };
+        return { id:null, points:null, players: [ { name: "" } ] };
     }),
     type: "singles",
     status: "ongoing",

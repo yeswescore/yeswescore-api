@@ -18,14 +18,14 @@ describe('clubs', function(){
 
 describe('players', function(){
   describe('http status', function(){
-    it('GET should return 404', function (done){
+    it('GET should return 200 OK', function (done){
       var options = {
         host: Conf["http.host"],
         port: Conf["http.port"],
         path: Conf["api.players"]
       };
       
-      http.is404OK(options, done);
+      http.is200OK(options, done);
     });
   });
 });

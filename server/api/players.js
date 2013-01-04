@@ -2,6 +2,60 @@ var DB = require("../db.js")
   , express = require("express")
   , app = require("../app.js");
 
+app.get('/v1/players/', function(req, res){
+  var players, club = req.query.club
+  if (club) {
+    players = DB.players.filter(function (p) {
+      return p && p.club && p.club.id === club;
+    });
+  } else {
+    players = DB.players;
+  }
+  // do not display password / token
+  players = players.map(function (player) {
+    return {
+      id: player.id,
+      nickname: player.nickname,
+      name: player.name,
+      rank: player.rank,
+      club: player.club,
+      games: player.games
+    }
+  });
+  //
+  var body = JSON.stringify(players);
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.end(body);
+});
+  
+app.get('/v1/players/autocomplete/', function(req, res){
+  var players, query = req.query.q
+  if (query) {
+    players = DB.players.filter(function (p) {
+      return p.name.removeDiacritics().toLowerCase().indexOf(query) !== -1 ||
+             p.nickname.removeDiacritics().toLowerCase().indexOf(query) !== -1;
+    });
+  } else {
+    players = [];
+  }
+  // do not display password / token
+  players = players.map(function (player) {
+    return {
+      id: player.id,
+      nickname: player.nickname,
+      name: player.name,
+      rank: player.rank,
+      club: player.club,
+      games: player.games
+    }
+  });
+  //
+  var body = JSON.stringify(players);
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.end(body);
+});
+  
+
 // POST /v1/players/
 app.post('/v1/players/', express.bodyParser(), function(req, res){
   // creating a new player
@@ -35,7 +89,7 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
   res.end(body);
 });
 
-// POST /v1/players/:id/?id=...&token=...
+// POST /v1/players/:id/?playerid=...&token=...
 app.post('/v1/players/:id', express.bodyParser(), function(req, res){
   if (!DB.isAuthenticated(req.query)) {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -59,10 +113,17 @@ app.post('/v1/players/:id', express.bodyParser(), function(req, res){
     return; // FIXME: error
   }
   // updating player
-  ["nickname", "name", "rank", "club", "password"].forEach(function (o) {
+  ["nickname", "name", "rank", "password"].forEach(function (o) {
     if (typeof req.body[o] !== "undefined")
       player[o] = req.body[o];
   });
+  // cas particulier club
+  if (req.body["club"] &&
+      typeof req.body["club"] === "object" &&
+      typeof req.body["club"].id !== "undefined" &&
+      typeof req.body["club"].name !== "undefined") {
+    player.club = req.body["club"];
+  }
   // sending back saved data to the client
   var body = JSON.stringify(player);
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
