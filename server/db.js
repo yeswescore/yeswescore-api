@@ -104,7 +104,6 @@ var teamSchema = Schema({
 teamSchema.virtual('id').get(function() { return this._id.toHexString() });
 
 var streamObjSchema = Schema({
-  id: Schema.Types.ObjectId,
   date_creation: { type: Date, default: Date.now },
   date_modification: Date,
   type: { type: String, enum: [ "comment" ] },
@@ -387,6 +386,7 @@ var generateClubsAsync = function () {
       sport: "tennis",
       name: clubName,
       city: generateFakeCity(),
+      // generation only
       random : Math.random()
     });
   });
@@ -409,6 +409,8 @@ var generatePlayersAsync = function () {
           rank: "15/2",
           club: { id: club.id, name: club.name },
           games: [],
+          // generation only
+          random : Math.random(),
           //
           password: null,
           token: String(Math.floor(Math.random()*10000000))
@@ -418,7 +420,7 @@ var generatePlayersAsync = function () {
    });
 };
 
-var generateGames = function () {
+var generateGamesAsync = function () {
   // generating 20 games
   var nbGames = 20;
   var randomPlayers = [];
@@ -428,8 +430,14 @@ var generateGames = function () {
   
   return Q.all(randomPlayers)
           .then(function (players) {
+    console.log('players: ' + players.length + " nbGames " + nbGames);
+    console.log(JSON.stringify(players[0]));
+            
     var games = [];
+    
     for (var i = 0; i < nbGames; ++i) {
+      console.log('new game ' + i);
+      try {
       var game = new DB.Model.Game({
         owner: players.random().id, // utilisateur ayant saisi le match.
         pos: generateFakeLocation(),
@@ -443,6 +451,8 @@ var generateGames = function () {
         teams: [ ],
         stream: [ ]
       });
+      } catch (e) { console.log('error ' +e); }
+      console.log('new model game : ' + i);
       
       // random pick match status, finished ? or ongoing ?
       game.status = ["ongoing", "finished"].random();
@@ -492,13 +502,13 @@ var generateGames = function () {
               { id: null, players: [ { name: generateFakePseudo() } ] },
               { id: null, players: [ { id : player2.id } ] }
             ];
-            player2.games.push(game.id);
+            //player2.games.push(game.id);
           } else {
             game.teams = [
               { id: null, players: [ { id: player1.id } ] },
               { id: null, players: [ { name: generateFakePseudo() } ] }
             ];
-            player1.games.push(game.id);
+            //player1.games.push(game.id);
           }
         }
       } else {
@@ -507,8 +517,8 @@ var generateGames = function () {
           { id: null, players: [ { id: player2.id } ] }
         ];
         // associating game to players
-        player1.games.push(game.id);
-        player2.games.push(game.id);
+        //player1.games.push(game.id);
+        //player2.games.push(game.id);
       }
       
       // generating 0 to 10 comments
@@ -519,16 +529,19 @@ var generateGames = function () {
         delta += 1000 * 60 * (1 + Math.floor(Math.random(5)));
         var date = new Date(new Date(game.date_start).getTime() + delta);
         var comment = {
-          id: generateFakeId(),
           type: "comment",
-          date: date.toISO(),
-          owner: DB.players.random().id,
+          owner: players.random().id,
           data: { text: generateFakeComment() }
         }
         game.stream.push(comment);
       }
- 
+      
+      console.log("saving : " + JSON.stringify(game.toObject({virtual:true, hidden: ["_id"]})));
+      
+      games.push(game);
     }
+    
+    return DB.saveAsync(games);
   });
   
   /*
@@ -637,13 +650,13 @@ var generateGames = function () {
              { id: null, players: [ { name: generateFakePseudo() } ] },
              { id: null, players: [ { id : player2.id } ] }
            ];
-           player2.games.push(game.id);
+           //player2.games.push(game.id);
          } else {
            game.teams = [
              { id: null, players: [ { id: player1.id } ] },
              { id: null, players: [ { name: generateFakePseudo() } ] }
            ];
-           player1.games.push(game.id);
+           //player1.games.push(game.id);
          }
       }
     } else {
@@ -652,8 +665,8 @@ var generateGames = function () {
         { id: null, players: [ { id: player2.id } ] }
       ];
       // associating game to players
-      player1.games.push(game.id);
-      player2.games.push(game.id);
+      //player1.games.push(game.id);
+      //player2.games.push(game.id);
     }
  
     // generating 0 to 10 comments
@@ -714,7 +727,7 @@ mongoose.connection.once("open", function () {
 DB.generateFakeData = function () {
   generateClubsAsync()
    .then(generatePlayersAsync)
-//   .then(generateGames);
+   .then(generateGamesAsync);
 };
 
 // undefined if nothing is found
