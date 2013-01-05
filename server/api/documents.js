@@ -6,11 +6,9 @@ if (Conf.env === "DEV") {
   app.get('/documents/games/random', function (req, res) {
     DB.Model.Game.randomAsync().then(
       function success(game) {
-        res.setHeader('Content-Type', 'application/json; charset=utf-8');
         res.end(JSON.stringify(game));
       },
       function error(err) {
-        res.setHeader('Content-Type', 'application/json; charset=utf-8');
         res.end(JSON.stringify({error:err}));
       }
     );
@@ -25,11 +23,9 @@ if (Conf.env === "DEV") {
   app.get('/documents/players/random', function (req, res) {
     DB.Model.Player.randomAsync().then(
       function success(player) {
-        res.setHeader('Content-Type', 'application/json; charset=utf-8');
         res.end(JSON.stringify(player));
       },
       function error(err) {
-        res.setHeader('Content-Type', 'application/json; charset=utf-8');
         res.end(JSON.stringify({error:err}));
       }
     );
@@ -44,11 +40,9 @@ if (Conf.env === "DEV") {
   app.get('/documents/clubs/random', function (req, res) {
     DB.Model.Club.randomAsync().then(
       function success(club) {
-        res.setHeader('Content-Type', 'application/json; charset=utf-8');
         res.end(JSON.stringify(club));
       },
       function error(err) {
-        res.setHeader('Content-Type', 'application/json; charset=utf-8');
         res.end(JSON.stringify({error:err}));
       }
     );
