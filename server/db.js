@@ -42,6 +42,7 @@ var DB = {
       // saving
       doc.save(function (err) {
         if (err) {
+          console.log('erreur enregistrement ' + err);
           simpleDeferred.reject(err);
         } else {
           simpleDeferred.resolve(doc);
@@ -54,6 +55,8 @@ var DB = {
   }
 };
 
+// DO NOT USE ???!!!
+// CRASH ??
 var defaultSchemaOptions = {
   toObject : {
     transform : function (doc, ret, options) {
@@ -73,10 +76,11 @@ var clubSchema = Schema({
   sport: String,
   date_creation: { type: Date, default: Date.now },
   name: String,
+  random: Number,
   city: String
 });
 clubSchema.virtual('id').get(function() { return this._id.toHexString() });
-clubSchema.options = defaultSchemaOptions;
+//clubSchema.options = defaultSchemaOptions;
 
 var playerSchema = Schema({
   nickname: String,
@@ -85,20 +89,18 @@ var playerSchema = Schema({
   date_modification: Date,
   password: String,
   rank: String,
-  club: Schema.Types.ObjectId,
-  games: [Schema.Types.ObjectId]
+  club: { type: Schema.Types.ObjectId, ref: "Club" },
+  games: [ { type: Schema.Types.ObjectId, ref: "Game" } ]
 });
 playerSchema.virtual('id').get(function() { return this._id.toHexString() });
-playerSchema.options = defaultSchemaOptions;
-
-var gameplayerSchema = Schema({
-  name: String,
-  service: Boolean
-});
-gameplayerSchema.virtual('id').get(function() { return this._id.toHexString() });
+//playerSchema.options = defaultSchemaOptions;
 
 var teamSchema = Schema({
-  players: [ gameplayerSchema ],
+  players: [ {
+    id: { type: Schema.Types.ObjectId, ref: "Player" },
+    name: String,
+    service: { type: Boolean, default: false }
+  } ],
   points: String
 });
 teamSchema.virtual('id').get(function() { return this._id.toHexString() });
@@ -107,7 +109,7 @@ var streamObjSchema = Schema({
   date_creation: { type: Date, default: Date.now },
   date_modification: Date,
   type: { type: String, enum: [ "comment" ] },
-  owner: Schema.Types.ObjectId,
+  owner: { type: Schema.Types.ObjectId, ref: "Player" },
   data: Schema.Types.Mixed
 });
 streamObjSchema.virtual('id').get(function() { return this._id.toHexString() });
@@ -117,7 +119,7 @@ var gameSchema = Schema({
   date_modification: Date,
   date_start: { type: Date, default: Date.now },
   date_end: Date,
-  owner: Schema.Types.ObjectId,
+  owner: { type: Schema.Types.ObjectId, ref: "Player" },
   pos: {type: [Number], index: '2d'},
   country: String,
   city: String,
@@ -128,7 +130,7 @@ var gameSchema = Schema({
   stream: [ streamObjSchema ]
 });
 gameSchema.virtual('id').get(function() { return this._id.toHexString() });
-gameSchema.options = defaultSchemaOptions;
+//gameSchema.options = defaultSchemaOptions;
 
 // creating models
 DB.Model.Game = mongoose.model("Game", gameSchema);
@@ -140,12 +142,14 @@ DB.getRandomModelAsync = function (model) {
   var deferred = Q.defer();
   var rnd = Math.random();
   model.where('random').gte(rnd).findOne(function (err, result) {
-    if (err)
+    if (err) {
       return deferred.reject(err);
+    }
     if (result === null) {
       model.where('random').lte(rnd).findOne(function (err, result) {
-        if (err)
+        if (err) {
           return deferred.reject(err);
+        }
         deferred.resolve(result); // shouldn't be null !!!?
       });
     } else {
@@ -403,41 +407,47 @@ var generatePlayersAsync = function () {
   return Q.all(randomClubs)
           .then(function (clubs) {
      var players = clubs.map(function (club) {
-       return new DB.Model.Player({
-          nickname: generateFakePseudo(),
-          name: generateFakeFirstName() + " " + generateFakeName(),
-          rank: "15/2",
-          club: { id: club.id, name: club.name },
-          games: [],
-          // generation only
-          random : Math.random(),
-          //
-          password: null,
-          token: String(Math.floor(Math.random()*10000000))
-       });
+       try {
+        return new DB.Model.Player({
+            nickname: generateFakePseudo(),
+            name: generateFakeFirstName() + " " + generateFakeName(),
+            rank: "15/2",
+            club: club.id,
+            games: [],
+            // generation only
+            random : Math.random(),
+            //
+            password: null,
+            token: String(Math.floor(Math.random()*10000000))
+        });
+       } catch (e) { console.log('erreur ' + e); }
      });
      return DB.saveAsync(players);
    });
 };
 
+var testPlayersAsync = function () {
+  DB.Model.Player.findOne({}).exec(function (err, player) {
+    player.games.push(player);
+    player.save(function (err, player) {
+      console.log(JSON.stringify(player.toObject({virtual:true})));
+    });
+  });
+};
+
 var generateGamesAsync = function () {
   // generating 20 games
-  var nbGames = 20;
-  var randomPlayers = [];
-  for (var i = 0; i < nbGames * 2; ++i) {
-     randomPlayers.push(DB.getRandomModelAsync(DB.Model.Player));
-  }
+  var deferred = Q.defer();
   
-  return Q.all(randomPlayers)
-          .then(function (players) {
-    console.log('players: ' + players.length + " nbGames " + nbGames);
-    console.log(JSON.stringify(players[0]));
-            
+  DB.Model.Player.find({})
+                 .exec(function (err, players) {
+    if (err)
+      return deferred.reject();
+    // Youpi.
     var games = [];
+    var nbGames = 20;
     
     for (var i = 0; i < nbGames; ++i) {
-      console.log('new game ' + i);
-      try {
       var game = new DB.Model.Game({
         owner: players.random().id, // utilisateur ayant saisi le match.
         pos: generateFakeLocation(),
@@ -451,8 +461,6 @@ var generateGamesAsync = function () {
         teams: [ ],
         stream: [ ]
       });
-      } catch (e) { console.log('error ' +e); }
-      console.log('new model game : ' + i);
       
       // random pick match status, finished ? or ongoing ?
       game.status = ["ongoing", "finished"].random();
@@ -486,8 +494,8 @@ var generateGamesAsync = function () {
       }
       
       // generating players
-      var player1 = players[i*2];
-      var player2 = players[i*2+1];
+      var player1 = players[(i*2)%20];
+      var player2 = players[(i*2+1)%20];
       
       // sometimes, players are "anonymous"
       if (Math.random() < 0.2) {
@@ -502,13 +510,11 @@ var generateGamesAsync = function () {
               { id: null, players: [ { name: generateFakePseudo() } ] },
               { id: null, players: [ { id : player2.id } ] }
             ];
-            //player2.games.push(game.id);
           } else {
             game.teams = [
               { id: null, players: [ { id: player1.id } ] },
               { id: null, players: [ { name: generateFakePseudo() } ] }
             ];
-            //player1.games.push(game.id);
           }
         }
       } else {
@@ -516,9 +522,6 @@ var generateGamesAsync = function () {
           { id: null, players: [ { id: player1.id } ] },
           { id: null, players: [ { id: player2.id } ] }
         ];
-        // associating game to players
-        //player1.games.push(game.id);
-        //player2.games.push(game.id);
       }
       
       // generating 0 to 10 comments
@@ -536,158 +539,27 @@ var generateGamesAsync = function () {
         game.stream.push(comment);
       }
       
-      console.log("saving : " + JSON.stringify(game.toObject({virtual:true, hidden: ["_id"]})));
-      
       games.push(game);
     }
-    
-    return DB.saveAsync(games);
-  });
-  
-  /*
-   *   id: string, // checksum hexa
-   *   date_creation: string, // date iso 8601
-   *   date_start: string, // date iso 8601
-   *   date_end: string, // date iso 8601
-   *   owner: string, // checksum hexa
-   *   pos: { long: float, lat: float }, // index geospatial
-   *   country: string,
-   *   city: string,
-   *   type: string, // singles / doubles
-   *   sets: string, // ex: 6,2;6,3  (precomputed)
-   *   status: string, // ongoing, canceled, finished (precomputed)
-   *   teams: [
-   *     { id: null, players: [ { id: string }, ... ] },   // authentified player
-   *     { id: null, players: [ { name: string }, ... ] }  // anonymous
-   *   ],
-   *   stream: [
-   *       // FIXME: historique du match, action / date / heure / commentaire / video / photo etc
-   *       // FIXME: ip, comment "signalé", stats,
-   *       {
-   *          id: ...,      //
-   *          date: string, // date iso 8601
-   *          type: string, // "comment|picture|video|..."
-   *          owner: string, // checksum hexa
-   *          data: { } // depends of type 
-   *       },
-   *       {
-   *          id: checksum,
-   *          date: string,
-   *          type: "comment",
-   *          owner: id,
-   *          data: { text: "...." }
-   *        }
-   *   ]
-   * */
-  
-  for (var i = 0; i < 20; ++i) {
-    var date_creation = generateFakeDateCreation();
-    var game = {
-      id: generateFakeId(),
-      date_creation: date_creation,
-      date_start: date_creation, // different ?
-      date_end: null,
-      owner: DB.players.random().id, // utilisateur ayant saisi le match.
-      pos: generateFakeLocation(),
-      country: "france",
-      city: generateFakeCity(),
-      type: "singles",
-      sets: "",
-      score: "",
-      sport: "tennis",
-      status: "unknown",
-      teams: [ ],
-      stream: [ ]
-    };
 
-    // random pick match status, finished ? or ongoing ?
-    game.status = ["ongoing", "finished"].random();
-    // 
-    if (game.status === "finished") {
-      // status finished
-      game.date_end = generateFakeDateEnd();
-      if (Math.random() > 0.5) {
-        game.sets = "6/"+Math.floor(Math.random() * 5)+";6/"+Math.floor(Math.random() * 5);
-        game.score = "2/0";
-      } else {
-        game.sets = Math.floor(Math.random() * 5)+"/6;"+Math.floor(Math.random() * 5)+"/6";
-        game.score = "0/2";
-      }
-    } else {
-      // status ongoing
-      if (Math.random() > 0.5) {
-        // 2 set
-        if (Math.random() > 0.5) {
-          game.sets = "6/"+Math.floor(Math.random() * 5)+";"+Math.floor(Math.random() * 5)+"/"+Math.floor(Math.random() * 5);
-          game.score = "1/0";
-        } else {
-          game.sets = Math.floor(Math.random() * 5)+"/6;"+Math.floor(Math.random() * 5)+"/"+Math.floor(Math.random() * 5);
-          game.score = "0/1";
+    DB.saveAsync(games).then(function (games) {
+      games.forEach(function (game, i) {
+        // adding games to players
+        if (game.teams[0].players[0].id) {
+          players[(i*2)%20].games.push(game.id);
         }
-      } else {
-        // 1 set
-        game.sets = Math.floor(Math.random() * 5)+"/"+Math.floor(Math.random() * 5);
-        game.score = "0/0";
-      }
-    }
-    
-    // generating players
-    var player1 = DB.players.random();
-    var player2 = DB.players.random();
-    while (player1 === player2) {
-      player2 = DB.players.random();
-    }
-    // sometimes, players are "anonymous"
-    if (Math.random() < 0.2) {
-      if (Math.random() < 0.3) {
-        game.teams = [ 
-          { id: null, players: [ { name: generateFakePseudo() } ] },
-          { id: null, players: [ { name: generateFakePseudo() } ] } 
-        ];
-      } else {
-         if (Math.random() < 0.5) {
-           game.teams = [
-             { id: null, players: [ { name: generateFakePseudo() } ] },
-             { id: null, players: [ { id : player2.id } ] }
-           ];
-           //player2.games.push(game.id);
-         } else {
-           game.teams = [
-             { id: null, players: [ { id: player1.id } ] },
-             { id: null, players: [ { name: generateFakePseudo() } ] }
-           ];
-           //player1.games.push(game.id);
-         }
-      }
-    } else {
-      game.teams = [
-        { id: null, players: [ { id: player1.id } ] },
-        { id: null, players: [ { id: player2.id } ] }
-      ];
-      // associating game to players
-      //player1.games.push(game.id);
-      //player2.games.push(game.id);
-    }
- 
-    // generating 0 to 10 comments
-    var nbComments = Math.floor(Math.random() * 11);
-    var delta = 0;
-    for (var j = 0; j < nbComments; ++j) {
-      // adding random (1 to 5) minutes
-      delta += 1000 * 60 * (1 + Math.floor(Math.random(5)));
-      var date = new Date(new Date(game.date_start).getTime() + delta);
-      var comment = {
-        id: generateFakeId(),
-        type: "comment",
-        date: date.toISO(),
-        owner: DB.players.random().id,
-        data: { text: generateFakeComment() }
-      }
-      game.stream.push(comment);
-    }
-    
-    DB.games.push(game);
-  }
+        if (game.teams[1].players[0].id) {
+          players[(i*2+1)%20].games.push(game.id);
+        }
+      });
+      
+      // saving players
+      DB.saveAsync(players).then(function () {
+        deferred.resolve();
+      }, function (e) { console.log('error ' + e); } );
+    });
+  });
+  return deferred.promise;
 };
 
 DB.dropCollection = function (collectionName) {
