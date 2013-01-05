@@ -316,6 +316,9 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
   res.end(body);
 });
 
+/* update  partie
+* POST /v1/games/id
+*/
 app.post('/v1/games/:id', express.bodyParser(), function(req, res){
   if (!DB.isAuthenticated(req.query)) {
     res.setHeader('Content-Type', 'application/json; charset=utf-8');
