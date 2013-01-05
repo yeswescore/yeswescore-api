@@ -8,10 +8,15 @@ require('./helpers.js');
 
 // static directory, will be used for tests.
 app.use("/static", express.static(__dirname + '/static'));
-app.use(function(req, res, next) {
+// default Content-Type
+app.use(function (req, res, next) {
   res.type('application/json; charset=utf-8');
   next();
 });
+
+app.defaultError = function (res, msg) { 
+  return function (err) { res.end(JSON.stringify({error:err, message:msg})); };
+};
 
 require('./api/bootstrap.js');
 require('./api/clubs.js');
