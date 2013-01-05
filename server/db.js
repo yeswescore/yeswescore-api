@@ -9,8 +9,12 @@ mongoose.connect(Conf.get("mongo.url"));
 
 var DB = {
   status : "disconnected",
-  Model : {
-  },
+  
+  // mongoose data.
+  Definition: { },  // schema definitions
+  Schema: { },      // mongoose schemas
+  Model: { },       // mongoose models
+  
   /*
    * Saving one or many mongo documents.
    * 
@@ -52,6 +56,35 @@ var DB = {
     });
     //
     return Q.all(promises);
+  },
+  
+  /**
+   * Read a random model from a model collection.
+   * ex:
+   *   DB.getRandomModelAsync(DB.Model.Player)
+   *     .then(function (randomPlayer) {
+   *        console.log("got a randomPlayer ! ");
+   *     });
+   */
+  getRandomModelAsync : function (model) {
+    var deferred = Q.defer();
+    var rnd = Math.random();
+    model.where('random').gte(rnd).findOne(function (err, result) {
+      if (err) {
+        return deferred.reject(err);
+      }
+      if (result === null) {
+        model.where('random').lte(rnd).findOne(function (err, result) {
+          if (err) {
+            return deferred.reject(err);
+          }
+          deferred.resolve(result); // shouldn't be null !!!?
+        });
+      } else {
+        deferred.resolve(result);
+      }
+    });
+    return deferred.promise;
   }
 };
 
@@ -70,10 +103,8 @@ var defaultSchemaOptions = {
 };
 
 //
-// Schemas:
+// Definitions
 //
-DB.Definition = {};
-DB.Schema = {};
 DB.Definition.Club = {
   sport: String,
   date_creation: { type: Date, default: Date.now },
@@ -130,7 +161,10 @@ if (Conf.env === "DEV") {
   DB.Definition.Player.random = { type: Number, default: Math.random };
   DB.Definition.Game.random = { type: Number, default: Math.random };
 }
-// Creating All Schemas
+
+//
+// Schemas
+//
 DB.Schema.Club = Schema(DB.Definition.Club);
 DB.Schema.Player = Schema(DB.Definition.Player);
 DB.Schema.Game = Schema(DB.Definition.Game);
@@ -138,33 +172,19 @@ DB.Schema.Game = Schema(DB.Definition.Game);
 for (var schemaName in DB.Schema) {
   DB.Schema[schemaName].virtual('id').get(function() { return this._id.toHexString() });
 }
-// Creating Models
+
+//
+// Models
+//
 DB.Model.Club = mongoose.model("Club", DB.Schema.Club);
 DB.Model.Player = mongoose.model("Player", DB.Schema.Player);
 DB.Model.Game = mongoose.model("Game", DB.Schema.Game);
-
-
-DB.getRandomModelAsync = function (model) {
-  var deferred = Q.defer();
-  var rnd = Math.random();
-  model.where('random').gte(rnd).findOne(function (err, result) {
-    if (err) {
-      return deferred.reject(err);
-    }
-    if (result === null) {
-      model.where('random').lte(rnd).findOne(function (err, result) {
-        if (err) {
-          return deferred.reject(err);
-        }
-        deferred.resolve(result); // shouldn't be null !!!?
-      });
-    } else {
-      deferred.resolve(result);
-    }
-  });
-  return deferred.promise;
-};
-
+// random api
+if (Conf.env === "DEV") {
+  DB.Model.Club.randomAsync = function () { return DB.getRandomModelAsync(DB.Model.Club); };
+  DB.Model.Player.randomAsync = function () { return DB.getRandomModelAsync(DB.Model.Player); };
+  DB.Model.Game.randomAsync = function () { return DB.getRandomModelAsync(DB.Model.Game); };
+}
 
 // @see http://lehelk.com/2011/05/06/script-to-remove-diacritics/
 // evaluated once; using closure.
