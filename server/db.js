@@ -608,24 +608,33 @@ DB.dropCollection = function (collectionName) {
 };
 
 DB.reset = function () {
-  return Q.allResolved([
-    DB.dropCollection("clubs"),
-    DB.dropCollection("players"),
-    DB.dropCollection("games")
-  ]);
+  if (Conf.env === "DEV") {
+    return Q.allResolved([
+      DB.dropCollection("clubs"),
+      DB.dropCollection("players"),
+      DB.dropCollection("games")
+    ]);
+  }
+  // FIXME: warning, should never be here 
+  return Q.allResolved([]);
 };
 
-// generating fake data at startup
+// generating fake data at startup (DEV ONLY)
 mongoose.connection.once("open", function () {
-  DB.reset().then(function () {
-    DB.generateFakeData();
-  });
+  if (Conf.env === "DEV") {
+    DB.reset().then(function () {
+      DB.generateFakeData();
+    });
+  }
 });
 
 DB.generateFakeData = function () {
   generateClubsAsync()
    .then(generatePlayersAsync)
-   .then(generateGamesAsync);
+   .then(generateGamesAsync)
+   .then(function () {
+     console.log('FAKE DATA GENERATED');
+   });
 };
 
 // undefined if nothing is found
