@@ -68,21 +68,16 @@ var DB = {
    */
   getRandomModelAsync : function (model) {
     var deferred = Q.defer();
-    var rnd = Math.random();
-    model.where('random').gte(rnd).findOne(function (err, result) {
-      if (err) {
+    //
+    model.count({}, function (err, nb) {
+      if (err)
         return deferred.reject(err);
-      }
-      if (result === null) {
-        model.where('random').lte(rnd).findOne(function (err, result) {
-          if (err) {
-            return deferred.reject(err);
-          }
-          deferred.resolve(result); // shouldn't be null !!!?
-        });
-      } else {
-        deferred.resolve(result);
-      }
+      var randomIndex = Math.floor(Math.random() * nb);
+      model.find({}).skip(randomIndex).limit(1).exec(function (err, result) {
+        if (err)
+          return deferred.reject(err);
+        return deferred.resolve(result[0]);
+      });
     });
     return deferred.promise;
   }
@@ -155,12 +150,6 @@ DB.Definition.Game = {
   teams: [ DB.Schema.Team ],
   stream: [ DB.Schema.StreamItem ]  
 };
-// Adding random to definitions (DEV ONLY)
-if (Conf.env === "DEV") {
-  DB.Definition.Club.random = { type: Number, default: Math.random };
-  DB.Definition.Player.random = { type: Number, default: Math.random };
-  DB.Definition.Game.random = { type: Number, default: Math.random };
-}
 
 //
 // Schemas
@@ -179,6 +168,7 @@ for (var schemaName in DB.Schema) {
 DB.Model.Club = mongoose.model("Club", DB.Schema.Club);
 DB.Model.Player = mongoose.model("Player", DB.Schema.Player);
 DB.Model.Game = mongoose.model("Game", DB.Schema.Game);
+
 // random api
 if (Conf.env === "DEV") {
   DB.Model.Club.randomAsync = function () { return DB.getRandomModelAsync(DB.Model.Club); };
