@@ -72,17 +72,15 @@ var defaultSchemaOptions = {
 //
 // Schemas:
 //
-var clubSchema = Schema({
+DB.Definition = {};
+DB.Schema = {};
+DB.Definition.Club = {
   sport: String,
   date_creation: { type: Date, default: Date.now },
   name: String,
-  random: Number,
   city: String
-});
-clubSchema.virtual('id').get(function() { return this._id.toHexString() });
-//clubSchema.options = defaultSchemaOptions;
-
-var playerSchema = Schema({
+};
+DB.Definition.Player = {
   nickname: String,
   name: String,
   date_creation: { type: Date, default: Date.now },
@@ -90,31 +88,28 @@ var playerSchema = Schema({
   password: String,
   rank: String,
   club: { type: Schema.Types.ObjectId, ref: "Club" },
-  games: [ { type: Schema.Types.ObjectId, ref: "Game" } ]
-});
-playerSchema.virtual('id').get(function() { return this._id.toHexString() });
-//playerSchema.options = defaultSchemaOptions;
-
-var teamSchema = Schema({
+  games: [ { type: Schema.Types.ObjectId, ref: "Game" } ]  
+};
+DB.Definition.Team = {
   players: [ {
     id: { type: Schema.Types.ObjectId, ref: "Player" },
     name: String,
     service: { type: Boolean, default: false }
   } ],
   points: String
-});
-teamSchema.virtual('id').get(function() { return this._id.toHexString() });
-
-var streamObjSchema = Schema({
+};
+DB.Definition.StreamItem = {
   date_creation: { type: Date, default: Date.now },
   date_modification: Date,
   type: { type: String, enum: [ "comment" ] },
   owner: { type: Schema.Types.ObjectId, ref: "Player" },
   data: Schema.Types.Mixed
-});
-streamObjSchema.virtual('id').get(function() { return this._id.toHexString() });
-
-var gameSchema = Schema({
+};
+// WE must instantiate Team & Stream Schema FIRST.
+DB.Schema.Team = Schema(DB.Definition.Team);
+DB.Schema.StreamItem = Schema(DB.Definition.StreamItem);
+// 
+DB.Definition.Game = {
   date_creation: { type: Date, default: Date.now },
   date_modification: Date,
   date_start: { type: Date, default: Date.now },
@@ -126,16 +121,27 @@ var gameSchema = Schema({
   sport: { type: String, enum: ["tennis"] },
   type: { type: String, enum: [ "singles", "doubles" ] },
   sets: String,
-  teams: [ teamSchema ],
-  stream: [ streamObjSchema ]
-});
-gameSchema.virtual('id').get(function() { return this._id.toHexString() });
-//gameSchema.options = defaultSchemaOptions;
-
-// creating models
-DB.Model.Game = mongoose.model("Game", gameSchema);
-DB.Model.Player = mongoose.model("Player", playerSchema);
-DB.Model.Club = mongoose.model("Club", clubSchema);
+  teams: [ DB.Schema.Team ],
+  stream: [ DB.Schema.StreamItem ]  
+};
+// Adding random to definitions (DEV ONLY)
+if (Conf.env === "DEV") {
+  DB.Definition.Club.random = { type: Number, default: Math.random };
+  DB.Definition.Player.random = { type: Number, default: Math.random };
+  DB.Definition.Game.random = { type: Number, default: Math.random };
+}
+// Creating All Schemas
+DB.Schema.Club = Schema(DB.Definition.Club);
+DB.Schema.Player = Schema(DB.Definition.Player);
+DB.Schema.Game = Schema(DB.Definition.Game);
+// Adding virtual id on all schemas.
+for (var schemaName in DB.Schema) {
+  DB.Schema[schemaName].virtual('id').get(function() { return this._id.toHexString() });
+}
+// Creating Models
+DB.Model.Club = mongoose.model("Club", DB.Schema.Club);
+DB.Model.Player = mongoose.model("Player", DB.Schema.Player);
+DB.Model.Game = mongoose.model("Game", DB.Schema.Game);
 
 
 DB.getRandomModelAsync = function (model) {
