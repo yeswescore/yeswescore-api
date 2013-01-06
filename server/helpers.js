@@ -2,16 +2,38 @@
 (function (global) {
   function pad(n){return n<10 ? '0'+n : n}
   // @see https://developer.mozilla.org/en-US/docs/JavaScript/Reference/Global_Objects/Date#Example.3a_ISO_8601_formatted_dates
-  Date.prototype.toISO = function () {
-    return this.getUTCFullYear()+'-'
-        + pad(this.getUTCMonth()+1)+'-'
-        + pad(this.getUTCDate())+'T'
-        + pad(this.getUTCHours())+':'
-        + pad(this.getUTCMinutes())+':'
-        + pad(this.getUTCSeconds())+'Z'
-  };
+  Object.defineProperty(
+    Date.prototype,
+    "toISO",
+    {
+      enumerable: false,
+      value: function () {
+        return this.getUTCFullYear()+'-'
+          + pad(this.getUTCMonth()+1)+'-'
+          + pad(this.getUTCDate())+'T'
+          + pad(this.getUTCHours())+':'
+          + pad(this.getUTCMinutes())+':'
+          + pad(this.getUTCSeconds())+'Z'
+      }
+    }
+  );
   
-  Array.prototype.random = function () { return this[Math.floor(Math.random() * this.length)] };
+  // Array
+  Object.defineProperty(
+    Array.prototype,
+    "random",
+    {
+      enumerable: false,
+      value: function () { return this[Math.floor(Math.random() * this.length)] }
+    }
+  );
   
-  Array.prototype.remove = function (e) { return this.splice(this.indexOf(e), 1) };
+  Object.defineProperty(
+    Array.prototype,
+    "remove",
+    {
+      enumerable: false,
+      value: function (e) { return this.splice(this.indexvOf(e), 1) };
+    }
+  );
 })(this);
