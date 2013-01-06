@@ -105,6 +105,7 @@ DB.Definition.Player = {
   date_creation: { type: Date, default: Date.now },
   date_modification: Date,
   password: String,
+  token: String,
   rank: String,
   club: { type: Schema.Types.ObjectId, ref: "Club" },
   games: [ { type: Schema.Types.ObjectId, ref: "Game" } ]  
@@ -152,16 +153,27 @@ DB.Schema.Player = new Schema(DB.Definition.Player);
 DB.Schema.Game = new Schema(DB.Definition.Game);
 // Schemas options
 for (var schemaName in DB.Schema) {
-  // Adding transform default func
-  DB.Schema[schemaName].options.toObject = {
-    transform : function (doc, ret, options) {
-      if (options.hide) {
-        options.hide.forEach(function (prop) { delete ret[prop] });
+  (function (schema) {
+    // Adding transform default func
+    schema.options.toObject = {
+      transform : function (doc, ret, options) {
+        var hide = schema.options.toObject.hide;
+        if (options.unhide) {
+          hide = hide.slice(); // clone
+          options.unhide.forEach(function (field) { hide.remove(field) });
+        }
+        // removing hidden fields
+        hide.forEach(function (prop) { delete ret[prop] });
       }
-    }
-  };
-  console.log(JSON.stringify(DB.Schema[schemaName].options));
+    };
+  })(DB.Schema[schemaName]);
 }
+// hidden fields
+DB.Schema.Team.options.toObject.hide = [ "_id", "__v" ];
+DB.Schema.StreamItem.options.toObject.hide = [ "_id", "__v" ];
+DB.Schema.Club.options.toObject.hide = [ "_id", "__v" ];
+DB.Schema.Player.options.toObject.hide = [ "_id", "__v", "password", "token"];
+DB.Schema.Game.options.toObject.hide = [ "_id", "__v" ];
 
 //
 // Models
@@ -171,30 +183,13 @@ DB.Model.Player = mongoose.model("Player", DB.Schema.Player);
 DB.Model.Game = mongoose.model("Game", DB.Schema.Game);
 
 // custom JSON api
-DB.Model.Club.toJSON = function (club) {
-  return JSON.stringify(club.toObject({
-    getters: true,
-    hide: [ "_id", "__v" ],
-    transform: true
-  }));
-};
-DB.Model.Player.toJSON = function (player, options) {
-  var defaultHiddenFields = [ "_id", "__v", "token", "password" ];
-  if (options.fields) {
-    fields.forEach(function (field) { defaultHiddenFields.remove(field) });
-  }
-  return JSON.stringify(player.toObject({
-    getters: true,
-    hide: [ "_id", "__v" ],
-    transform: true
-  }));
-};
-DB.Model.Game.toJSON = function (game) {
-  return JSON.stringify(game.toObject({
-    getters: true,
-    hide: [ "_id", "__v" ],
-    transform: true
-  }))
+JSON.stringifyModel = function (m, options) {
+  options = options || {};
+  if (options && typeof options.virtuals === "undefined")
+    options.virtuals = true;
+  if (options && typeof options.transform === "undefined")
+    options.transform = true;
+  return JSON.stringify(m.toObject(options));
 };
 
 // random api
@@ -658,9 +653,20 @@ DB.searchById = function (collection, id) {
    return collection.filter(function (o) { return o.id === id }).pop();
 };
 
-DB.isAuthenticated = function (query) {
-  var player = DB.searchById(DB.players, query.playerid);
-  return player && player.token === query.token;
+DB.isAuthenticatedAsync = function (query) {
+  var deferred = Q.defer();
+  if (query.playerid && query.token) {
+    DB.Model.Player.findOne({_id: query.playerid, token: query.token})
+                   .exec(function (err, player) {
+                      if (err)
+                        deferred.reject(err);
+                      else
+                        deferred.resolve(player);
+                   });
+  } else {
+    deferred.resolve(null); // no player.
+  }
+  return deferred.promise;
 };
 
 DB.generateFakeId = generateFakeId;
