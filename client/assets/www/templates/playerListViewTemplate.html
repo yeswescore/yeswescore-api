@@ -1,0 +1,19 @@
+<% if(players.length==0) { %>
+        <li><p>Aucun resultat pour <%= query %></p></li>
+<% } %> 
+
+<%
+    for (var i = 0; i < players.length; i++) {
+    	
+    	player = players[i];
+    
+    %>
+        <li>
+        <a href="#players/<%= player.id %>" data-transition="slide">
+        <%= player.name %> : <%= player.rank %> : <%= player.nickname %> : <%= player.club.name %>
+		<br/>
+        </a>
+        </li>
+    <%
+        }
+%>

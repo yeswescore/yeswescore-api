@@ -1,0 +1,19 @@
+<% if(clubs.length==0) { %>
+        <li><p>Aucun club <%= query %></p></li>
+<% } %> 
+
+<%
+    for (var i = 0; i < clubs.length; i++) {
+    	
+    	clubs = players[i];
+    
+    %>
+        <li>
+        <a href="#clubs/<%= club.id %>" data-transition="slide">
+        <%= club.name %> : <%= club.city %> : <%= club.id %>  
+		<br/>
+        </a>
+        </li>
+    <%
+        }
+%>
