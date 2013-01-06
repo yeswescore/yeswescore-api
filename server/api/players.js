@@ -132,18 +132,19 @@ app.post('/v1/players/:id', express.bodyParser(), function(req, res){
 
 // searching a specific player
 app.get('/v1/players/:id', function(req, res){
-  var player = DB.searchById(DB.players, req.params.id);
-  if (player) {
-    // removing token from player. (private data)
-    var p = { };
-    for (var i in player) {
-      p[i] = player[i];
-    }
-    p["token"] = null;
-    p["password"] = null;
-    player = p;
-  }
-  var body = JSON.stringify(player);
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.end(body);
+  DB.isAuthenticatedAsync(req.query)
+    .then(function (authentifiedPlayer) {
+      DB.Model.Player.findOne({_id:req.params.id})
+                      .exec(function (err, player) {
+        if (err)
+          return app.defaultError(res)(err);
+        if (player === null)
+          return app.defaultError(res)("no player found");
+        if (authentifiedPlayer)
+          res.end(JSON.stringifyModel(player, { unhide: [ "token", "password"] }));
+        else
+          res.end(JSON.stringifyModel(player));
+      });
+    },
+    app.defaultError(res, "authentication error"));
 });
