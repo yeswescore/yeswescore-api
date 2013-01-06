@@ -36,26 +36,33 @@ var DB = {
    *     function error() { console.log('error') }
    *   );
    */
-  saveAsync: function (doc, callback) {
-    var promises;
-    if (!Array.isArray(doc)) {
-      doc = [ doc ];
-    }
-    promises = doc.map(function _save(doc) {
+  saveAsync: function (doc) {
+    if (Array.isArray(doc)) {
+      var promises = doc.map(function _save(doc) {
+        var simpleDeferred = Q.defer();
+        // saving
+        doc.save(function (err) {
+          if (err) {
+            simpleDeferred.reject(err);
+          } else {
+            simpleDeferred.resolve(doc);
+          }
+        });
+        return simpleDeferred.promise;
+      });
+      //
+      return Q.all(promises);
+    } else {
       var simpleDeferred = Q.defer();
-      // saving
       doc.save(function (err) {
         if (err) {
-          console.log('erreur enregistrement ' + err);
           simpleDeferred.reject(err);
         } else {
           simpleDeferred.resolve(doc);
         }
       });
       return simpleDeferred.promise;
-    });
-    //
-    return Q.all(promises);
+    }
   },
   
   /**
@@ -405,9 +412,7 @@ var generateClubsAsync = function () {
     return new DB.Model.Club({
       sport: "tennis",
       name: clubName,
-      city: generateFakeCity(),
-      // generation only
-      random : Math.random()
+      city: generateFakeCity()
     });
   });
   return DB.saveAsync(clubs);
