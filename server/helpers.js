@@ -33,7 +33,7 @@
     "remove",
     {
       enumerable: false,
-      value: function (e) { return this.splice(this.indexvOf(e), 1) }
+      value: function (e) { return this.splice(this.indexOf(e), 1) }
     }
   );
 })(this);
