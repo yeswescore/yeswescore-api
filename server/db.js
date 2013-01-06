@@ -90,20 +90,6 @@ var DB = {
   }
 };
 
-// DO NOT USE ???!!!
-// CRASH ??
-var defaultSchemaOptions = {
-  toObject : {
-    transform : function (doc, ret, options) {
-      if (options.hide) {
-        options.hide.forEach(function (prop) {
-          delete ret[prop];
-        });
-      }
-    }
-  }
-};
-
 //
 // Definitions
 //
@@ -139,8 +125,8 @@ DB.Definition.StreamItem = {
   data: Schema.Types.Mixed
 };
 // WE must instantiate Team & Stream Schema FIRST.
-DB.Schema.Team = Schema(DB.Definition.Team);
-DB.Schema.StreamItem = Schema(DB.Definition.StreamItem);
+DB.Schema.Team = new Schema(DB.Definition.Team);
+DB.Schema.StreamItem = new Schema(DB.Definition.StreamItem);
 // 
 DB.Definition.Game = {
   date_creation: { type: Date, default: Date.now },
@@ -161,12 +147,20 @@ DB.Definition.Game = {
 //
 // Schemas
 //
-DB.Schema.Club = Schema(DB.Definition.Club);
-DB.Schema.Player = Schema(DB.Definition.Player);
-DB.Schema.Game = Schema(DB.Definition.Game);
-// Adding virtual id on all schemas.
+DB.Schema.Club = new Schema(DB.Definition.Club);
+DB.Schema.Player = new Schema(DB.Definition.Player);
+DB.Schema.Game = new Schema(DB.Definition.Game);
+// Schemas options
 for (var schemaName in DB.Schema) {
-  DB.Schema[schemaName].virtual('id').get(function() { return this._id.toHexString() });
+  // Adding transform default func
+  DB.Schema[schemaName].options.toObject = {
+    transform : function (doc, ret, options) {
+      if (options.hide) {
+        options.hide.forEach(function (prop) { delete ret[prop] });
+      }
+    }
+  };
+  console.log(JSON.stringify(DB.Schema[schemaName].options));
 }
 
 //
@@ -175,6 +169,33 @@ for (var schemaName in DB.Schema) {
 DB.Model.Club = mongoose.model("Club", DB.Schema.Club);
 DB.Model.Player = mongoose.model("Player", DB.Schema.Player);
 DB.Model.Game = mongoose.model("Game", DB.Schema.Game);
+
+// custom JSON api
+DB.Model.Club.toJSON = function (club) {
+  return JSON.stringify(club.toObject({
+    getters: true,
+    hide: [ "_id", "__v" ],
+    transform: true
+  }));
+};
+DB.Model.Player.toJSON = function (player, options) {
+  var defaultHiddenFields = [ "_id", "__v", "token", "password" ];
+  if (options.fields) {
+    fields.forEach(function (field) { defaultHiddenFields.remove(field) });
+  }
+  return JSON.stringify(player.toObject({
+    getters: true,
+    hide: [ "_id", "__v" ],
+    transform: true
+  }));
+};
+DB.Model.Game.toJSON = function (game) {
+  return JSON.stringify(game.toObject({
+    getters: true,
+    hide: [ "_id", "__v" ],
+    transform: true
+  }))
+};
 
 // random api
 if (Conf.env === "DEV") {
