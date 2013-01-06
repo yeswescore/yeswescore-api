@@ -2,33 +2,31 @@ var DB = require("../db.js")
   , express = require("express")
   , app = require("../app.js");
 
-// searching a specific club
 app.get('/v1/clubs/:id', function(req, res){
-  var body = JSON.stringify(DB.searchById(DB.clubs, req.params.id));
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.end(body);
+    DB.Model.Club.findOne({_id:req.params.id})
+                 .exec(function (err, club) {
+      if (err)
+        return app.defaultError(res)(err);
+      if (club === null)
+        return app.defaultError(res)("no club found");
+      res.end(JSON.stringify(club));
+    });
 });
 
 app.post('/v1/clubs', express.bodyParser(), function(req, res){
   if (req.body.name) {
     // creating a new club (no owner)
-    var club = {
-        id: DB.generateFakeId(),
-        name: null
-    };
-    //
-    ["name"].forEach(function (o) {
-      if (typeof req.body[o] !== "undefined")
-        club[o] = req.body[o];
+    var club = new DB.Model.Club({
+      sport: "tennis",
+      name: req.body.name,
+      city: req.body.city
     });
-    //
-    DB.clubs.push(club);
-    // sending back saved data to the client
-    var body = JSON.stringify(club);
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.end(body);
+    DB.saveAsync(club)
+      .then(
+        function (club) { res.end(JSON.stringify(club)) },
+        app.defaultError(res)
+      );
   } else {
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.end(JSON.stringify({error:"please provide club name"}));
+    app.defaultError(res)("please provide club name");
   }
 });
