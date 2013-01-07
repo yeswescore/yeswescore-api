@@ -3,29 +3,20 @@ var DB = require("../db.js")
   , app = require("../app.js");
 
 app.get('/v1/players/', function(req, res){
-  var players, club = req.query.club
-  if (club) {
-    players = DB.players.filter(function (p) {
-      return p && p.club && p.club.id === club;
-    });
-  } else {
-    players = DB.players;
-  }
-  // do not display password / token
-  players = players.map(function (player) {
-    return {
-      id: player.id,
-      nickname: player.nickname,
-      name: player.name,
-      rank: player.rank,
-      club: player.club,
-      games: player.games
-    }
+  var limit = req.query.limit || 10; // FIXME: should be numeric
+  var offset = req.query.offset || 0;
+  var club = req.query.club;
+
+  var query = DB.Model.Player.find({});
+  if (club)
+    query = query.where("club", club);
+  query.skip(offset)
+       .limit(limit)
+       .exec(function (err, players) {
+    if (err)
+      return app.defaultError(res)(err);
+    res.end(JSON.stringifyModels(players));
   });
-  //
-  var body = JSON.stringify(players);
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.end(body);
 });
   
 app.get('/v1/players/autocomplete/', function(req, res){
@@ -141,9 +132,9 @@ app.get('/v1/players/:id', function(req, res){
         if (player === null)
           return app.defaultError(res)("no player found");
         if (authentifiedPlayer)
-          res.end(JSON.stringifyModel(player, { unhide: [ "token", "password"] }));
+          res.end(JSON.stringifyModels(player, { unhide: [ "token", "password"] }));
         else
-          res.end(JSON.stringifyModel(player));
+          res.end(JSON.stringifyModels(player));
       });
     },
     app.defaultError(res, "authentication error"));
