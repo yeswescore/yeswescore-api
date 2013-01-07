@@ -183,12 +183,17 @@ DB.Model.Player = mongoose.model("Player", DB.Schema.Player);
 DB.Model.Game = mongoose.model("Game", DB.Schema.Game);
 
 // custom JSON api
-JSON.stringifyModel = function (m, options) {
+JSON.stringifyModels = function (m, options) {
   options = options || {};
   if (options && typeof options.virtuals === "undefined")
     options.virtuals = true;
   if (options && typeof options.transform === "undefined")
     options.transform = true;
+  if (Array.isArray(m)) {
+    return JSON.stringify(m.map(function (model) {
+      return model.toObject(options);
+    }));
+  }
   return JSON.stringify(m.toObject(options));
 };
 
