@@ -115,15 +115,10 @@ DB.Definition.Player = {
   token: { type: String, default: DB.generateToken },
   rank: String,
   club: { type: Schema.Types.ObjectId, ref: "Club" },
-  games: [ { type: Schema.Types.ObjectId, ref: "Game" } ]  
+  games: [ { type: Schema.Types.ObjectId, ref: "Game" } ]
 };
 DB.Definition.Team = {
-  players: [ {
-    id: { type: Schema.Types.ObjectId, ref: "Player" },
-    name: String,
-    nameSearchable: String,
-    service: { type: Boolean, default: false }
-  } ],
+  players: [ { type: Schema.Types.ObjectId, ref: "Player" } ],
   points: String
 };
 DB.Definition.StreamItem = {
@@ -169,11 +164,6 @@ DB.Schema.Club.pre('save', function (next) {
 DB.Schema.Player.pre('save', function (next) {
   if (this.nickname)
     this.nicknameSearchable = this.nickname.searchable();
-  if (this.name)
-    this.nameSearchable = this.name.searchable();
-  next();
-});
-DB.Schema.Team.pre('save', function (next) {
   if (this.name)
     this.nameSearchable = this.name.searchable();
   next();
@@ -471,17 +461,18 @@ var generateGamesAsync = function () {
       var player2 = players[(i*2+1)%20];
       
       // sometimes, players are "anonymous"
+      /*
       if (Math.random() < 0.2) {
         if (Math.random() < 0.3) {
           game.teams = [
-            { id: null, players: [ { name: generateFakePseudo() } ] },
-            { id: null, players: [ { name: generateFakePseudo() } ] } 
+            { players: [ { name: generateFakePseudo() } ] },
+            { players: [ { name: generateFakePseudo() } ] } 
           ];
         } else {
           if (Math.random() < 0.5) {
             game.teams = [
-              { id: null, players: [ { name: generateFakePseudo() } ] },
-              { id: null, players: [ { id : player2.id } ] }
+              { players: [ { name: generateFakePseudo() } ] },
+              { players: [ { id : player2.id } ] }
             ];
           } else {
             game.teams = [
@@ -491,11 +482,12 @@ var generateGamesAsync = function () {
           }
         }
       } else {
-        game.teams = [
-          { id: null, players: [ { id: player1.id } ] },
-          { id: null, players: [ { id: player2.id } ] }
-        ];
-      }
+        */
+      game.teams = [
+        { players: [ player1.id ] },
+        { players: [ player2.id ] }
+      ];
+     // }
       
       // generating 0 to 10 comments
       var nbComments = Math.floor(Math.random() * 11);
@@ -518,10 +510,10 @@ var generateGamesAsync = function () {
     DB.saveAsync(games).then(function (games) {
       games.forEach(function (game, i) {
         // adding games to players
-        if (game.teams[0].players[0].id) {
+        if (game.teams[0].players[0]) {
           players[(i*2)%20].games.push(game.id);
         }
-        if (game.teams[1].players[0].id) {
+        if (game.teams[1].players[0]) {
           players[(i*2+1)%20].games.push(game.id);
         }
       });
