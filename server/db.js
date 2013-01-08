@@ -87,6 +87,10 @@ var DB = {
       });
     });
     return deferred.promise;
+  },
+  
+  generateToken : function () {
+    return String(Math.floor(Math.random()*10000000));
   }
 };
 
@@ -107,8 +111,8 @@ DB.Definition.Player = {
   nameSearchable: String,
   date_creation: { type: Date, default: Date.now },
   date_modification: Date,
-  password: String,
-  token: String,
+  password: { type: String, default: null },
+  token: { type: String, default: DB.generateToken },
   rank: String,
   club: { type: Schema.Types.ObjectId, ref: "Club" },
   games: [ { type: Schema.Types.ObjectId, ref: "Game" } ]  
@@ -383,20 +387,13 @@ var generatePlayersAsync = function () {
   return Q.all(randomClubs)
           .then(function (clubs) {
      var players = clubs.map(function (club) {
-       try {
         return new DB.Model.Player({
             nickname: generateFakePseudo(),
             name: generateFakeFirstName() + " " + generateFakeName(),
             rank: "15/2",
             club: club.id,
-            games: [],
-            // generation only
-            random : Math.random(),
-            //
-            password: null,
-            token: String(Math.floor(Math.random()*10000000))
+            games: []
         });
-       } catch (e) { console.log('erreur ' + e); }
      });
      return DB.saveAsync(players);
    });
