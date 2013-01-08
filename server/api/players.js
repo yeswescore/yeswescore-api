@@ -7,7 +7,7 @@ app.get('/v1/players/', function(req, res){
   var offset = req.query.offset || 0;
   var club = req.query.club;
 
-  var query = DB.Model.Player.find({});
+  var query = DB.Model.Player.find({type:"default"});
   if (club)
     query = query.where("club", club);
   query.skip(offset)
@@ -20,17 +20,23 @@ app.get('/v1/players/', function(req, res){
 });
   
 app.get('/v1/players/autocomplete/', function(req, res){
-  var fields = req.query.fields || "id,nickname,name";
+  var fields = req.query.fields || "id,nickname,name,type";
   var limit = req.query.limit || 5;
+  var owner = req.query.owner;
   var text = req.query.q;
+  
   if (text) {
     // slow
     text = new RegExp("("+text.searchable().pregQuote()+")");
-
+    // searching
     DB.Model.Player
-      .find({})
+      .find({
+        $and: [
+          { $or: [ {nicknameSearchable: text}, {nameSearchable: text} ] },
+          { $or: [ {type: "default"}, {type: "owned", owner: owner} ] }
+        ]
+      })
       .select(fields.replace(/,/g, " "))
-      .or([{nicknameSearchable: text}, {nameSearchable: text}])
       .sort('name')
       .limit(limit)
       .exec(function (err, players) {
@@ -49,7 +55,8 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
       nickname: req.body.nickname || "",
       name: req.body.name || "",
       rank: req.body.rank || "",
-      club: req.body.club || null
+      club: req.body.club || null,
+      type: req.body.type || "default"
   });
   DB.saveAsynch(player)
     .then(
