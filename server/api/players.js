@@ -3,7 +3,7 @@ var DB = require("../db.js")
   , app = require("../app.js");
 
 app.get('/v1/players/', function(req, res){
-  var limit = req.query.limit || 10; // FIXME: should be numeric
+  var limit = req.query.limit || 10;
   var offset = req.query.offset || 0;
   var club = req.query.club;
 
@@ -20,30 +20,24 @@ app.get('/v1/players/', function(req, res){
 });
   
 app.get('/v1/players/autocomplete/', function(req, res){
-  var players, query = req.query.q
-  if (query) {
-    players = DB.players.filter(function (p) {
-      return p.name.removeDiacritics().toLowerCase().indexOf(query) !== -1 ||
-             p.nickname.removeDiacritics().toLowerCase().indexOf(query) !== -1;
-    });
+  var limit = req.query.limit || 5;
+  var text = req.query.q;
+  if (text) {
+    text = new RegExp("("+text.searchable().pregQuote()+")");
+    
+    DB.Model.Player
+      .find({})
+      .or([{nicknameSearchable: text}, {nameSearchable: text}])
+      .sort('name')
+      .limit(limit)
+      .exec(function (err, players) {
+        if (err)
+          return app.defaultError(res)(err);
+        res.end(JSON.stringifyModels(players));
+      });
   } else {
-    players = [];
+    res.end(JSON.stringify([]));
   }
-  // do not display password / token
-  players = players.map(function (player) {
-    return {
-      id: player.id,
-      nickname: player.nickname,
-      name: player.name,
-      rank: player.rank,
-      club: player.club,
-      games: player.games
-    }
-  });
-  //
-  var body = JSON.stringify(players);
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.end(body);
 });
   
 
