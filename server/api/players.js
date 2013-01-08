@@ -39,80 +39,52 @@ app.get('/v1/players/autocomplete/', function(req, res){
     res.end(JSON.stringify([]));
   }
 });
-  
 
-// POST /v1/players/
 app.post('/v1/players/', express.bodyParser(), function(req, res){
   // creating a new player
-  var player = {
-      id: DB.generateFakeId(),
-      nickname: null,
-      name: null,
-      rank: null,
-      club: null,
-      games: [],
-      password: null,
-      token:  String(Math.floor(Math.random()*10000000)),
-  };
-  //
-  ["nickname", "name", "rank", "password"].forEach(function (o) {
-    if (typeof req.body[o] !== "undefined")
-      player[o] = req.body[o];
+  var player = new DB.Model.Player({
+      nickname: req.body.nickname || "",
+      name: req.body.name || "",
+      rank: req.body.rank || "",
+      club: req.body.club || null
   });
-  // cas particulier club
-  if (req.body["club"] &&
-      typeof req.body["club"] === "object" &&
-      typeof req.body["club"].id !== "undefined" &&
-      typeof req.body["club"].name !== "undefined") {
-    player.club = req.body["club"];
-  }
-  //
-  DB.players.push(player);
-  // sending back saved data to the client
-  var body = JSON.stringify(player);
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.end(body);
+  DB.saveAsynch(player)
+    .then(
+      function (player) { res.end(JSON.stringifyModels(player)) },
+      app.defaultError(res)
+    );
 });
 
 // POST /v1/players/:id/?playerid=...&token=...
 app.post('/v1/players/:id', express.bodyParser(), function(req, res){
-  if (!DB.isAuthenticated(req.query)) {
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.end(JSON.stringify({"error": "unauthorized"}));
-    return; // FIXME: error
+  if (req.params.id !== req.body.id ||
+      req.params.id !== req.query.id) {
+    return app.defaultError(res)("id differs");
   }
-  var player = DB.searchById(DB.players, req.params.id);
-  if (!player) {
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.end(JSON.stringify({"error": "player doesn't exist"}));
-    return; // FIXME: error
-  }
-  if (req.params.id !== req.body.id) {
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.end(JSON.stringify({"error": "wrong format"}));
-    return; // FIXME: error
-  }
-  if (player.token !== req.body.token) {
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.end(JSON.stringify({"error": "unauthorized"}));
-    return; // FIXME: error
-  }
-  // updating player
-  ["nickname", "name", "rank", "password"].forEach(function (o) {
-    if (typeof req.body[o] !== "undefined")
-      player[o] = req.body[o];
-  });
-  // cas particulier club
-  if (req.body["club"] &&
-      typeof req.body["club"] === "object" &&
-      typeof req.body["club"].id !== "undefined" &&
-      typeof req.body["club"].name !== "undefined") {
-    player.club = req.body["club"];
-  }
-  // sending back saved data to the client
-  var body = JSON.stringify(player);
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.end(body);
+  DB.isAuthenticatedAsync(req.query)
+    .then(function (authentifiedPlayer) {
+      if (!authentifiedPlayer)
+        return app.defaultError(res)("player not authenticated");
+      DB.Model.Player.findOne({_id:req.params.id})
+                     .exec(function (err, player) {
+         if (err)
+           return app.defaultError(res)(err);
+         if (player === null)
+           return app.defaultError(res)("no player found");
+        // updating player
+        ["nickname", "name", "rank", "password", "club"].forEach(function (o) {
+          if (typeof req.body[o] !== "undefined")
+            player[o] = req.body[o];
+        });
+        // saving player
+        DB.saveAsynch(player)
+          .then(function (player) {
+            res.end(JSON.stringifyModels(player));
+          },
+        app.defaultError(res, "update error"));
+      });
+    },
+    app.defaultError(res, "authentication error"));
 });
 
 // searching a specific player
