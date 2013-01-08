@@ -20,14 +20,16 @@ app.get('/v1/players/', function(req, res){
 });
   
 app.get('/v1/players/autocomplete/', function(req, res){
+  var fields = req.query.fields || "id,nickname,name";
   var limit = req.query.limit || 5;
   var text = req.query.q;
   if (text) {
     // slow
     text = new RegExp("("+text.searchable().pregQuote()+")");
-    
+
     DB.Model.Player
       .find({})
+      .select(fields.replace(/,/g, " "))
       .or([{nicknameSearchable: text}, {nameSearchable: text}])
       .sort('name')
       .limit(limit)
