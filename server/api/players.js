@@ -23,6 +23,7 @@ app.get('/v1/players/autocomplete/', function(req, res){
   var limit = req.query.limit || 5;
   var text = req.query.q;
   if (text) {
+    // slow
     text = new RegExp("("+text.searchable().pregQuote()+")");
     
     DB.Model.Player
