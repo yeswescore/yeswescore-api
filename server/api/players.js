@@ -66,6 +66,7 @@ app.post('/v1/players/:id', express.bodyParser(), function(req, res){
     .then(function (authentifiedPlayer) {
       if (!authentifiedPlayer)
         return app.defaultError(res)("player not authenticated");
+      // FIXME: use http://mongoosejs.com/docs/api.html#model_Model-findByIdAndUpdate
       DB.Model.Player.findOne({_id:req.params.id})
                      .exec(function (err, player) {
          if (err)
@@ -92,8 +93,10 @@ app.post('/v1/players/:id', express.bodyParser(), function(req, res){
 app.get('/v1/players/:id', function(req, res){
   DB.isAuthenticatedAsync(req.query)
     .then(function (authentifiedPlayer) {
-      DB.Model.Player.findOne({_id:req.params.id})
-                      .exec(function (err, player) {
+      var query = DB.Model.Player.findOne({_id:req.params.id});
+      if (req.query.populate === "club")
+        query.populate("club");
+      query.exec(function (err, player) {
         if (err)
           return app.defaultError(res)(err);
         if (player === null)
