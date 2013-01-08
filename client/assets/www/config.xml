@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<widget xmlns = "http://www.w3.org/ns/widgets" xmlns:gap = "http://phonegap.com/ns/1.0" id = "com.zenodus.client" version = "0.0.0.5">
+<widget xmlns = "http://www.w3.org/ns/widgets" xmlns:gap = "http://phonegap.com/ns/1.0" id = "com.zenodus.client" version = "0.0.0.6">
 
-<preference name="phonegap-version" value="2.2.0" />
+<preference name="phonegap-version" value="2.3.0" />
 
 <name>zeScore</name>
 
@@ -37,7 +37,8 @@
 <feature name="http://api.phonegap.com/1.0/device"/>
 
 <!-- Whitelisting -->
-<!-- <access origin="*" /> -->
+<access origin="*" />
+<!-- 
 <access origin="http://reachtheflow.com:8080" subdomains="true" />
-
+ -->
 </widget>

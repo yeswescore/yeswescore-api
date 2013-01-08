@@ -1,24 +1,72 @@
 <!DOCTYPE html>
-<html>
+<html class="ui-mobile-rendering">
 <head>
-    <title>zeScore</title>
-    <meta name="viewport" content="user-scalable=no,width=device-width" />
-    <meta http-equiv="Access-Control-Allow-Origin" content="*"/>
-    <link rel="stylesheet" href="styles/jquery.mobile-1.2.0.min.css" />
-    <link rel="stylesheet" href="styles/main.css" />
+	<title>zeScore</title>
+	<meta name="viewport" content="user-scalable=no,width=device-width" />
+	
+	<link rel="stylesheet" href="styles/jquery.mobile-1.2.0.min.css">
+	<link rel="stylesheet" href="styles/main.css">	
+	
     <!-- we will use cordova 2.2 to package the mobile application-->
-    <script type="text/javascript" src="scripts/cordova-2.2.0.js"></script>    
-    <!-- require.js:  data-main attribute tells require.js to load
-         js/main.js after require.js loads. -->   
-    <script data-main="main/main" src="scripts/vendor/require.js"></script>
+    <script type="text/javascript" src="scripts/cordova-2.3.0.js"></script> 
+    <script type="text/javascript" charset="utf-8">
+    document.addEventListener("deviceready", onDeviceReady, false);
+    function onDeviceReady() {
+        navigator.splashscreen.hide();
+    }
+    </script>    	
     
+  	<!-- JQuery -->
+	<script type="text/javascript" src="scripts/jquery.min.js"></script>
+	
+  	<!-- Config -->	
+	<script type="text/javascript" src="js/jqm-config.js"></script>  
+  	<script type="text/javascript" src="js/app-config.js"></script>	
+	
+	<!-- Libraries -->  
+	<script type="text/javascript" src="scripts/jquery.mobile-1.1.1.min.js"></script> 
+	<script type="text/javascript" src="scripts/lodash.min.js"></script>
+	<script type="text/javascript" src="scripts/backbone-min.js"></script>
+	<script type="text/javascript" src="scripts/backbone-localstorage.js"></script>
+	<script type="text/javascript" src="scripts/backbone.poller.min.js"></script>
+	  
+  	<!-- Core -->	
+  	<script type="text/javascript" src="js/models/game.js"></script>
+  	<script type="text/javascript" src="js/models/player.js"></script>
+  	<script type="text/javascript" src="js/models/club.js"></script>  	
+  	<script type="text/javascript" src="js/models/version.js"></script> 
+  	
+  	 	   	
+  	<script type="text/javascript" src="js/collections/games.js"></script>
+  	<script type="text/javascript" src="js/collections/gamessearch.js"></script>
+  	<script type="text/javascript" src="js/collections/players.js"></script>
+  	<script type="text/javascript" src="js/collections/playerssearch.js"></script>  	
+  	<script type="text/javascript" src="js/collections/clubs.js"></script>    	
+     
+    <!-- Views -->
+    <script type="text/javascript" src="js/views/account.js"></script> 
+	<script type="text/javascript" src="js/views/club.js"></script> 
+	<script type="text/javascript" src="js/views/game.js"></script> 
+	<script type="text/javascript" src="js/views/gameadd.js"></script> 
+	<script type="text/javascript" src="js/views/gameend.js"></script> 
+	<script type="text/javascript" src="js/views/index.js"></script> 
+	<script type="text/javascript" src="js/views/player.js"></script> 
+	<script type="text/javascript" src="js/views/playerform.js"></script> 
+	<script type="text/javascript" src="js/views/playerlist.js"></script> 
+	<script type="text/javascript" src="js/views/playersignin.js"></script> 
+    <script type="text/javascript" src="js/views/index.js"></script>
+    <script type="text/javascript" src="js/views/game.js"></script>
+    <script type="text/javascript" src="js/tools.js"></script>
+    <script type="text/javascript" src="js/main.js"></script>
+
 </head>
 <body>
 <div id="index" data-role="page">
 </div>
 
-<!-- 
-    <script src="http://debug.phonegap.com/target/target-script-min.js#zenodus"></script>
- -->
+<!-- TEMPLATE_START -->
+
+<!-- TEMPLATE_END -->
+
 </body>
 </html>
