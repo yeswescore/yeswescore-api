@@ -60,13 +60,13 @@ describe('dev:players', function(){
   
   describe('FIXME: read players filtering by club', function() {
     it('should read players using filter ?club=:id', function (done) {
-      done("FIXME");
+      done("FIXME: avec la pagination, checker les params");
     });
   });
   
   describe('FIXME: autocomplete players ', function() {
     it('should read players', function (done) {
-      done("FIXME");
+      done("FIXME: verifier pregQuote");
     });
   });
   
