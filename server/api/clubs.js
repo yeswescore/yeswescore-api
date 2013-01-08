@@ -9,11 +9,11 @@ app.get('/v1/clubs/:id', function(req, res){
         return app.defaultError(res)(err);
       if (club === null)
         return app.defaultError(res)("no club found");
-      res.end(JSON.stringify(club));
+      res.end(JSON.stringifyModels(club));
     });
 });
 
-app.post('/v1/clubs', express.bodyParser(), function(req, res){
+app.post('/v1/clubs/', express.bodyParser(), function(req, res){
   if (req.body.name) {
     // creating a new club (no owner)
     var club = new DB.Model.Club({
@@ -23,7 +23,7 @@ app.post('/v1/clubs', express.bodyParser(), function(req, res){
     });
     DB.saveAsync(club)
       .then(
-        function (club) { res.end(JSON.stringify(club)) },
+        function (club) { res.end(JSON.stringifyModels(club)) },
         app.defaultError(res)
       );
   } else {
