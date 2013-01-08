@@ -14,10 +14,6 @@ app.use(function (req, res, next) {
   next();
 });
 
-app.defaultError = function (res, msg) { 
-  return function (err) { res.end(JSON.stringify({error:err, message:msg})); };
-};
-
 require('./api/bootstrap.js');
 require('./api/clubs.js');
 require('./api/documents.js');
