@@ -115,7 +115,9 @@ DB.Definition.Player = {
   token: { type: String, default: DB.generateToken },
   rank: String,
   club: { type: Schema.Types.ObjectId, ref: "Club" },
-  games: [ { type: Schema.Types.ObjectId, ref: "Game" } ]
+  games: [ { type: Schema.Types.ObjectId, ref: "Game" } ],
+  owner: { type: Schema.Types.ObjectId, ref: "Player" },
+  type: { type: String, enum: [ "default", "owned" ], default: "default" }
 };
 DB.Definition.Team = {
   players: [ { type: Schema.Types.ObjectId, ref: "Player" } ],
@@ -369,23 +371,38 @@ var generateClubsAsync = function () {
 
 var generatePlayersAsync = function () {
   // reading random club
-  var nbPlayers = 20;
+  var nbPlayers = 40;
   var randomClubs = [];
   for (var i = 0; i < nbPlayers; ++i) {
      randomClubs.push(DB.getRandomModelAsync(DB.Model.Club));
   }
+  var gClubs;
   return Q.all(randomClubs)
           .then(function (clubs) {
+     gClubs = clubs;
      var players = clubs.map(function (club) {
         return new DB.Model.Player({
             nickname: generateFakePseudo(),
             name: generateFakeFirstName() + " " + generateFakeName(),
             rank: "15/2",
             club: club.id,
-            games: []
+            games: [],
+            type: "default"
         });
      });
      return DB.saveAsync(players);
+   }).then(function (players) {
+      var anonymous = gClubs.map(function (club) {
+          return new DB.Model.Player({
+              nickname: generateFakePseudo(),
+              name: generateFakeFirstName() + " " + generateFakeName(),
+              rank: "15/2",
+              club: club.id,
+              games: [],
+              type: "owned"
+          });
+      });
+      return DB.saveAsync(anonymous);
    });
 };
 
@@ -402,126 +419,137 @@ var generateGamesAsync = function () {
   // generating 20 games
   var deferred = Q.defer();
   
-  DB.Model.Player.find({})
+  DB.Model.Player.find({type:"default"})
                  .exec(function (err, players) {
     if (err)
       return deferred.reject();
-    // Youpi.
-    var games = [];
-    var nbGames = 20;
-    
-    for (var i = 0; i < nbGames; ++i) {
-      var game = new DB.Model.Game({
-        owner: players.random().id, // utilisateur ayant saisi le match.
-        pos: generateFakeLocation(),
-        country: "france",
-        city: generateFakeCity(),
-        type: "singles",
-        sets: "",
-        score: "",
-        sport: "tennis",
-        status: "unknown",
-        teams: [ ],
-        stream: [ ]
-      });
+    DB.Model.Player.find({type:"owned"})
+                   .exec(function (err, owned) {
+      if (err)
+        return deferred.reject();
+      // Youpi.
+      var games = [];
+      var nbGames = 20;
       
-      // random pick match status, finished ? or ongoing ?
-      game.status = ["ongoing", "finished"].random();
-      // 
-      if (game.status === "finished") {
-        // status finished
-        game.date_end = generateFakeDateEnd();
-        if (Math.random() > 0.5) {
-          game.sets = "6/"+Math.floor(Math.random() * 5)+";6/"+Math.floor(Math.random() * 5);
-          game.score = "2/0";
-        } else {
-          game.sets = Math.floor(Math.random() * 5)+"/6;"+Math.floor(Math.random() * 5)+"/6";
-          game.score = "0/2";
-        }
-      } else {
-        // status ongoing
-        if (Math.random() > 0.5) {
-          // 2 set
+      for (var i = 0; i < nbGames; ++i) {
+        var owner = players.random().id;
+        
+        var game = new DB.Model.Game({
+          owner: owner, // utilisateur ayant saisi le match.
+          pos: generateFakeLocation(),
+          country: "france",
+          city: generateFakeCity(),
+          type: "singles",
+          sets: "",
+          score: "",
+          sport: "tennis",
+          status: "unknown",
+          teams: [ ],
+          stream: [ ]
+        });
+        
+        // random pick match status, finished ? or ongoing ?
+        game.status = ["ongoing", "finished"].random();
+        // 
+        if (game.status === "finished") {
+          // status finished
+          game.date_end = generateFakeDateEnd();
           if (Math.random() > 0.5) {
-            game.sets = "6/"+Math.floor(Math.random() * 5)+";"+Math.floor(Math.random() * 5)+"/"+Math.floor(Math.random() * 5);
-            game.score = "1/0";
+            game.sets = "6/"+Math.floor(Math.random() * 5)+";6/"+Math.floor(Math.random() * 5);
+            game.score = "2/0";
           } else {
-            game.sets = Math.floor(Math.random() * 5)+"/6;"+Math.floor(Math.random() * 5)+"/"+Math.floor(Math.random() * 5);
-            game.score = "0/1";
+            game.sets = Math.floor(Math.random() * 5)+"/6;"+Math.floor(Math.random() * 5)+"/6";
+            game.score = "0/2";
           }
         } else {
-          // 1 set
-          game.sets = Math.floor(Math.random() * 5)+"/"+Math.floor(Math.random() * 5);
-          game.score = "0/0";
+          // status ongoing
+          if (Math.random() > 0.5) {
+            // 2 set
+            if (Math.random() > 0.5) {
+              game.sets = "6/"+Math.floor(Math.random() * 5)+";"+Math.floor(Math.random() * 5)+"/"+Math.floor(Math.random() * 5);
+              game.score = "1/0";
+            } else {
+              game.sets = Math.floor(Math.random() * 5)+"/6;"+Math.floor(Math.random() * 5)+"/"+Math.floor(Math.random() * 5);
+              game.score = "0/1";
+            }
+          } else {
+            // 1 set
+            game.sets = Math.floor(Math.random() * 5)+"/"+Math.floor(Math.random() * 5);
+            game.score = "0/0";
+          }
         }
-      }
-      
-      // generating players
-      var player1 = players[(i*2)%20];
-      var player2 = players[(i*2+1)%20];
-      
-      // sometimes, players are "anonymous"
-      /*
-      if (Math.random() < 0.2) {
-        if (Math.random() < 0.3) {
+        
+        // generating players
+        var player1 = players[i*2];
+        var player2 = players[i*2+1];
+        var ownedplayer1 = owned[i*2];
+        var ownedplayer2 = owned[i*2+1];
+        
+        // sometimes, players are "anonymous"
+        if (Math.random() < 0.2) {
+          if (Math.random() < 0.3) {
+            game.teams = [
+              { players: [ ownedplayer1.id ] },
+              { players: [ ownedplayer2.id ] } 
+            ];
+          } else {
+            if (Math.random() < 0.5) {
+              game.teams = [
+                { players: [ ownedplayer1.id ] },
+                { players: [ player2.id ] }
+              ];
+            } else {
+              game.teams = [
+                { players: [ player1.id ] },
+                { players: [ ownedplayer2.id ] }
+              ];
+            }
+          }
+        } else {
           game.teams = [
-            { players: [ { name: generateFakePseudo() } ] },
-            { players: [ { name: generateFakePseudo() } ] } 
+            { players: [ player1.id ] },
+            { players: [ player2.id ] }
           ];
-        } else {
-          if (Math.random() < 0.5) {
-            game.teams = [
-              { players: [ { name: generateFakePseudo() } ] },
-              { players: [ { id : player2.id } ] }
-            ];
-          } else {
-            game.teams = [
-              { id: null, players: [ { id: player1.id } ] },
-              { id: null, players: [ { name: generateFakePseudo() } ] }
-            ];
+        }
+        
+        // generating 0 to 10 comments
+        var nbComments = Math.floor(Math.random() * 11);
+        var delta = 0;
+        for (var j = 0; j < nbComments; ++j) {
+          // adding random (1 to 5) minutes
+          delta += 1000 * 60 * (1 + Math.floor(Math.random(5)));
+          var date = new Date(new Date(game.date_start).getTime() + delta);
+          var comment = {
+            type: "comment",
+            owner: players.random().id,
+            data: { text: generateFakeComment() }
           }
+          game.stream.push(comment);
         }
-      } else {
-        */
-      game.teams = [
-        { players: [ player1.id ] },
-        { players: [ player2.id ] }
-      ];
-     // }
-      
-      // generating 0 to 10 comments
-      var nbComments = Math.floor(Math.random() * 11);
-      var delta = 0;
-      for (var j = 0; j < nbComments; ++j) {
-        // adding random (1 to 5) minutes
-        delta += 1000 * 60 * (1 + Math.floor(Math.random(5)));
-        var date = new Date(new Date(game.date_start).getTime() + delta);
-        var comment = {
-          type: "comment",
-          owner: players.random().id,
-          data: { text: generateFakeComment() }
-        }
-        game.stream.push(comment);
+        
+        games.push(game);
       }
-      
-      games.push(game);
-    }
 
-    DB.saveAsync(games).then(function (games) {
-      games.forEach(function (game, i) {
-        // adding games to players
-        if (game.teams[0].players[0]) {
-          players[(i*2)%20].games.push(game.id);
-        }
-        if (game.teams[1].players[0]) {
-          players[(i*2+1)%20].games.push(game.id);
-        }
+      DB.saveAsync(games).then(function (games) {
+        games.forEach(function (game, i) {
+          // adding games to players
+          if (players[i*2].id === game.teams[0].players[0])
+            players[i*2].games.push(game.id);
+          else
+            owned[i*2].owner = game.owner;
+          if (players[i*2+1].id === game.teams[1].players[0])
+            players[i*2+1].games.push(game.id);
+          else
+            owned[i*2+1].owner = game.owner;
+        });
+        
+        // saving players
+        DB.saveAsync(players).then(function () {
+          DB.saveAsync(owned).then(function () {
+            deferred.resolve();
+          }, function (e) { deferred.reject(); console.log('error ' + e); } );
+        }, function (e) { deferred.reject(); console.log('error ' + e); } );
       });
-      
-      // saving players
-      DB.saveAsync(players).then(function () {
-        deferred.resolve();
-      }, function (e) { console.log('error ' + e); } );
     });
   });
   return deferred.promise;
