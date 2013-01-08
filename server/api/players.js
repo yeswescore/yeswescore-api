@@ -95,7 +95,7 @@ app.get('/v1/players/:id', function(req, res){
     .then(function (authentifiedPlayer) {
       var query = DB.Model.Player.findOne({_id:req.params.id});
       if (req.query.populate === "club")
-        query.populate("club");
+        query.populate("club", "id name");
       query.exec(function (err, player) {
         if (err)
           return app.defaultError(res)(err);
