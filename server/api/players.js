@@ -1,6 +1,7 @@
 var DB = require("../db.js")
   , express = require("express")
-  , app = require("../app.js");
+  , app = require("../app.js")
+  , Q = require("q");
 
 /**
  * Read All Players
@@ -123,7 +124,7 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
 });
 
 // POST /v1/players/:id/?playerid=...&token=...
-app.post('/v1/players/:id/', express.bodyParser(), function(req, res){
+app.post('/v1/players/:id', express.bodyParser(), function(req, res){
   if (req.params.id !== req.body.id ||
       req.params.id !== req.query.id) {
     return app.defaultError(res)("id differs");
