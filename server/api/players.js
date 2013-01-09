@@ -2,6 +2,17 @@ var DB = require("../db.js")
   , express = require("express")
   , app = require("../app.js");
 
+/**
+ * Read All Players
+ * 
+ * Generic options:
+ *  /v1/players/?limit=0
+ *  /v1/players/?offset=0
+ *  /v1/players/?fields=nickname,name
+ *
+ * Specific options:
+ *  /v1/players/?club=:id   (filter with a club)
+ */
 app.get('/v1/players/', function(req, res){
   var limit = req.query.limit || 10;
   var offset = req.query.offset || 0;
@@ -22,6 +33,17 @@ app.get('/v1/players/', function(req, res){
   });
 });
 
+/**
+ * Autocomplete search in players
+ * 
+ * Generic options:
+ *  /v1/players/autocomplete/?limit=0
+ *  /v1/players/autocomplete/?fields=nickname,name
+ *
+ * Specific options:
+ *  /v1/players/autocomplete/?q=Charlotte (searched text)
+ *  /v1/players/autocomplete/?owner=:id   (autocomplete centered to an owner)
+ */
 app.get('/v1/players/autocomplete/', function(req, res){
   var fields = req.query.fields || "id,nickname,name,type";
   var limit = req.query.limit || 5;
@@ -52,7 +74,23 @@ app.get('/v1/players/autocomplete/', function(req, res){
   }
 });
 
+/**
+ * Create a new player
+ * 
+ * No authentication
+ * 
+ * Body {
+ *   nickname: String, (default="")
+ *   name: String,     (default="")
+ *   rank: String,     (default="")
+ *   club: id          (default=null)
+ *   type: String      (enum=default,owned default=default)
+ * }
+ */
 app.post('/v1/players/', express.bodyParser(), function(req, res){
+  if (req.body.type &&
+      DB.Definition.Player.type.enum.indexOf(req.body.type) === -1)
+    return app.defaultError(res)("unknown type");
   // creating a new player
   var player = new DB.Model.Player({
       nickname: req.body.nickname || "",
@@ -101,7 +139,17 @@ app.post('/v1/players/:id/', express.bodyParser(), function(req, res){
     app.defaultError(res, "authentication error"));
 });
 
-// searching a specific player
+/**
+ * Autocomplete search in players
+ * 
+ * Authentication provide password & token
+ * 
+ * Generic options:
+ *  /v1/players/:id/?fields=nickname,name
+ *
+ * Specific options:
+ *  /v1/players/:id/?populate=club (join with collection club)
+ */
 app.get('/v1/players/:id/', function(req, res){
   var populate = req.query.populate;
   var fields = req.query.fields;
