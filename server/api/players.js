@@ -84,7 +84,7 @@ app.get('/v1/players/autocomplete/', function(req, res){
  *   nickname: String, (default="")
  *   name: String,     (default="")
  *   rank: String,     (default="")
- *   club: id          (default=null)
+ *   club: { id:..., name:... }  (default=null, name: is ignored)
  *   type: String      (enum=default,owned default=default)
  * }
  */
@@ -95,8 +95,8 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
   // club ? => reading club to get the name
   var deferred = Q.defer();
   var club = req.body.club;
-  if (club) {
-    DB.Model.Club.findById(club, function (err, club) {
+  if (club && club.id) {
+    DB.Model.Club.findById(club.id, function (err, club) {
       if (err)
         return deferred.reject(err);
       deferred.resolve(club);
@@ -126,7 +126,7 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
 // POST /v1/players/:id/?playerid=...&token=...
 app.post('/v1/players/:id', express.bodyParser(), function(req, res){
   if (req.params.id !== req.body.id ||
-      req.params.id !== req.query.id) {
+      req.params.id !== req.query.playerid) {
     return app.defaultError(res)("id differs");
   }
   DB.isAuthenticatedAsync(req.query)
