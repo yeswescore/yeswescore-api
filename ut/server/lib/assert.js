@@ -38,7 +38,7 @@ assert.isNotEmpty = function (s, m) {
 assert.isId = function (id, m) {
   assert.isString(id, m+" > isId: must be a string");
   assert.isNotEmpty(id, m+" > isId: cannot be empty");
-  assert.isHexa(id, m+" > isId: must be hexa");
+  assert.isHexa(id, m+" > isId: must be hexa ("+id+")");
 };
 
 assert.isNullableString = function (s, m) {
@@ -79,7 +79,8 @@ assert.isClub = function (club) {
   assert.isNullableString(club.sport, "isClub: sport");
   assert.isNullableString(club.name, "isClub: name");
   assert.isNullableString(club.city, "isClub: city");
-  assert.allowedFields(club, ["id", "sport", "name", "city"]);
+  assert.isDate(club.date_creation, "isClub: date_creation");
+  assert.allowedFields(club, ["id", "sport", "name", "city", "date_creation"]);
 };
 
 /*
