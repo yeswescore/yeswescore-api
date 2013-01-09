@@ -8,11 +8,27 @@
 	<link rel="stylesheet" href="styles/main.css">	
 	
     <!-- we will use cordova 2.2 to package the mobile application-->
-    <script type="text/javascript" src="scripts/cordova-2.3.0.js"></script> 
+    <script type="text/javascript" src="scripts/cordova-2.2.0.js"></script> 
     <script type="text/javascript" charset="utf-8">
     document.addEventListener("deviceready", onDeviceReady, false);
     function onDeviceReady() {
         navigator.splashscreen.hide();
+    }
+    
+    // alert dialog dismissed
+    function alertDismissed() {
+        // do something
+    }
+
+    // Show a custom alert
+    //
+    function showAlert() {
+        navigator.notification.alert(
+            'You are the winner!',  // message
+            alertDismissed,         // callback
+            'Game Over',            // title
+            'Done'                  // buttonName
+        );
     }
     </script>    	
     
@@ -68,5 +84,8 @@
 
 <!-- TEMPLATE_END -->
 
+<!-- 
+<script src="http://debug.phonegap.com/target/target-script-min.js#zenodus"></script>
+ -->
 </body>
 </html>
