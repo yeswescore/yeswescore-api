@@ -153,53 +153,46 @@ app.get('/v1/games/', function(req, res){
 });
 
 // searching a specific game
+// a bit complex due to "populate" option.
 app.get('/v1/games/:id', function(req, res){
-  var game = DB.searchById(DB.games, req.params.id);
-  var result = {};
-  if (game) {
-    result = {
-      id: game.id,
-      date_creation: game.date_creation,
-      date_start: game.date_start,
-      date_end: game.date_end,
-      pos: game.pos,
-      country: game.country,
-      city: game.city,
-      type: game.type,
-      sets: game.sets,
-      score: game.score,
-      sport: game.sport,
-      status: game.status,
-      owner: game.owner,
-      teams: game.teams.map(function (teamInfo) {
-        //
-        var players = teamInfo.players.map(function (playerInfo) {
-          if (typeof playerInfo.id !== "undefined") {
-            var player = DB.searchById(DB.players, playerInfo.id);
-            return {
-                id: player.id,
-                nickname: player.nickname,
-                name: player.name,
-                rank: player.rank,
-                club: player.club
-              };
+  DB.Model.Game.findOne({_id:req.params.id})
+               .exec(function (err, game) {
+    if (err)
+      return app.defaultError(res)(err);
+    if (game === null)
+      return app.defaultError(res)("no game found");
+    // must populate manually
+    var populate = req.query.populate;
+    var populatePaths = (typeof populate === "string") ? populate.split(",") : [];
+    if (populatePaths.indexOf("teams.players") === -1)
+      return res.end(JSON.stringifyModels(game));
+    
+    // populate: we need to read players
+    var q = DB.Model.Player.find({});
+    // var or = [ { _id: .. }, { _id: .. }, ... ]
+    var or = game.teams.reduce(function (p, team) {
+      return p.concat(team.players.map(function (player) {
+        return { _id: player };
+      }));
+    }, []);
+    q.or(or);
+    if (populatePaths.indexOf("teams.players.club") !== -1)
+      q.populate("club");
+    q.exec(function (err, players) {
+      if (err)
+        return app.defaultError(res)(err, "populate error");
+      game.teams.forEach(function (team, teamIndex) {
+        team.players.forEach(function (playerId, playerIndex) {
+          for (var i = 0; i < players.length; ++i) {
+            if (players[i].id == playerId) { // /!\ cannot use ===
+              game.teams[teamIndex].players[playerIndex] = players[i];
+            }
           }
-          return playerInfo;
         });
-        //
-        return { 
-          id: null,
-          players: players,
-          points: teamInfo.points
-        };
-      }),
-      stream: game.stream
-    };
-  };
-  
-  var body = JSON.stringify(result);
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.end(body);
+      });
+      res.end(JSON.stringifyModels(game));
+    });
+  });
 });
 
 
