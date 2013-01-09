@@ -194,12 +194,13 @@ describe('dev:players', function(){
         path: Conf["documents.players"]+"random"
       };
       http.getJSON(options, function (randomPlayer) {
-        assert.isPlayerWithToken(randomPlayer);
+        assert.isObject(randomPlayer);
+        assert.isId(randomPlayer._id);
         
         var options = {
           host: Conf["http.host"],
           port: Conf["http.port"],
-          path: Conf["api.players"]+randomPlayer.id
+          path: Conf["api.players"]+randomPlayer._id
         };
         
         // modify player
@@ -207,7 +208,7 @@ describe('dev:players', function(){
         // try post without auth tokens
         http.post(options, randomPlayer, function (error) {
           assert.isError(error);
-          assert(error.error === "unauthorized", "must be an unauthorized error");
+          assert(error.error === "id differs", "must be an unauthorized error");
           done();
         });
       });
@@ -223,7 +224,8 @@ describe('dev:players', function(){
         path: Conf["documents.players"]+"random"
       };
       http.getJSON(options, function (randomPlayer) {
-        assert.isPlayerWithToken(randomPlayer);
+        assert.isObject(randomPlayer);
+        assert.isId(randomPlayer._id);
 
         // second, create a new player
         var options = {
@@ -246,7 +248,7 @@ describe('dev:players', function(){
           var options = {
             host: Conf["http.host"],
             port: Conf["http.port"],
-            path: Conf["api.players"]+randomPlayer.id+"/?playerid="+player.id+"&token="+player.token
+            path: Conf["api.players"]+randomPlayer._id+"/?playerid="+player.id+"&token="+player.token
           };
 
           var i = 0;
@@ -255,13 +257,13 @@ describe('dev:players', function(){
           // try post
           http.post(options, player, function (error) {
             assert.isError(error);
-            assert(error.error === "wrong format", "wrong format error");
+            assert(error.error === "id differs", "wrong format error");
             cb();
           });
           player.id = randomPlayer.id;
           http.post(options, player, function (error) {
             assert.isError(error);
-            assert(error.error === "unauthorized", "unauthorized error");
+            assert(error.error === "id differs", "unauthorized error");
             cb();
           });
         });
