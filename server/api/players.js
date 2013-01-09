@@ -146,9 +146,9 @@ app.post('/v1/players/:id', express.bodyParser(), function(req, res){
             player[o] = req.body[o];
         });
         // saving player
-        DB.saveAsynch(player)
+        DB.saveAsync(player)
           .then(function (player) {
-            res.end(JSON.stringifyModels(player));
+            res.end(JSON.stringifyModels(player, { unhide: [ "token", "password"] }));
           },
         app.defaultError(res, "update error"));
       });
