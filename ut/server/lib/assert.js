@@ -45,6 +45,28 @@ assert.isNullableString = function (s, m) {
   assert(isString(s) || s === null, m+" >isNullableString: must be null or string");
 };
 
+assert.isUndefinedOrString = function (s, m) {
+  assert(typeof s === "undefined" || typeof s === "string", m+" >isUndefinedOrString: must be undefined or string");  
+};
+
+assert.isUndefinedOrNullableString = function (s, m) {
+  assert(typeof s === "undefined" || typeof s === "string" || s === null, m+" >isUndefinedOrString: must be undefined or string");  
+};
+
+assert.isUndefinedOrArray = function (s, m) {
+  assert(typeof s === "undefined" || isArray(s), m);
+};
+
+assert.isUndefinedOrDate = function (s, m) {
+  assert(typeof s === "undefined" || isDate(s), m);
+};
+
+assert.isUndefinedOrId = function (s, m) {
+  if (typeof s === "undefined")
+    return;
+  assert.isId(s, m);
+};
+
 assert.isDate = function (s, m) {
   assert(isDate(s), m);
 };
@@ -76,10 +98,11 @@ assert.isClub = function (club) {
   assert.isObject(club, "isClub: club must be an object");
   // mandatory
   assert.isId(club.id, "isClub: id must be an hexa string");
-  assert.isNullableString(club.sport, "isClub: sport");
-  assert.isNullableString(club.name, "isClub: name");
-  assert.isNullableString(club.city, "isClub: city");
-  assert.isDate(club.date_creation, "isClub: date_creation");
+  // optionnals
+  assert.isUndefinedOrString(club.sport, "isClub: sport");
+  assert.isUndefinedOrString(club.name, "isClub: name");
+  assert.isUndefinedOrString(club.city, "isClub: city");
+  assert.isUndefinedOrDate(club.date_creation, "isClub: date_creation");
   assert.allowedFields(club, ["id", "sport", "name", "city", "date_creation"]);
 };
 
@@ -106,23 +129,33 @@ assert.isPlayerScheme = function (player, m) {
   assert.isObject(player, "isPlayerScheme: player must be an object");
   // mandatory
   assert.isId(player.id, "isPlayerScheme: id must be an hexa string");
-  // token is optionnal
-  assert.isNullableString(player.token, "isPlayerScheme: token");
+  // token & password can be undefined
+  assert.isUndefinedOrString(player.token, "isPlayerScheme: token");
+  assert.isUndefinedOrNullableString(player.password, "isPlayerScheme: password");
   // optionnals
-  assert.isNullableString(player.nickname, "isPlayerScheme: nickname");
-  assert.isNullableString(player.name, "isPlayerScheme: name");
-  assert.isNullableString(player.rank, "isPlayerScheme: rank");
-  assert.isNullableString(player.password, "isPlayerScheme: password");
+  assert.isUndefinedOrString(player.nickname, "isPlayerScheme: nickname");
+  assert.isUndefinedOrString(player.name, "isPlayerScheme: name");
+  assert.isUndefinedOrDate(player.date_creation, "isPlayerScheme: date_creation");
+  assert.isUndefinedOrDate(player.date_modification, "isPlayerScheme: date_modification");
+  assert.isUndefinedOrString(player.rank, "isPlayerScheme: rank");
+  // owner
+  if (player.owner)
+    assert.isId(player.owner, "isPlayerScheme: owner must be an id (or null)");
   // club
-  assert(player.club === null || 
+  assert(typeof player.club === "undefined" || 
          (typeof player.club === "object" && player.club.id), "isPlayerScheme: club must be null or object");
+  // type
+  assert(typeof player.type === "undefined" ||
+         player.type === "default" ||
+         player.type === "owned", "isPlayerScheme: type must be undefined, default or owned");
+         
   // games
-  assert.isArray(player.games, "isPlayerScheme: games must be an array");
+  assert.isUndefinedOrArray(player.games, "isPlayerScheme: games must be an array");
   player.games.forEach(function (gameId) {
     assert.isId(gameId, "isPlayerScheme: games[*] must be id");
   });
   //
-  assert.allowedFields(player, ["id", "nickname", "name", "rank", "club", "games", "password", "token"]);
+  assert.allowedFields(player, ["id", "nickname", "name", "date_creation", "date_modification", "rank", "club", "games", "owner", "password", "token", "type"]);
   // FIXME:
   // - rank format
   // - no password => allowed blank fields
@@ -131,8 +164,8 @@ assert.isPlayerScheme = function (player, m) {
 
 assert.isPlayer = function (player) {
   assert.isPlayerScheme(player, "isPlayer: must be a player");
-  assert(player.token === null, "isPlayer: token must be null");
-  assert(player.password === null, "isPlayer: password must be null");
+  assert(typeof player.token === "undefined", "isPlayer: token must be undefined");
+  assert(typeof player.password === "undefined", "isPlayer: password must be undefined");
 };
 
 assert.isPlayerWithToken = function (player) {
