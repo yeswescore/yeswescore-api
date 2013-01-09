@@ -6,10 +6,13 @@ app.get('/v1/players/', function(req, res){
   var limit = req.query.limit || 10;
   var offset = req.query.offset || 0;
   var club = req.query.club;
+  var fields = req.query.fields;
 
   var query = DB.Model.Player.find({type:"default"});
+  if (fields)
+    query.select(fields.replace(/,/g, " "))
   if (club)
-    query = query.where("club", club);
+    query.where("club", club);
   query.skip(offset)
        .limit(limit)
        .exec(function (err, players) {
@@ -66,7 +69,7 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
 });
 
 // POST /v1/players/:id/?playerid=...&token=...
-app.post('/v1/players/:id', express.bodyParser(), function(req, res){
+app.post('/v1/players/:id/', express.bodyParser(), function(req, res){
   if (req.params.id !== req.body.id ||
       req.params.id !== req.query.id) {
     return app.defaultError(res)("id differs");
@@ -99,11 +102,16 @@ app.post('/v1/players/:id', express.bodyParser(), function(req, res){
 });
 
 // searching a specific player
-app.get('/v1/players/:id', function(req, res){
+app.get('/v1/players/:id/', function(req, res){
+  var populate = req.query.populate;
+  var fields = req.query.fields;
+  
   DB.isAuthenticatedAsync(req.query)
     .then(function (authentifiedPlayer) {
       var query = DB.Model.Player.findOne({_id:req.params.id});
-      if (req.query.populate === "club")
+      if (fields)
+         query.select(fields.replace(/,/g, " "))
+      if (populate === "club")
         query.populate("club", "id name");
       query.exec(function (err, player) {
         if (err)
