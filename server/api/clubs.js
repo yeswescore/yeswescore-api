@@ -2,24 +2,44 @@ var DB = require("../db.js")
   , express = require("express")
   , app = require("../app.js");
 
+/**
+ * Read a club
+ * 
+ * Generic options:
+ *  /v1/clubs/?fields=name
+ */
 app.get('/v1/clubs/:id', function(req, res){
-    DB.Model.Club.findOne({_id:req.params.id})
-                 .exec(function (err, club) {
-      if (err)
-        return app.defaultError(res)(err);
-      if (club === null)
-        return app.defaultError(res)("no club found");
-      res.end(JSON.stringifyModels(club));
-    });
+  var fields = req.query.fields;
+  
+  var query = DB.Model.Club.findById(req.params.id);
+  if (fields)
+    query.select(fields.replace(/,/g, " "));
+  query.exec(function (err, club) {
+    if (err)
+      return app.defaultError(res)(err);
+    if (club === null)
+      return app.defaultError(res)("no club found");
+    res.end(JSON.stringifyModels(club));
+  });
 });
 
+/**
+ * Create a new club
+ * 
+ * Body {
+ *   name: String,     (MANDATORY)
+ *   city: String,     (default="")
+ * }
+ * 
+ * FIXME: who can create a club? owner?
+ */
 app.post('/v1/clubs/', express.bodyParser(), function(req, res){
   if (req.body.name) {
     // creating a new club (no owner)
     var club = new DB.Model.Club({
       sport: "tennis",
       name: req.body.name,
-      city: req.body.city
+      city: req.body.city || ""
     });
     DB.saveAsync(club)
       .then(
