@@ -1,7 +1,7 @@
-var mongoose = require("mongoose"),
-    Schema = mongoose.Schema,
-    Conf = require("./conf.js"),
-    Q = require("q");
+var mongoose = require("mongoose")
+  , Schema = mongoose.Schema
+  , Conf = require("./conf.js")
+  , Q = require("q");
 
 mongoose.connection.on('error', function () { DB.status = "disconnected" });
 mongoose.connection.on('connected', function () { DB.status = "connected" });
