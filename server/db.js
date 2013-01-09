@@ -177,7 +177,7 @@ DB.Schema.Game.pre('save', function (next) {
 });
 
 // Hidden fields
-var hiddenFields = [ "_id", "__v", "password", "token"];
+var hiddenFields = [ "password", "token"];
 for (var schemaName in DB.Schema) {
   (function (schema) {
     // Adding transform default func
@@ -188,6 +188,10 @@ for (var schemaName in DB.Schema) {
           hide = hide.slice(); // clone
           options.unhide.forEach(function (field) { hide.remove(field) });
         }
+        // removing private fields
+        Object.keys(ret).forEach(function (key) {
+          if (key[0] === "_") delete ret[key];
+        });
         // removing hidden fields
         hide.forEach(function (prop) { delete ret[prop] });
       }
