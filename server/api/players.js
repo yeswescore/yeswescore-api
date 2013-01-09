@@ -18,7 +18,7 @@ app.get('/v1/players/', function(req, res){
     res.end(JSON.stringifyModels(players));
   });
 });
-  
+
 app.get('/v1/players/autocomplete/', function(req, res){
   var fields = req.query.fields || "id,nickname,name,type";
   var limit = req.query.limit || 5;
@@ -32,7 +32,7 @@ app.get('/v1/players/autocomplete/', function(req, res){
     DB.Model.Player
       .find({
         $and: [
-          { $or: [ {nicknameSearchable: text}, {nameSearchable: text} ] },
+          { $or: [ {_nicknameSearchable: text}, {_nameSearchable: text} ] },
           { $or: [ {type: "default"}, {type: "owned", owner: owner} ] }
         ]
       })

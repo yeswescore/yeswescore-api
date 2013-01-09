@@ -101,14 +101,12 @@ DB.Definition.Club = {
   sport: String,
   date_creation: { type: Date, default: Date.now },
   name: String,
-  nameSearchable: String,
-  city: String
+  city: String,
+  _nameSearchable: String
 };
 DB.Definition.Player = {
   nickname: String,
-  nicknameSearchable: String,
   name: String,
-  nameSearchable: String,
   date_creation: { type: Date, default: Date.now },
   date_modification: Date,
   password: { type: String, default: null },
@@ -117,7 +115,9 @@ DB.Definition.Player = {
   club: { type: Schema.Types.ObjectId, ref: "Club" },
   games: [ { type: Schema.Types.ObjectId, ref: "Game" } ],
   owner: { type: Schema.Types.ObjectId, ref: "Player" },
-  type: { type: String, enum: [ "default", "owned" ], default: "default" }
+  type: { type: String, enum: [ "default", "owned" ], default: "default" },
+  _nicknameSearchable: String,
+  _nameSearchable: String
 };
 DB.Definition.Team = {
   players: [ { type: Schema.Types.ObjectId, ref: "Player" } ],
@@ -143,12 +143,12 @@ DB.Definition.Game = {
   pos: {type: [Number], index: '2d'},
   country: String,
   city: String,
-  citySearchable: String,
   sport: { type: String, enum: ["tennis"] },
   type: { type: String, enum: [ "singles", "doubles" ] },
   sets: String,
   teams: [ DB.Schema.Team ],
-  stream: [ DB.Schema.StreamItem ]  
+  stream: [ DB.Schema.StreamItem ],
+  _citySearchable: String
 };
 
 //
@@ -160,19 +160,19 @@ DB.Schema.Game = new Schema(DB.Definition.Game);
 // Need to index some fields
 DB.Schema.Club.pre('save', function (next) {
   if (this.name)
-    this.nameSearchable = this.name.searchable();
+    this._nameSearchable = this.name.searchable();
   next();
 });
 DB.Schema.Player.pre('save', function (next) {
   if (this.nickname)
-    this.nicknameSearchable = this.nickname.searchable();
+    this._nicknameSearchable = this.nickname.searchable();
   if (this.name)
-    this.nameSearchable = this.name.searchable();
+    this._nameSearchable = this.name.searchable();
   next();
 });
 DB.Schema.Game.pre('save', function (next) {
   if (this.city)
-    this.citySearchable = this.city.searchable();
+    this._citySearchable = this.city.searchable();
   next();
 });
 
