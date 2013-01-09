@@ -176,13 +176,14 @@ DB.Schema.Game.pre('save', function (next) {
   next();
 });
 
-// Schemas options
+// Hidden fields
+var hiddenFields = [ "_id", "__v", "password", "token"];
 for (var schemaName in DB.Schema) {
   (function (schema) {
     // Adding transform default func
     schema.options.toObject = {
       transform : function (doc, ret, options) {
-        var hide = schema.options.toObject.hide;
+        var hide = hiddenFields;
         if (options.unhide) {
           hide = hide.slice(); // clone
           options.unhide.forEach(function (field) { hide.remove(field) });
@@ -193,12 +194,6 @@ for (var schemaName in DB.Schema) {
     };
   })(DB.Schema[schemaName]);
 }
-// hidden fields
-DB.Schema.Team.options.toObject.hide = [ "_id", "__v" ];
-DB.Schema.StreamItem.options.toObject.hide = [ "_id", "__v" ];
-DB.Schema.Club.options.toObject.hide = [ "_id", "__v" ];
-DB.Schema.Player.options.toObject.hide = [ "_id", "__v", "password", "token"];
-DB.Schema.Game.options.toObject.hide = [ "_id", "__v" ];
 
 //
 // Models
