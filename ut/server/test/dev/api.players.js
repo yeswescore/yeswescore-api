@@ -75,7 +75,9 @@ describe('dev:players', function(){
         path: Conf["documents.clubs"]+"random"
       };
       http.getJSON(options, function (randomClub) {
-        assert.isClub(randomClub);
+        assert.isObject(randomClub);
+        assert.isId(randomClub._id);
+        assert.isString(randomClub.name);
         
         var options = {
           host: Conf["http.host"],
@@ -88,7 +90,7 @@ describe('dev:players', function(){
           name: "TU-"+Math.random(),
           rank: "15/2",
           password: null,
-          club: { id: randomClub.id, name: randomClub.name }
+          club: { id: randomClub._id, name: randomClub.name }
         };
         http.post(options, newPlayer, function (player) {
           assert.isPlayerWithToken(player);
@@ -123,7 +125,9 @@ describe('dev:players', function(){
         path: Conf["documents.clubs"]+"random"
       };
       http.getJSON(options, function (randomClub) {
-        assert.isClub(randomClub);
+        assert.isObject(randomClub);
+        assert.isId(randomClub._id);
+        assert.isString(randomClub.name);
         
         var options = {
           host: Conf["http.host"],
@@ -136,7 +140,7 @@ describe('dev:players', function(){
           name: "TU-"+Math.random(),
           rank: "15/2",
           password: null,
-          club: { id: randomClub.id, name: randomClub.name }
+          club: { id: randomClub._id, name: randomClub.name }
         };
         http.post(options, newPlayer, function (player) {
           assert.isPlayerWithToken(player);
