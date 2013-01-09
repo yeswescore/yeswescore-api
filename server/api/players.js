@@ -111,13 +111,13 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
         nickname: req.body.nickname || "",
         name: req.body.name || "",
         rank: req.body.rank || "",
-        club: inlinedClub, // might not work ? 
+        club: inlinedClub, // will be undefined !
         type: req.body.type || "default"
     });
     
     DB.saveAsync(player)
       .then(
-        function (player) { res.end(JSON.stringifyModels(player)) },
+        function (player) { res.end(JSON.stringifyModels(player, { unhide: [ "token", "password"] })) },
         app.defaultError(res)
       );
   }, app.defaultError(res));
