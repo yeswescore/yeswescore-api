@@ -20,26 +20,14 @@ describe('dev:players', function(){
         var options = {
           host: Conf["http.host"],
           port: Conf["http.port"],
-          path: Conf["api.players"]+randomplayer.id
+          path: Conf["api.players"]+randomplayer._id
         };
         http.getJSON(options, function (player) {
           assert.isPlayer(player, "must be a player");
-          assert(player.id === randomplayer.id, "must be same player");
+          assert(player.id === randomplayer._id, "must be same player");
           done();
         });
       });
-    });
-  });
-  
-  describe('FIXME: read players filtering by club', function() {
-    it('should read players using filter ?club=:id', function (done) {
-      done("FIXME: avec la pagination, checker les params");
-    });
-  });
-  
-  describe('FIXME: autocomplete players ', function() {
-    it('should read players', function (done) {
-      done("FIXME: verifier pregQuote");
     });
   });
   
@@ -262,6 +250,18 @@ describe('dev:players', function(){
           });
         });
       });
+    });
+  });
+  
+  describe('FIXME: read players filtering by club', function() {
+    it('should read player checking params: security, pregQuote, ...', function (done) {
+      done(/* FIXME */);
+    });
+  });
+  
+  describe('FIXME: read players filtering by club', function() {
+    it('should read players using filter ?club=:id', function (done) {
+      done(/* FIXME */);
     });
   });
 });
