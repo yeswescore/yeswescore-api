@@ -112,7 +112,10 @@ DB.Definition.Player = {
   password: { type: String, default: null },
   token: { type: String, default: DB.generateToken },
   rank: String,
-  club: { type: Schema.Types.ObjectId, ref: "Club" },
+  club: {
+    id: { type: Schema.Types.ObjectId, ref: "Club" },
+    name: String
+  },
   games: [ { type: Schema.Types.ObjectId, ref: "Game" } ],
   owner: { type: Schema.Types.ObjectId, ref: "Player" },
   type: { type: String, enum: [ "default", "owned" ], default: "default" },
@@ -384,7 +387,10 @@ var generatePlayersAsync = function () {
             nickname: generateFakePseudo(),
             name: generateFakeFirstName() + " " + generateFakeName(),
             rank: "15/2",
-            club: club.id,
+            club: {
+              id: club.id,
+              name: club.name
+            },
             games: [],
             type: "default"
         });
@@ -396,7 +402,10 @@ var generatePlayersAsync = function () {
               nickname: generateFakePseudo(),
               name: generateFakeFirstName() + " " + generateFakeName(),
               rank: "15/2",
-              club: club.id,
+              club: {
+                id: club.id,
+                name: club.name
+              },
               games: [],
               type: "owned"
           });

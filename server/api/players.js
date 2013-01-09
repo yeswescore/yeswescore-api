@@ -23,7 +23,7 @@ app.get('/v1/players/', function(req, res){
   if (fields)
     query.select(fields.replace(/,/g, " "))
   if (club)
-    query.where("club", club);
+    query.where("club.id", club);
   query.skip(offset)
        .limit(limit)
        .exec(function (err, players) {
@@ -91,19 +91,35 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
   if (req.body.type &&
       DB.Definition.Player.type.enum.indexOf(req.body.type) === -1)
     return app.defaultError(res)("unknown type");
-  // creating a new player
-  var player = new DB.Model.Player({
-      nickname: req.body.nickname || "",
-      name: req.body.name || "",
-      rank: req.body.rank || "",
-      club: req.body.club || null,
-      type: req.body.type || "default"
-  });
-  DB.saveAsynch(player)
-    .then(
-      function (player) { res.end(JSON.stringifyModels(player)) },
-      app.defaultError(res)
-    );
+  // club ? => reading club to get the name
+  var deferred = Q.defer();
+  var club = req.body.club;
+  if (club) {
+    DB.Model.Club.findById(club, function (err, club) {
+      if (err)
+        return deferred.reject(err);
+      deferred.resolve(club);
+    });
+  } else {
+    deferred.resolve(null);
+  }
+  deferred.promise.then(function (club) {
+    // creating a new player
+    var inlinedClub = (club) ? { id: club.id, name: club.name } : null;
+    var player = new DB.Model.Player({
+        nickname: req.body.nickname || "",
+        name: req.body.name || "",
+        rank: req.body.rank || "",
+        club: inlinedClub, // might not work ? 
+        type: req.body.type || "default"
+    });
+    
+    DB.saveAsync(player)
+      .then(
+        function (player) { res.end(JSON.stringifyModels(player)) },
+        app.defaultError(res)
+      );
+  }, app.defaultError(res));
 });
 
 // POST /v1/players/:id/?playerid=...&token=...
@@ -148,7 +164,6 @@ app.post('/v1/players/:id/', express.bodyParser(), function(req, res){
  *  /v1/players/:id/?fields=nickname,name
  *
  * Specific options:
- *  /v1/players/:id/?populate=club (join with collection club)
  */
 app.get('/v1/players/:id/', function(req, res){
   var populate = req.query.populate;
@@ -156,11 +171,9 @@ app.get('/v1/players/:id/', function(req, res){
   
   DB.isAuthenticatedAsync(req.query)
     .then(function (authentifiedPlayer) {
-      var query = DB.Model.Player.findOne({_id:req.params.id});
+      var query = DB.Model.Player.findById(req.params.id);
       if (fields)
          query.select(fields.replace(/,/g, " "))
-      if (populate === "club")
-        query.populate("club", "id name");
       query.exec(function (err, player) {
         if (err)
           return app.defaultError(res)(err);
