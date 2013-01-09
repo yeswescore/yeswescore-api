@@ -161,12 +161,24 @@ describe('dev:players', function(){
             assert(modifiedPlayer.id === player.id, "must be same player");
             assert(modifiedPlayer.name === player.name, "must have the same modified name");
             
-            // reading from DB
+            // reading from DB authentified
             http.getJSON(options, function (p) {
-              assert.isPlayer(p, "must be a player");
+              assert.isPlayerWithToken(p, "must be a player");
               assert(p.id === player.id, "must be same player");
               assert(p.name === player.name, "must have the same modified name");
-              done();
+              
+              var options = {
+                host: Conf["http.host"],
+                port: Conf["http.port"],
+                path: Conf["api.players"]+player.id
+              };
+              // reading from DB unauthentified
+              http.getJSON(options, function (p) {
+                assert.isPlayer(p, "must be a player");
+                assert(p.id === player.id, "must be same player");
+                assert(p.name === player.name, "must have the same modified name");
+                done();
+              });
             });
           });
         });
