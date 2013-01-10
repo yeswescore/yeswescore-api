@@ -35,6 +35,39 @@ app.get('/v1/players/', function(req, res){
 });
 
 /**
+ * Read a player
+ * 
+ * Authentication provide password & token
+ * 
+ * Generic options:
+ *  /v1/players/:id/?fields=nickname,name
+ *
+ * Specific options:
+ */
+app.get('/v1/players/:id', function(req, res){
+  var populate = req.query.populate;
+  var fields = req.query.fields;
+  
+  DB.isAuthenticatedAsync(req.query)
+    .then(function (authentifiedPlayer) {
+      var query = DB.Model.Player.findById(req.params.id);
+      if (fields)
+         query.select(fields.replace(/,/g, " "))
+      query.exec(function (err, player) {
+        if (err)
+          return app.defaultError(res)(err);
+        if (player === null)
+          return app.defaultError(res)("no player found");
+        if (authentifiedPlayer)
+          res.end(JSON.stringifyModels(player, { unhide: [ "token", "password"] }));
+        else
+          res.end(JSON.stringifyModels(player));
+      });
+    },
+    app.defaultError(res, "authentication error"));
+});
+
+/**
  * Autocomplete search in players
  * 
  * Generic options:
@@ -151,39 +184,6 @@ app.post('/v1/players/:id', express.bodyParser(), function(req, res){
             res.end(JSON.stringifyModels(player, { unhide: [ "token", "password"] }));
           },
         app.defaultError(res, "update error"));
-      });
-    },
-    app.defaultError(res, "authentication error"));
-});
-
-/**
- * Autocomplete search in players
- * 
- * Authentication provide password & token
- * 
- * Generic options:
- *  /v1/players/:id/?fields=nickname,name
- *
- * Specific options:
- */
-app.get('/v1/players/:id', function(req, res){
-  var populate = req.query.populate;
-  var fields = req.query.fields;
-  
-  DB.isAuthenticatedAsync(req.query)
-    .then(function (authentifiedPlayer) {
-      var query = DB.Model.Player.findById(req.params.id);
-      if (fields)
-         query.select(fields.replace(/,/g, " "))
-      query.exec(function (err, player) {
-        if (err)
-          return app.defaultError(res)(err);
-        if (player === null)
-          return app.defaultError(res)("no player found");
-        if (authentifiedPlayer)
-          res.end(JSON.stringifyModels(player, { unhide: [ "token", "password"] }));
-        else
-          res.end(JSON.stringifyModels(player));
       });
     },
     app.defaultError(res, "authentication error"));
