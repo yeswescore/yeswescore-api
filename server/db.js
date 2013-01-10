@@ -102,7 +102,8 @@ DB.Definition.Club = {
   date_creation: { type: Date, default: Date.now },
   name: String,
   city: String,
-  _nameSearchable: String
+  // private searchable fields
+  _searchableName: String  // AUTO-FIELD (Club pre save)
 };
 DB.Definition.Player = {
   nickname: String,
@@ -114,13 +115,15 @@ DB.Definition.Player = {
   rank: String,
   club: {
     id: { type: Schema.Types.ObjectId, ref: "Club" },
-    name: String
+    name: String // AUTO-FIELD (Player pre save)
   },
-  games: [ { type: Schema.Types.ObjectId, ref: "Game" } ],
+  games: [ { type: Schema.Types.ObjectId, ref: "Game" } ], // AUTO-FIELD (Game post save)
   owner: { type: Schema.Types.ObjectId, ref: "Player" },
   type: { type: String, enum: [ "default", "owned" ], default: "default" },
-  _nicknameSearchable: String,
-  _nameSearchable: String
+  // private searchable fields
+  _searchableNickname: String,  // AUTO-FIELD (Player pre save)
+  _searchableName: String,      // AUTO-FIELD (Player pre save)
+  _searchableClubName: String   // AUTO-FIELD (Player pre save)
 };
 DB.Definition.Team = {
   players: [ { type: Schema.Types.ObjectId, ref: "Player" } ],
@@ -151,7 +154,12 @@ DB.Definition.Game = {
   sets: String,
   teams: [ DB.Schema.Team ],
   stream: [ DB.Schema.StreamItem ],
-  _citySearchable: String
+  // private searchable fields
+  _searchableCity: String,                                // AUTO-FIELD (Game pre save)
+  _searchablePlayersNames: [ String ],                    // AUTO-FIELD (Player post save) ASYNC
+  _searchablePlayersNickNames: [ String ],                // AUTO-FIELD (Player post save) ASYNC
+  _searchablePlayersClubsIds: [ Schema.Types.ObjectId ]   // AUTO-FIELD (Player post save) ASYNC
+  _searchablePlayersClubsNames: [ String ]                // AUTO-FIELD (Player post save) ASYNC
 };
 
 //
@@ -160,27 +168,118 @@ DB.Definition.Game = {
 DB.Schema.Club = new Schema(DB.Definition.Club);
 DB.Schema.Player = new Schema(DB.Definition.Player);
 DB.Schema.Game = new Schema(DB.Definition.Game);
-// Need to index some fields
+
+// AUTO-FIELDS
 DB.Schema.Club.pre('save', function (next) {
-  if (this.name)
-    this._nameSearchable = this.name.searchable();
-  next();
-});
-DB.Schema.Player.pre('save', function (next) {
-  if (this.nickname)
-    this._nicknameSearchable = this.nickname.searchable();
-  if (this.name)
-    this._nameSearchable = this.name.searchable();
-  next();
-});
-DB.Schema.Game.pre('save', function (next) {
-  if (this.city)
-    this._citySearchable = this.city.searchable();
+  // club._searchableName
+  if (this.isModified('name'))
+    this._searchableName = this.name.searchable();
   next();
 });
 
+DB.Schema.Player.pre('save', function (next) {
+  // infos for post save
+  this._wasModified = [];
+  // player._searchableNickname
+  if (this.isModified('nickname')) {
+    this._wasModified.push('nickname');
+    this._searchableNickname = this.nickname.searchable();
+  }
+  // player._searchableName
+  if (this.isModified('name')) {
+    this._wasModified.push('name');
+    this._searchableName = this.name.searchable();
+  }
+  // player._searchableClubName
+  // player.club.name
+  var self = this;
+  if (this.isModified('club')) {
+    this._wasModified.push('club');
+    DB.Model.Club.findById(this.club.id, function (err, club) {
+      if (err)
+        return next(); // FIXME: log.
+      self.club.name = club.name;
+      self._searchableClubName = club.name.searchable();
+      next();
+    });
+  } else {
+    next();
+  }
+});
+
+DB.Schema.Player.post('save', function (next) {
+  // SUPER HEAVY PLAYER GAMES UPDATE
+  // SHOULD BE DISPATCHED TO A WORKER, ASYNC STUFF.
+  next();
+  if (this._wasModified.indexOf("name") === -1 &&
+      this._wasModified.indexOf("nickname") === -1 &&
+      this._wasModified.indexOf("club") === -1)
+    return;
+
+  // ASYNC STUFF HERE
+  var self = this;
+  setTimeout(function () {
+    // read player games
+    DB.Model.Player.findById(self.id)
+                   .select('games')
+                   .exec(function (err, player) {
+      if (err)
+        return; //FIXME: log
+      DB.Model.Game.find({"teams.players": self.id})
+                   .select("teams")
+                   .populate("teams.players")
+                   .exec(function (err, games) {
+        if (err)
+          return; //FIXME: log
+        // for
+        games.forEach(function (game) {
+          game.markModified("teams");
+          game.save(/* should update _searchable* fields */);
+        });
+      });
+    });
+  }, 10);
+});
+
+DB.Schema.Game.pre('save', function (next) {
+  // infos for post save
+  this._wasModified = [];
+  // game._searchableCity
+  if (this.isModified('city'))
+    this._searchableCity = this.city.searchable();
+  // game._teams
+  if (doc.isModified('teams')) {
+    this._wasModified.push('teams');
+    // reading players from DB.
+    var playersIds = this.teams.reduce(function (p, team) {
+      return p.concat(team.players);
+    }, []);
+    var self = this;
+    DB.Model.Player.find({_id: { $in: playersIds } }, function (err, players) {
+      if (err)
+        return next(); // FIXME: we should log this error.
+      self._searchablePlayersNames = players.map(function (p) { return p.name.searchable() });
+      self._searchablePlayersNickNames = players.map(function (p) { return p.nickname.searchable() });
+      self._searchablePlayersClubsIds = players.filter(function (p) { return p.club && p.club.id })
+                                               .map(function (p) { return p.club.id });
+      self._searchablePlayersClubsNames = players.filter(function (p) { return p.club && p.club.name })
+                                                 .map(function (p) { return p.club.name.searchable() });
+      next();
+    });
+  } else {
+    next();
+  }
+});
+
+DB.Schema.Game.post('save', function (next) {
+  if (this._wasModified.indexOf('teams') === -1)
+    return next();
+  // teams were modified, saving 
+  
+});
+
 // Hidden fields
-var hiddenFields = [ "password", "token"];
+var hiddenFields = ["password", "token"];
 for (var schemaName in DB.Schema) {
   (function (schema) {
     // Adding transform default func

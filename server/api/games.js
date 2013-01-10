@@ -2,167 +2,87 @@ var DB = require("../db.js")
   , express = require("express")
   , app = require("../app.js");
 
-/*
-  * SEARCHING GAMES :
-  * 
-  * json format:
-  * {
-  *   id: string,
-  *    date_creation: string,
-  *    date_start: string
-  *    date_end: string
-  *    pos: { long: float, lat: float },
-  *    country: string,
-  *    city: string,
-  *    sport: string,
-  *    type: string,
-  *    sets: string,
-  *    score: string,
-  *    status: string,
-  *    teams: [
-  *      {
-  *        id: null,
-  *        players: [
-  *          {
-  *            id: string,
-  *            nickname: string,
-  *            name: string,
-  *            rank: string,
-  *            club: {
-  *              id: string,
-  *              name: string
-  *            }
-  *          }
-  *        ]
-  *      },
-  *      {
-  *        id: null,
-  *        players: [
-  *          {
-  *            id: string,
-  *            nickname: string,
-  *            name: string,
-  *            rank: string,
-  *            club: {
-  *              id: string,
-  *              name: string
-  *            }
-  *          }
-  *        ]
-  *      },
-  *    ]
-  * }
-  */
-app.get('/v1/games/', function(req, res){
-  console.log("query="+req.query.q);
-  var games = DB.games, query = req.query.q, club = req.query.club;
 
-  // params de recherche ?
-  if (query) {
-    // query inside games
-    games = games.filter(function (g) {
-      // FIXME: trim, removeDiacritics, security
-      return g.city.removeDiacritics().toLowerCase().indexOf(query) !== -1;
-    });
-    console.log(games.length + " games matchent");
-    // query inside players (couteux!)
-    var players = DB.players.filter(function (p) {
-      return p.nickname.removeDiacritics().toLowerCase().indexOf(query) !== -1 ||
-            p.name.removeDiacritics().toLowerCase().indexOf(query) !== -1;
-    });
-    console.log(players.length + " players matchent");
-    players.forEach(function (player) {
-      player.games.forEach(function (gameId) {
-        // unique, couteux.
-        if (!DB.searchById(games, gameId))
-          games.push(DB.searchById(DB.games, gameId));
-      });
-    });
-  }
-  
-  // filtre par club ?
+/**
+ * Read games
+ * a bit complex due to "populate" option.
+ * 
+ * Generic options:
+ *  /v1/games/?limit=10              (default=10)
+ *  /v1/games/?offset=0              (default=0)
+ *  /v1/games/?fields=nickname,name  (default=)
+ *  /v1/games/?order=date_start      (default=date_start)
+ *
+ * Specific options:
+ *  /v1/games/?club=:id
+ * 
+ * auto-populate teams.players
+ */
+app.get('/v1/games/', function(req, res){
+  var limit = req.query.limit || 10;
+  var offset = req.query.offset || 0;
+  var text = req.query.q;
+  var club = req.query.club;
+  var fields = req.query.fields;
+  var order = req.query.order || "date_start";
+
+  if (!text)
+    return res.end(JSON.stringify([]));
+  text = new RegExp("("+text.searchable().pregQuote()+")");
+  var query = DB.Model.Game.find({});
+  if (fields)
+      query.select(fields.replace(/,/g, " "))
+  // populate
+  var populateCondition = {
+    $or: [
+      { _nicknameSearchable: text },
+      { _nameSearchable: text }
+    ]
+  };
+  // condition on club
   if (club) {
-    games = games.filter(function (game) {
-      var fromClub = false;
-      if (game.teams) {
-        game.teams.forEach(function (team) {
-          if (team) {
-            team.players.forEach(function (playerInfo) {
-              if (playerInfo && playerInfo.id) {
-                var player = DB.searchById(DB.players, playerInfo.id);
-                if (player && player.club &&
-                    player.club.id && club === player.club.id) {
-                  fromClub = true;
-                }
-              }
-            });
-          }
-        });
-      }
-      return fromClub;
-    });
-  }
-  
-  console.log(games.length + ' games');
-  
-  // formating DB data.
-  games = games.map(function (game) {
-    return {
-      id: game.id,
-      date_creation: game.date_creation,
-      date_start: game.date_start,
-      date_end: game.date_end,
-      pos: game.pos,
-      country: game.country,
-      city: game.city,
-      type: game.type,
-      sets: game.sets,
-      score: game.score,
-      sport: game.sport,
-      status: game.status,
-      owner: game.owner,
-      stream: [], // empty
-      teams: game.teams.map(function (teamInfo) {
-        //
-        var players = teamInfo.players.map(function (playerInfo) {
-          if (typeof playerInfo.id !== "undefined") {
-            var player = DB.searchById(DB.players, playerInfo.id);
-            return {
-                id: player.id,
-                nickname: player.nickname,
-                name: player.name,
-                rank: player.rank,
-                club: player.club
-              };
-          }
-          return playerInfo;
-        });
-        //
-        return { 
-          id: null,
-          players: players,
-          points: teamInfo.points
-        };
-      })
+    populateCondition = { $and: [
+        populateCondition,
+        { "club.id": club }
+      ]
     }
+  }
+  query.populate("teams.players", null, populateCondition)
+       .where("_citySearchable", text)
+       .sort(order.replace(/,/, " "))
+       .skip(offset)
+       .limit(limit)
+       .exec(function (err, games) {
+      if (err)
+        return app.defaultError(res)(err);
+      res.end(JSON.stringifyModels(games));
   });
-  // 
-  var body = JSON.stringify(games);
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.end(body);
 });
 
-// searching a specific game
-// a bit complex due to "populate" option.
+
+/**
+ * Read a game
+ * a bit complex due to "populate" option.
+ * 
+ * Generic options:
+ *  /v1/games/:id/?fields=nickname,name
+ *
+ * Specific options:
+ *  /v1/games/:id/?populate=team.players,team.players.club
+ */
 app.get('/v1/games/:id', function(req, res){
-  DB.Model.Game.findOne({_id:req.params.id})
-               .exec(function (err, game) {
+  var populate = req.query.populate;
+  var fields = req.query.fields;
+  
+  var query = DB.Model.Game.findOne({_id:req.params.id});
+  if (fields)
+      query.select(fields.replace(/,/g, " "))
+  query.exec(function (err, game) {
     if (err)
       return app.defaultError(res)(err);
     if (game === null)
       return app.defaultError(res)("no game found");
     // must populate manually
-    var populate = req.query.populate;
     var populatePaths = (typeof populate === "string") ? populate.split(",") : [];
     if (populatePaths.indexOf("teams.players") === -1)
       return res.end(JSON.stringifyModels(game));
