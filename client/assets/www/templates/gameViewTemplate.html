@@ -5,152 +5,36 @@
 
 <div data-role="content">
 
-<%
-team1_set1 = '&nbsp;';
-team1_set2 = '&nbsp;';
-team1_set3 = '&nbsp;';
-
-team2_set1 = '&nbsp;';
-team2_set2 = '&nbsp;';
-team2_set3 = '&nbsp;';
-
-
-if (game.sets !== null ) {
-	if (game.sets.indexOf(';')!=-1) { 
-	scoreboard = game.sets.split(';');
-	
-		if (scoreboard.length==2 || scoreboard.length==3) 
-		{
-			scoreboard1 = scoreboard[0].split('/');
-			team1_set1 = scoreboard1[0];
-			team2_set1 = scoreboard1[1];
-			
-			scoreboard2 = scoreboard[1].split('/');
-			team1_set2 = scoreboard2[0];
-			team2_set2 = scoreboard2[1];
-				
-		}
-		if (scoreboard.length==3) 
-		{
-			scoreboard3 = scoreboard[2].split('/');
-			team1_set3 = scoreboard3[0];
-			team2_set3 = scoreboard3[1];	
-		}
-	}
-	// 1 set
-	else 
-	{
-			if (game.sets.indexOf('/')!=-1) { 
-				
-				scoreboard1 = game.sets.split('/');
-				team1_set1 = scoreboard1[0];
-				team2_set1 = scoreboard1[1];
-				
-			}
-	
-	}
-}
-%>
-   
-<div class="ui-body ui-body-a">
-
-	<div class="ui-grid-d">
-		<div class="ui-block-a">
-			<a href="#players/<%= game.teams[0].players[0].id %>" data-role="text" style="color: yellow">
-			<%= game.teams[0].players[0].name %>		
-			</a> 
-			<div id="var_service1"></div>	
-		</div>
-		<div class="ui-block-b" style="color: red" id="team1_points_div"><%= game.teams[0].points %></div>
-		<div class="ui-block-c" style="text-align:center;border: 1px solid #FFF" id="team1_set1_div"><%= team1_set1 %></div>
-		<div class="ui-block-d" style="text-align:center;border: 1px solid #FFF" id="team1_set2_div"><%= team1_set2 %></div>
-		<div class="ui-block-e" style="text-align:center;border: 1px solid #FFF" id="team1_set3_div"><%= team1_set3 %></div>
-	</div>
-	<!-- /grid-a -->
-
-	<div class="ui-grid-d">
-		<div class="ui-block-a">&nbsp;</div>
-		<div class="ui-block-b">
-			<font style="white-space: normal; font-size: small">POINTS</font>
-		</div>
-		<div class="ui-block-c" style="text-align:center;">
-			<font style="white-space:normal;font-size: small">1</font>
-		</div>
-		<div class="ui-block-d" style="text-align:center;">
-			<font style="white-space:normal;font-size: small">2</font>
-		</div>
-		<div class="ui-block-e" style="text-align:center;">
-			<font style="white-space:normal;font-size: small">3</font>
-		</div>
-	</div>
-
-	<div class="ui-grid-d">
-		<div class="ui-block-a">
-			<a href="#players/<%= game.teams[1].players[0].id %>" data-role="text" style="color: yellow">
-			<%= game.teams[1].players[0].name %>		
-			</a>
-			<div id="var_service2"></div>	
-		</div>
-		<div class="ui-block-b" style="color: red" id="team2_points_div"><%= game.teams[1].points %></div>
-		<div class="ui-block-c" style="text-align:center;border: 1px solid #FFF" id="team2_set1_div"><%= team2_set1 %></div>
-		<div class="ui-block-d" style="text-align:center;border: 1px solid #FFF" id="team2_set2_div"><%= team2_set2 %></div>
-		<div class="ui-block-e" style="text-align:center;border: 1px solid #FFF" id="team2_set3_div"><%= team2_set3 %></div>
-	</div>
-	<!-- /grid-a -->
-	
-	<div class="ui-grid-a">
-		<div class="ui-block-a">
-		
-		</div>
-		<div class="ui-block-b">
-		
-		</div>
-	</div>	
-
-</div>
-
+<div id="displayViewScoreBoard" data-role="listview"></div>
 <%
 //if (game.owner === Owner.id) 
 //{
 %>
+<br/><br/>
 <form id="frmScore">
-<div align="center">
-		<div data-role="fieldcontain">
+<div class="ui-grid-a">
+	<div class="ui-block-a">
+		<h3 style="margin-top:20px;text-align:right;">Serveur : </h3>
+	</div>
+	<div class="ui-block-b">
+	
 		<fieldset data-role="controlgroup" data-type="horizontal">
 		        <input type="radio" name="team_selected" id="team1_selected" value="1" />
 		        <label for="team1_selected"><%= game.teams[0].players[0].name %></label>
 		        <input type="radio" name="team_selected" id="team2_selected" value="2" checked="checked"/>
 		        <label for="team2_selected"><%= game.teams[1].players[0].name %></label>
 		    </fieldset>
-		</div>
+	
+	</div>
 </div>
 <div class="ui-grid-a">
-	<div class="ui-block-a"><a id="setPlusSetButton" data-role="button">Set +</a></div>
-	<div class="ui-block-b"><a id="setMinusSetButton" data-role="button">Set -</a></div>
+	<div class="ui-block-a"><a data-theme="g" id="setPointWinButton" data-role="button">Serveur Marque</a></div>
+	<div class="ui-block-b"><a data-theme="f" id="setPointErrorButton" data-role="button">Serveur Faute</a></div>
 </div>
 <div class="ui-grid-a">
-	<div class="ui-block-a"><a id="setPlusPointButton" data-role="button">Point +</a></div>
-	<div class="ui-block-b"><a id="setMinusPointButton" data-role="button">Point -</a></div>
+	<div class="ui-block-a"><a id="endButton" data-role="button">Terminer la partie</a></div>
+	<div class="ui-block-b"><a id="cancelButton" data-role="button">Annuler la dernière action</a></div>
 </div>
-<div class="ui-grid-a">
-	<div class="ui-block-a"><a id="endButton" data-role="button">Terminer</a></div>
-	<div class="ui-block-b"><a id="cancelButton" data-role="button">Annuler</a></div>
-</div>
-
-<input type="hidden" id="game_id" value="<%= game.id %>"/>
-<input type="hidden" id="team1_id" value="<%= game.teams[0].players[0].id %>"/>
-<input type="hidden" id="team1_points" value="<%= game.teams[0].points %>"/>
-<input type="hidden" id="team1_set1" value="<%= team1_set1 %>"/>
-<input type="hidden" id="team1_set2" value="<%= team1_set2 %>"/>
-<input type="hidden" id="team1_set3" value="<%= team1_set3 %>"/>
-<input type="hidden" id="team2_id" value="<%= game.teams[1].players[0].id %>" />
-<input type="hidden" id="team2_points" value="<%= game.teams[1].points %>"/>
-<input type="hidden" id="team2_set1" value="<%= team2_set1 %>"/>
-<input type="hidden" id="team2_set2" value="<%= team2_set2 %>"/>
-<input type="hidden" id="team2_set3" value="<%= team2_set3 %>"/>
-<!--  BUG je prend owner 993a8c9ab5713eb0ba4e70b1 et token 3135411 de la partie 64ff2998c7520d7ef9cf07d8 -->
-<input type="hidden" id="playerid" value="<%= Owner.id %>" />
-<input type="hidden" id="token" value="<%= Owner.token %>" />
 	
 </form>
 <%
