@@ -158,7 +158,7 @@ DB.Definition.Game = {
   _searchableCity: String,                                // AUTO-FIELD (Game pre save)
   _searchablePlayersNames: [ String ],                    // AUTO-FIELD (Player post save) ASYNC
   _searchablePlayersNickNames: [ String ],                // AUTO-FIELD (Player post save) ASYNC
-  _searchablePlayersClubsIds: [ Schema.Types.ObjectId ]   // AUTO-FIELD (Player post save) ASYNC
+  _searchablePlayersClubsIds: [ Schema.Types.ObjectId ],  // AUTO-FIELD (Player post save) ASYNC
   _searchablePlayersClubsNames: [ String ]                // AUTO-FIELD (Player post save) ASYNC
 };
 
@@ -177,7 +177,15 @@ DB.Schema.Club.pre('save', function (next) {
   next();
 });
 
+/*
+ * Before saving a player we might need to 
+ *  - update searchableNickname
+ *  - update searchableName
+ *  - update searchableClubName
+ */
 DB.Schema.Player.pre('save', function (next) {
+  if (this.isModified("games") && this.games.length !== 0)
+    throw "should not save games "+JSON.stringify(this);
   // infos for post save
   this._wasModified = [];
   // player._searchableNickname
@@ -207,69 +215,90 @@ DB.Schema.Player.pre('save', function (next) {
   }
 });
 
-DB.Schema.Player.post('save', function (next) {
+//
+// Optim: post('exec', ...) => 
+//     save in _dbValue = [ nickname, name, ... ]
+//  => prevent populate :
+//   - find(...).exec(
+//       $pull: oldPlayerName
+//   )
+//
+
+/*
+ * After saving a player we might need to 
+ *  - update Game searchableNickname
+ *  - update Game searchableName
+ *  - update Game searchableClubName
+ *  - update Game searchableClubId
+ */
+DB.Schema.Player.post('save', function () {
   // SUPER HEAVY PLAYER GAMES UPDATE
   // SHOULD BE DISPATCHED TO A WORKER, ASYNC STUFF.
-  next();
   if (this._wasModified.indexOf("name") === -1 &&
       this._wasModified.indexOf("nickname") === -1 &&
       this._wasModified.indexOf("club") === -1)
     return;
 
   // ASYNC STUFF HERE
-  var self = this;
-  var id = self.id;
-  setTimeout(function postSaveUpdateSearchableContent() {
-    // maybe we should use player.games
-    DB.Model.Game.find({"teams.players": id})
-                  .select("teams")
-                  .populate("teams.players")
-                  .exec(function (err, games) {
-      if (err)
-        return; //FIXME: log
-      // for
-      games.forEach(function postSaveUpdateForEachGame(game) {
-        //
-        if (this._wasModified.indexOf("name") !== -1) {
-          game._searchablePlayersNames = game.teams.reduce(function (p, team) {
-            return p.concat(team.players.map(function (player) {
-              return player.name.searchable();
-            }));
-          }, []);
-        }
-        //
-        if (this._wasModified.indexOf("nickname") !== -1) {
-          game._searchablePlayersNickNames = game.teams.reduce(function (p, team) {
-            return p.concat(team.players.map(function (player) {
-              return player.nickname.searchable();
-            }));
-          }, []);
-        }
-        //
-        if (this._wasModified.indexOf("club") !== -1) {
-          game._searchablePlayersClubsIds = game.teams.reduce(function (p, team) {
-            return p.concat(team.players.filter(function (player) {
-              return player.club && player.club.id;
-            }).map(function (player) {
-              return player.club.id;
-            }));
-          }, []);
-          
-          game._searchablePlayersClubsNames = game.teams.reduce(function (p, team) {
-            return p.concat(team.players.filter(function (player) {
-              return player.club && player.club.name;
-            }).map(function (player) {
-              return player.club.name.searchable;
-            }));
-          }, []);
-        }
-        // When ? we don't know & we don't mind *yet* :)
-        game.save();
-      });
+  // maybe we should use player.games
+  DB.Model.Game.find({"teams.players": this.id})
+                .select("teams")
+                .populate("teams.players")
+                .exec(function (err, games) {
+    if (err)
+      return; //FIXME: log
+    // for
+    games.forEach(function postSaveUpdateForEachGame(game) {
+      //
+      if (this._wasModified.indexOf("name") !== -1) {
+        game._searchablePlayersNames = game.teams.reduce(function (p, team) {
+          return p.concat(team.players.map(function (player) {
+            return player.name.searchable();
+          }));
+        }, []);
+      }
+      //
+      if (this._wasModified.indexOf("nickname") !== -1) {
+        game._searchablePlayersNickNames = game.teams.reduce(function (p, team) {
+          return p.concat(team.players.map(function (player) {
+            return player.nickname.searchable();
+          }));
+        }, []);
+      }
+      //
+      if (this._wasModified.indexOf("club") !== -1) {
+        game._searchablePlayersClubsIds = game.teams.reduce(function (p, team) {
+          return p.concat(team.players.filter(function (player) {
+            return player.club && player.club.id;
+          }).map(function (player) {
+            return player.club.id;
+          }));
+        }, []);
+        
+        game._searchablePlayersClubsNames = game.teams.reduce(function (p, team) {
+          return p.concat(team.players.filter(function (player) {
+            return player.club && player.club.name;
+          }).map(function (player) {
+            return player.club.name.searchable;
+          }));
+        }, []);
+      }
+      // When ? we don't know & we don't mind *yet* :)
+      game.save();
     });
-  }, 10);
+  });
 });
 
+/*
+ * Before saving a game we might need to 
+ *  - update searchableNickname   (teams were modified)
+ *  - update searchableName
+ *  - update searchableClubName
+ *  - update searchableClubIds
+ * 
+ * FIXME: performance: need to read teams.players ?
+ * 
+ */
 DB.Schema.Game.pre('save', function (next) {
   // infos for post save
   this._wasModified = [];
@@ -277,62 +306,84 @@ DB.Schema.Game.pre('save', function (next) {
   if (this.isModified('city'))
     this._searchableCity = this.city.searchable();
   // game._teams
-  if (doc.isModified('teams')) {
+  if (this.isModified('teams')) {
     this._wasModified.push('teams');
     // we need first to read the players from DB, to get the old "players"
     //  and be able to "remove" potentially added players
-    DB.Model.Game.findById(this.id).select("teams.players").exec(function (err, oldGame) {
+    DB.Model.Game.findById(this.id)
+                 .select("teams.players")
+                 .exec(function (err, oldGame) {
       if (err)
         return next(); // FIXME: we should log this error.
       // reading players from DB.
       this._newPlayersIds = this.teams.reduce(function (p, team) {
         return p.concat(team.players);
       }, []);
-      this._oldPlayersIds = oldGame.teams.reduce(function (p, team) {
-        return p.concat(team.players);
-      }, []);
-      var self = this;
-      DB.Model.Player.find({_id: { $in: playersIds } }, function (err, players) {
+      if (oldGame) {
+        this._oldPlayersIds = oldGame.teams.reduce(function (p, team) {
+          return p.concat(team.players);
+        }, []);
+      } else {
+        this._oldPlayersIds = []; // might be no old game (creation).
+      }
+      // players should exist in db
+      DB.Model.Player.find({_id: { $in: this._newPlayersIds } }, function (err, players) {
         if (err)
           return next(); // FIXME: we should log this error.
-        self._searchablePlayersNames = players.map(function (p) { return p.name.searchable() });
-        self._searchablePlayersNickNames = players.map(function (p) { return p.nickname.searchable() });
-        self._searchablePlayersClubsIds = players.filter(function (p) { return p.club && p.club.id })
+        if (!players)
+          return next(); // FIXME: we should log this error.
+        this._searchablePlayersNames = players.map(function (p) { return p.name.searchable() });
+        this._searchablePlayersNickNames = players.map(function (p) { return p.nickname.searchable() });
+        this._searchablePlayersClubsIds = players.filter(function (p) { return p.club && p.club.id })
                                                 .map(function (p) { return p.club.id });
-        self._searchablePlayersClubsNames = players.filter(function (p) { return p.club && p.club.name })
+        this._searchablePlayersClubsNames = players.filter(function (p) { return p.club && p.club.name })
                                                   .map(function (p) { return p.club.name.searchable() });
         next();
-      });
-    });
+      }.bind(this));
+    }.bind(this));
   } else {
     next();
   }
 });
 
-DB.Schema.Game.post('save', function (next) {
+/*
+ * After saving a game we might need to 
+ *  - update Player games
+ * 
+ * FIXME: update Player.games sync or async ?
+ */
+DB.Schema.Game.post('save', function () {
   if (this._wasModified.indexOf('teams') === -1)
-    return next();
+    return;
   
-  // teams were modified, saving 'nightmare'
-  //   we need to update players.games
-  setTimeout(function postSaveUpdatePlayersGames() {
-  var self = this;
-  var id = self.id;
-  var removedPlayers = this._oldPlayersIds.filter(function (oldPlayerId) {
-    return self._newPlayersIds.indexOf(oldPlayerId) === -1;
-  });
-  var addedPlayers = this._newPlayersIds.filter(function (newPlayerId) {
-    return self._oldPlayersIds.indexOf(newPlayerId) === -1;
-  });
-  // should we do unique ? or should we let do player A vs player A ?
-  removedPlayers.forEach(function (playerId) {
-    DB.Model.Player.findById(playerId).select("games").exec(function (err, player) {
-      if (err)
-        return; //FIXME: log (skip)
-      player.games.indexOf(id)
+  // teams were modified, we need to update players.games
+  var removedPlayersFilter =
+    this._oldPlayersIds.exclude(this._newPlayersIds)
+                       .map(function (oldPlayerId) {
+      return { _id: oldPlayerId };
     });
-  });
-  })
+  var addedPlayersFilter =
+    this._newPlayersIds.exclude(this._oldPlayersIds)
+                       .map(function (newPlayerId) {
+      return { _id: newPlayerId };
+    });
+  // should we do unique ? or should we let do player A vs player A ?
+  if (removedPlayersFilter.length) {
+    DB.Model.Player.update(
+      { $or: removedPlayersFilter }, // search filter
+      { $pull: { "games" : this.id } },
+      { multi: true },
+      function (err) { /* FIXME: nothing yet, but should test&log err */  }
+    );
+  }
+  if (addedPlayersFilter.length) {
+    DB.Model.Player.update(
+      { $or: addedPlayersFilter }, // search filter
+      { $pull: { "games" : this.id } },
+      { multi: true },
+      function (err) { /* FIXME: nothing yet, but should test&log err */  }
+    );
+  }
 });
 
 // Hidden fields
@@ -570,15 +621,6 @@ var generatePlayersAsync = function () {
    });
 };
 
-var testPlayersAsync = function () {
-  DB.Model.Player.findOne({}).exec(function (err, player) {
-    player.games.push(player);
-    player.save(function (err, player) {
-      console.log(JSON.stringify(player.toObject({virtual:true})));
-    });
-  });
-};
-
 var generateGamesAsync = function () {
   // generating 20 games
   var deferred = Q.defer();
@@ -697,21 +739,15 @@ var generateGamesAsync = function () {
       DB.saveAsync(games).then(function (games) {
         games.forEach(function (game, i) {
           // adding games to players
-          if (players[i*2].id === game.teams[0].players[0])
-            players[i*2].games.push(game.id);
-          else
+          if (players[i*2].id !== game.teams[0].players[0])
             owned[i*2].owner = game.owner;
-          if (players[i*2+1].id === game.teams[1].players[0])
-            players[i*2+1].games.push(game.id);
-          else
+          if (players[i*2+1].id !== game.teams[1].players[0])
             owned[i*2+1].owner = game.owner;
         });
         
         // saving players
-        DB.saveAsync(players).then(function () {
-          DB.saveAsync(owned).then(function () {
-            deferred.resolve();
-          }, function (e) { deferred.reject(); console.log('error ' + e); } );
+        DB.saveAsync(owned).then(function () {
+          deferred.resolve();
         }, function (e) { deferred.reject(); console.log('error ' + e); } );
       });
     });
