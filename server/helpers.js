@@ -37,6 +37,17 @@
     }
   );
   
+  Object.defineProperty(
+    Array.prototype,
+    "exclude",
+    {
+      enumerable: false,
+      value: function(a) {
+        return this.filter(function(i) {return !(a.indexOf(i) > -1)})
+      }
+    }
+  );
+  
   // String
   // @see http://lehelk.com/2011/05/06/script-to-remove-diacritics/
   // evaluated once; using closure.
