@@ -151,6 +151,7 @@ DB.Definition.Game = {
   city: String,
   sport: { type: String, enum: ["tennis"] },
   type: { type: String, enum: [ "singles", "doubles" ] },
+  status: { type: String, enum: [ "ongoing", "finished" ], default: "ongoing" },
   sets: String,
   teams: [ DB.Schema.Team ],
   stream: [ DB.Schema.StreamItem ],
@@ -649,7 +650,7 @@ var generateGamesAsync = function () {
           sets: "",
           score: "",
           sport: "tennis",
-          status: "unknown",
+          status: "ongoing",
           teams: [ ],
           stream: [ ]
         });
