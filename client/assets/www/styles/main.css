@@ -1,0 +1,50 @@
+/* Fix BUG footer on Android 2.3.5 */
+.footer {
+position: fixed;
+z-index: 10;
+bottom: 0;
+width: 100%;
+}
+
+.label-info {
+	color:red;
+}
+
+.completer .results {
+    margin: 10px 0 0;
+    padding: 0;
+}
+
+.completer .results li {
+    font-size: 1.4em;
+    color: #5D63B3;
+    font-weight: bold;
+    background-color: #D5D7F5;
+    padding: 4px;
+    margin: 0;
+    border-bottom: 1px solid #B6B9E3;
+    cursor: pointer;
+}
+
+.completer .results li:last-child {
+    border-bottom: none;
+}
+
+.completer .results li:hover {
+    text-decoration: underline;
+}
+
+.completer .selections {
+    padding: 0;
+    margin: 13px 0;
+    overflow: auto;
+}
+
+.completer .selections li {
+    background: #FCFBA2;
+    float: left;
+    padding: 1px 2px;
+    color: #333;
+    font-size: 1.2em;
+    margin-right: 10px;
+}

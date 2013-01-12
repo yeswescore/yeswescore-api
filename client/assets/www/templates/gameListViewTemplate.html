@@ -1,0 +1,20 @@
+<% if(games.length==0) { %>
+        <li><p>Aucun resultat <%= query %></p></li>
+<% } %> 
+
+<%
+    for (var i = 0; i < games.length; i++) {
+    	
+    	game = games[i];
+    
+    %>
+        <li>
+        <a href="#games/<%= game.id %>" data-transition="slide">
+        <%= game.city %> : <%= game.teams[0].players[0].name %> ( <%= game.teams[0].players[0].rank %> ) vs <%= game.teams[1].players[0].name %> ( <%= game.teams[1].players[0].rank %> )
+		<br/>
+		Score : <%= game.score %>&nbsp;&nbsp;&nbsp;Sets : <%= game.sets %>&nbsp;&nbsp;&nbsp;Statut : <%= game.status %>
+        </a>
+        </li>
+    <%
+        }
+%>

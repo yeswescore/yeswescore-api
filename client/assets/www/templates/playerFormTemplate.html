@@ -1,0 +1,101 @@
+<div data-role="header" data-theme="b" data-position="fixed">
+    <a href="#" data-transition="slide" data-reverse="true" data-icon="back" >
+    Back</a>
+    <h1>zeScore</h1>
+</div><!-- /header -->
+
+<div data-role="content">
+   
+<form id="frmAddPlayer" class="ui-body ui-body-b ui-corner-all">
+
+  <span class="success label label-info hide" style="color:red"></span>	
+
+  <div class="control-group">
+    <label class="control-label" for="name">Name *</label>
+    <div class="controls">
+      <input type="text" id="name" name="name" placeholder="Nom Complet" class='input-xlarge' value="<%= player.name %>"/>
+      <span class="name_error label label-info hide"></span>
+    </div>
+  </div>
+  
+  <div class="control-group">
+    <label class="control-label" for="nickname">Nickname *</label>
+    <div class="controls">
+      <input type="text" id="nickname" name="nickname" placeholder="Pseudo" class='input-xlarge' value="<%= player.nickname %>"/>
+      <span class="nickname_error label label-info hide"></span>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <label class="control-label" for="mail">Mail *</label>
+    <div class="controls">
+      <input type="text" id="mail" name="mail" placeholder="Mail" class='input-xlarge' value=""/>
+      <span class="mail_error label label-info hide"></span>
+    </div>
+  </div>
+
+  <div class="control-group">
+    <label class="control-label" for="rank">Rank</label>
+    <div class="controls">
+      <input type="text" id="rank" name="rank" placeholder="Classement" class='input-xlarge' value="<%= player.rank %>"/>
+      <span class="rank_error label label-info hide"></span>
+    </div>
+  </div>
+  
+  <div class="control-group">
+    <label class="control-label" for="password">Password</label>
+    <div class="controls">
+      <input type="text" id="password" name="password" placeholder="Password" class='input-xlarge' value="<%= player.password %>"/>
+      <span class="password_error label label-info hide"></span>
+    </div>
+  </div>    
+  
+  <div class="control-group">
+    <label class="control-label" for="licenceid">ID de la licence</label>
+    <div class="controls">
+      <input type="text" id="licenceid" name="licenceid" placeholder="Identifiant de la licence" class='input-xlarge' value=""/>
+      <span class="licenceid_error label label-info hide"></span>
+    </div>
+  </div>    
+  
+  	<!-- FIXME: Find club_id in Ajax -->
+  <div class="control-group">
+    <label class="control-label" for="club">Club</label>
+    <div class="controls">
+      <input type="text" id="club" name="club" placeholder="Nom du Club" class='input-xlarge' value=""/>
+      <ul id="suggestions" data-role="listview" data-inset="true"></ul>
+      <span class="club_error label label-info hide"></span>
+    </div>
+  </div>  
+
+  <div class="control-group">
+    <label class="control-label" for="clubid">ID du Club</label>
+    <div class="controls">
+      <input type="text" id="clubid" name="clubid" placeholder="Identifiant du Club" class='input-xlarge' value=""/>
+      <span class="clubid_error label label-info hide"></span>
+    </div>
+  </div>      
+      
+  <div class="control-group">
+    <div class="controls">
+      <button type="submit" value="Save" class="button">Save</button>
+    </div>
+  </div>
+  
+  	<input type="hidden" id="id" value="<%= playerid %>" class="input" />
+	<input type="hidden" id="token" value="<%= token %>" class="input" />
+  
+</form>
+   
+   
+</div><!-- /content -->
+
+<div data-role="footer" data-theme="b" data-position="fixed">
+   <div data-role="navbar">
+	<ul>
+		<li><a href="#">Suivre</a></li>
+		<li><a href="#games/add" class="ui-btn-active ui-state-persist">Diffuser</a></li>
+		<li><a href="#account">Mon Compte</a></li>
+	</ul>				
+	</div><!-- /navbar -->
+</div>
