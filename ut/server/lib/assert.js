@@ -62,8 +62,7 @@ assert.isUndefinedOrDate = function (s, m) {
 };
 
 assert.isUndefinedOrId = function (s, m) {
-  if (typeof s === "undefined")
-    return;
+  if (typeof s === "undefined") return;
   assert.isId(s, m);
 };
 
@@ -72,12 +71,14 @@ assert.isDate = function (s, m) {
 };
 
 assert.isPos = function (s, m) {
-  assert(typeof s === "object" || s === null, m+" >isPos: must be an object");
-  if (s) {
-    assert(typeof s.long !== "undefined", m+" >isPos: must have { pos: ... } attribute");
-    assert(typeof s.lat !== "undefined", m+" >isPos: must have { lat: ... } attribute");
-  }
+  assert(Array.isArray(s), m+" >isPos: must be an array (index 2d)");
 };
+
+assert.isUndefinedOrPos = function (s, m) {
+  if (typeof s === "undefined") return;
+  assert.isPos(s, m);
+};
+
 
 assert.allowedFields = function (o, fields, m) {
   for (var i in o) {
@@ -199,17 +200,17 @@ assert.isGame = function (game) {
   assert.isId(game.owner, "isGame: owner must be an hexa string");
   assert.isDate(game.date_creation, "isGame: date_creation must be a date");
   assert.isDate(game.date_start, "isGame: date_start must be a date");
-  assert.isDate(game.date_end, "isGame: date_end must be a date");
-  assert.isPos(game.pos, "isGame: pos must be a pos");
+  assert.isUndefinedOrDate(game.date_end, "isGame: date_end must be a date");
+  assert.isUndefinedOrPos(game.pos, "isGame: pos must be a pos");
   assert.isArray(game.stream, "isGame: stream must be an array");
   // 
-  assert.isNullableString(game.country, "isGame: country");
-  assert.isNullableString(game.city, "isGame: city");
-  assert.isNullableString(game.type, "isGame: type");
-  assert.isNullableString(game.sets, "isGame: sets");
-  assert.isNullableString(game.score, "isGame: score");
-  assert.isNullableString(game.sport, "isGame: sport");
-  assert.isNullableString(game.status, "isGame: status");
+  assert.isUndefinedOrString(game.country, "isGame: country");
+  assert.isUndefinedOrString(game.city, "isGame: city");
+  assert.isUndefinedOrString(game.type, "isGame: type");
+  assert.isUndefinedOrString(game.sets, "isGame: sets");
+  assert.isUndefinedOrString(game.score, "isGame: score");
+  assert.isString(game.sport, "isGame: sport");
+  assert.isUndefinedOrString(game.status, "isGame: status");
   //
   assert(game.type === "singles", "isGame: game.type can only be singles");
   assert(game.sport === "tennis", "isGame: game.sport can only be tennis");
