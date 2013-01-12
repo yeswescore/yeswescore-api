@@ -20,11 +20,11 @@ describe('dev:games', function(){
         var options = {
           host: Conf["http.host"],
           port: Conf["http.port"],
-          path: Conf["api.games"]+randomgame.id
+          path: Conf["api.games"]+randomgame._id
         };
         http.getJSON(options, function (game) {
           assert.isGame(game, "must be a game");
-          assert(game.id === randomgame.id, "must be same game");
+          assert(game.id === randomgame._id, "must be same game");
           done();
         });
       });

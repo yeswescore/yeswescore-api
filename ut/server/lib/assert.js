@@ -236,35 +236,19 @@ assert.isGame = function (game) {
 };
 
 /**
- * accepted teamplayer object
-  {
-    id: "b79f6e2c83429a8d37a99660"
-  }
-  or
-  {
-    name: "..."
-  }
-*/
-assert.isTeamPlayer = function (o, m) {
-  assert.isObject(o, "isTeamPlayer: must be an object");
-  assert(typeof o.id === "string" || typeof o.name === "string", "isTeamPlayer: must have 'id' or 'name' field");
-  if (typeof o.id !== "undefined")
-    assert.isId(o.id, "isTeamPlayer: o.id must be an hexa id string");
-};
-
-/**
  * accepted gameteam object
   {
     id: null,
-    players: [ teamplayer, teamplayer, ... ]
+    players: [ id, id, ... ]
   }
 */
 assert.isGameTeam = function (o, m) {
   assert.isObject(o, "isGameTeam: must be an object");
-  assert(o.id === null, "isGameTeam: id must be null (no team yet)");
   assert.isArray(o.players, "isGameTeam: players must be an array");
   assert(o.players.length === 1, "isGameTeam: only singles are handle yet");
-  assert.isTeamPlayer(o.players[0], "isGameTeam: team.players[0] must be a teamplayer");
+  o.players.forEach(function (playerId) {
+    assert.isId(playerId, "isGameTeam: team.players[*] mut be player ids");
+  });
 };
 
 /**
@@ -281,12 +265,13 @@ assert.isStreamObject = function (o, m) {
   assert.isObject(o, "isStreamObject: o must be an object");
   assert(typeof o.id !== "undefined", "isStreamObject: streamObject.id cannot be undefined");
   assert(typeof o.type !== "undefined", "isStreamObject: streamObject.type cannot be undefined");
-  assert(typeof o.date !== "undefined", "isStreamObject: streamObject.date cannot be undefined");
+  assert(typeof o.date_creation !== "undefined", "isStreamObject: streamObject.date_creation cannot be undefined");
   assert(typeof o.owner !== "undefined", "isStreamObject: streamObject.owner cannot be undefined");
   assert(typeof o.data !== "undefined", "isStreamObject: streamObject.data cannot be undefined");
   assert.isId(o.id, "isStreamObject: streamObject.id must be an hexa string");
   assert.isId(o.owner, "isStreamObject: streamObject.owner must be an hexa string");
-  assert.isDate(o.date, "isStreamObject: streamObject.date must be a date");
+  assert.isDate(o.date_creation, "isStreamObject: streamObject.date_creation must be a date");
+  assert.isUndefinedOrDate(o.date_modification, "isStreamObject: streamObject.date_modification must be a date");
   assert.isNotEmpty(o.type, "isStreamObject: streamObject.type cannot be empty");
   assert.isObject(o.data, "isStreamObject: streamObject.data must be an object");
 };
