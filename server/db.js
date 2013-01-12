@@ -218,24 +218,53 @@ DB.Schema.Player.post('save', function (next) {
 
   // ASYNC STUFF HERE
   var self = this;
-  setTimeout(function () {
-    // read player games
-    DB.Model.Player.findById(self.id)
-                   .select('games')
-                   .exec(function (err, player) {
+  var id = self.id;
+  setTimeout(function postSaveUpdateSearchableContent() {
+    // maybe we should use player.games
+    DB.Model.Game.find({"teams.players": id})
+                  .select("teams")
+                  .populate("teams.players")
+                  .exec(function (err, games) {
       if (err)
         return; //FIXME: log
-      DB.Model.Game.find({"teams.players": self.id})
-                   .select("teams")
-                   .populate("teams.players")
-                   .exec(function (err, games) {
-        if (err)
-          return; //FIXME: log
-        // for
-        games.forEach(function (game) {
-          game.markModified("teams");
-          game.save(/* should update _searchable* fields */);
-        });
+      // for
+      games.forEach(function postSaveUpdateForEachGame(game) {
+        //
+        if (this._wasModified.indexOf("name") !== -1) {
+          game._searchablePlayersNames = game.teams.reduce(function (p, team) {
+            return p.concat(team.players.map(function (player) {
+              return player.name.searchable();
+            }));
+          }, []);
+        }
+        //
+        if (this._wasModified.indexOf("nickname") !== -1) {
+          game._searchablePlayersNickNames = game.teams.reduce(function (p, team) {
+            return p.concat(team.players.map(function (player) {
+              return player.nickname.searchable();
+            }));
+          }, []);
+        }
+        //
+        if (this._wasModified.indexOf("club") !== -1) {
+          game._searchablePlayersClubsIds = game.teams.reduce(function (p, team) {
+            return p.concat(team.players.filter(function (player) {
+              return player.club && player.club.id;
+            }).map(function (player) {
+              return player.club.id;
+            }));
+          }, []);
+          
+          game._searchablePlayersClubsNames = game.teams.reduce(function (p, team) {
+            return p.concat(team.players.filter(function (player) {
+              return player.club && player.club.name;
+            }).map(function (player) {
+              return player.club.name.searchable;
+            }));
+          }, []);
+        }
+        // When ? we don't know & we don't mind *yet* :)
+        game.save();
       });
     });
   }, 10);
@@ -250,21 +279,30 @@ DB.Schema.Game.pre('save', function (next) {
   // game._teams
   if (doc.isModified('teams')) {
     this._wasModified.push('teams');
-    // reading players from DB.
-    var playersIds = this.teams.reduce(function (p, team) {
-      return p.concat(team.players);
-    }, []);
-    var self = this;
-    DB.Model.Player.find({_id: { $in: playersIds } }, function (err, players) {
+    // we need first to read the players from DB, to get the old "players"
+    //  and be able to "remove" potentially added players
+    DB.Model.Game.findById(this.id).select("teams.players").exec(function (err, oldGame) {
       if (err)
         return next(); // FIXME: we should log this error.
-      self._searchablePlayersNames = players.map(function (p) { return p.name.searchable() });
-      self._searchablePlayersNickNames = players.map(function (p) { return p.nickname.searchable() });
-      self._searchablePlayersClubsIds = players.filter(function (p) { return p.club && p.club.id })
-                                               .map(function (p) { return p.club.id });
-      self._searchablePlayersClubsNames = players.filter(function (p) { return p.club && p.club.name })
-                                                 .map(function (p) { return p.club.name.searchable() });
-      next();
+      // reading players from DB.
+      this._newPlayersIds = this.teams.reduce(function (p, team) {
+        return p.concat(team.players);
+      }, []);
+      this._oldPlayersIds = oldGame.teams.reduce(function (p, team) {
+        return p.concat(team.players);
+      }, []);
+      var self = this;
+      DB.Model.Player.find({_id: { $in: playersIds } }, function (err, players) {
+        if (err)
+          return next(); // FIXME: we should log this error.
+        self._searchablePlayersNames = players.map(function (p) { return p.name.searchable() });
+        self._searchablePlayersNickNames = players.map(function (p) { return p.nickname.searchable() });
+        self._searchablePlayersClubsIds = players.filter(function (p) { return p.club && p.club.id })
+                                                .map(function (p) { return p.club.id });
+        self._searchablePlayersClubsNames = players.filter(function (p) { return p.club && p.club.name })
+                                                  .map(function (p) { return p.club.name.searchable() });
+        next();
+      });
     });
   } else {
     next();
@@ -274,8 +312,27 @@ DB.Schema.Game.pre('save', function (next) {
 DB.Schema.Game.post('save', function (next) {
   if (this._wasModified.indexOf('teams') === -1)
     return next();
-  // teams were modified, saving 
   
+  // teams were modified, saving 'nightmare'
+  //   we need to update players.games
+  setTimeout(function postSaveUpdatePlayersGames() {
+  var self = this;
+  var id = self.id;
+  var removedPlayers = this._oldPlayersIds.filter(function (oldPlayerId) {
+    return self._newPlayersIds.indexOf(oldPlayerId) === -1;
+  });
+  var addedPlayers = this._newPlayersIds.filter(function (newPlayerId) {
+    return self._oldPlayersIds.indexOf(newPlayerId) === -1;
+  });
+  // should we do unique ? or should we let do player A vs player A ?
+  removedPlayers.forEach(function (playerId) {
+    DB.Model.Player.findById(playerId).select("games").exec(function (err, player) {
+      if (err)
+        return; //FIXME: log (skip)
+      player.games.indexOf(id)
+    });
+  });
+  })
 });
 
 // Hidden fields
