@@ -33,13 +33,13 @@ describe('dev:games', function(){
   
   describe('FIXME: test game query', function () {
     it ('should be able to query games using q=...', function (done) {
-      done("FIXME");
+      done(/* FIXME */);
     });
   });
   
   describe('FIXME: test game query club', function () {
     it ('should be able to query games using club=...', function (done) {
-      done("FIXME");
+      done(/* FIXME */);
     });
   });
 
