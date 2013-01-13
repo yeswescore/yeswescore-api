@@ -12,7 +12,7 @@ var DB = require("../db.js")
  *  /v1/games/?limit=10              (default=10)
  *  /v1/games/?offset=0              (default=0)
  *  /v1/games/?fields=nickname,name  (default=)
- *  /v1/games/?order=date_start      (default=date_start)
+ *  /v1/games/?sort=date_start      (default=date_start)
  *
  * Specific options:
  *  /v1/games/?club=:id
@@ -26,7 +26,7 @@ app.get('/v1/games/', function(req, res){
   var text = req.query.q;
   var club = req.query.club || null;
   var fields = req.query.fields || "date_start,pos,country,city,type,status,sets,teams,teams.players.name,teams.players.nickname,teams.players.club";
-  var order = req.query.order || "date_start";
+  var sort = req.query.sort || "date_start";
 
   if (!text)
     return res.end(JSON.stringify([]));
@@ -51,7 +51,7 @@ app.get('/v1/games/', function(req, res){
     ])
     .select(gameFields)
     .populate("teams.players", teamPlayersFields)
-    .sort(order.replace(/,/g, " "))
+    .sort(sort.replace(/,/g, " "))
     .skip(offset)
     .limit(limit)
     .exec(function (err, games) {

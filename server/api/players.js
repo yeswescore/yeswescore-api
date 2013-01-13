@@ -49,7 +49,7 @@ app.get('/v1/players/autocomplete/', function(req, res){
   var fields = req.query.fields || "nickname,name,type";
   var limit = req.query.limit || 5;
   var owner = req.query.owner;
-  var order = req.query.order || "name";
+  var sort = req.query.sort || "name";
   var text = req.query.q;
   
   if (text) {
@@ -64,7 +64,7 @@ app.get('/v1/players/autocomplete/', function(req, res){
         ]
       })
       .select(fields.replace(/,/g, " "))
-      .sort(order.replace(/,/g, " "))
+      .sort(sort.replace(/,/g, " "))
       .limit(limit)
       .exec(function (err, players) {
         if (err)
