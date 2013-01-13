@@ -1,6 +1,7 @@
 var DB = require("../db.js")
   , express = require("express")
-  , app = require("../app.js");
+  , app = require("../app.js")
+  , Q = require("q");
 
 
 /**
@@ -16,6 +17,7 @@ var DB = require("../db.js")
  * Specific options:
  *  /v1/games/?club=:id
  * 
+ * only query games with teams
  * auto-populate teams.players
  */
 app.get('/v1/games/', function(req, res){
@@ -29,26 +31,18 @@ app.get('/v1/games/', function(req, res){
   if (!text)
     return res.end(JSON.stringify([]));
   text = new RegExp("("+text.searchable().pregQuote()+")");
-  var query = DB.Model.Game.find({});
+  // heavy...
+  var query = DB.Model.Game.find({
+    $or : [
+      { _citySearchable: text },
+      { _searchablePlayersNames: text },
+      { _searchablePlayersNickNames: text },
+      { _searchablePlayersClubsNames: text }
+    ]
+  });
   if (fields)
       query.select(fields.replace(/,/g, " "))
-  // populate
-  var populateCondition = {
-    $or: [
-      { _nicknameSearchable: text },
-      { _nameSearchable: text }
-    ]
-  };
-  // condition on club
-  if (club) {
-    populateCondition = { $and: [
-        populateCondition,
-        { "club.id": club }
-      ]
-    }
-  }
-  query.populate("teams.players", null, populateCondition)
-       .where("_citySearchable", text)
+  query.populate("teams.players", null, club? {"club.id": club} : {})
        .sort(order.replace(/,/, " "))
        .skip(offset)
        .limit(limit)
@@ -68,165 +62,139 @@ app.get('/v1/games/', function(req, res){
  *  /v1/games/:id/?fields=nickname,name
  *
  * Specific options:
- *  /v1/games/:id/?populate=team.players,team.players.club
+ *  /v1/games/:id/?populate=teams.players
  */
 app.get('/v1/games/:id', function(req, res){
   var populate = req.query.populate;
+  var populatePaths = (typeof populate === "string") ? populate.split(",") : [];
   var fields = req.query.fields;
   
+  // searching player by id.
   var query = DB.Model.Game.findOne({_id:req.params.id});
   if (fields)
       query.select(fields.replace(/,/g, " "))
+  if (populatePaths.indexOf("teams.players") !== -1)
+    query.populate("teams.players");
   query.exec(function (err, game) {
     if (err)
       return app.defaultError(res)(err);
     if (game === null)
       return app.defaultError(res)("no game found");
-    // must populate manually
-    var populatePaths = (typeof populate === "string") ? populate.split(",") : [];
-    if (populatePaths.indexOf("teams.players") === -1)
-      return res.end(JSON.stringifyModels(game));
-    
-    // populate: we need to read players
-    var q = DB.Model.Player.find({});
-    // var or = [ { _id: .. }, { _id: .. }, ... ]
-    var or = game.teams.reduce(function (p, team) {
-      return p.concat(team.players.map(function (player) {
-        return { _id: player };
-      }));
-    }, []);
-    q.or(or);
-    if (populatePaths.indexOf("teams.players.club") !== -1)
-      q.populate("club");
-    q.exec(function (err, players) {
-      if (err)
-        return app.defaultError(res)(err, "populate error");
-      game.teams.forEach(function (team, teamIndex) {
-        team.players.forEach(function (playerId, playerIndex) {
-          for (var i = 0; i < players.length; ++i) {
-            if (players[i].id == playerId) { // /!\ cannot use ===
-              game.teams[teamIndex].players[playerIndex] = players[i];
-            }
-          }
-        });
-      });
-      res.end(JSON.stringifyModels(game));
-    });
+    // should we hide the owner ?
+    res.end(JSON.stringifyModels(game));
   });
 });
 
-
-
-/* creation partie
-* POST /v1/games/?playerid=...&token=...
-* {
-*   players : [
-*      {
-*        id: null/string
-*        nickname: string
-*        rank:
-*      }
-*   ]
-* }
-*/
-app.post('/v1/games/', express.bodyParser(), function (req, res) {  
-  // on verifie que l'owner est authentifie
-  if (!DB.isAuthenticated(req.query)) {
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.end(JSON.stringify({"error": "unauthorized"}));
-    return; // FIXME: error
-  }
-
-  /*
-  * document game:
-  * {
-  *   id: string, // checksum hexa
-  *   date_creation: string, // date iso 8601
-  *   date_start: string, // date iso 8601
-  *   date_end: string, // date iso 8601
-  *   owner,
-  *   pos: { long: float, lat: float }, // index geospatial
-  *   country: string,
-  *   city: string,
-  *   type: string, // singles / doubles
-  *   sets: string, // ex: 6,2;6,3  (precomputed)
-  *   status: string, // ongoing, canceled, finished (precomputed)
-  *   teams: [
-  *     string, // id
-  *     string  // id
-  *   ],
-  *   stream: [
-  *       FIXME: historique du match, action / date / heure / commentaire / video / photo etc
-  *   ]
-  */
-  // si aucune teams, on cree 2
-  if (!Array.isArray(req.body.teams))
-    req.body.teams = [{}, {}]; // double team vide.s
-  // on cree la partie
-  var game = {
-    id: DB.generateFakeId(),
-    date_creation: new Date().toISO(),
-    date_start: new Date().toISO(),
-    date_end: null,
-    owner: req.query.playerid,
-    teams: req.body.teams.map(function (teamInfo) {
-        if (typeof teamInfo.players !== "undefined" &&
-            Array.isArray(teamInfo.players) &&
-            typeof teamInfo.players[0] !== "undefined" &&
-            typeof teamInfo.players[0].id !== "undefined" &&
-            DB.searchById(DB.players, teamInfo.players[0].id))
-          return { id:null, points:null, players: [ { id: teamInfo.players[0].id } ] };
-        if (typeof teamInfo.players !== "undefined" &&
-            Array.isArray(teamInfo.players) &&
-            typeof teamInfo.players[0] !== "undefined" &&
-            typeof teamInfo.players[0].name !== "undefined")
-          return { id:null, points:null, players: [ { name: teamInfo.players[0].name } ] };
-        return { id:null, points:null, players: [ { name: "" } ] };
-    }),
-    type: "singles",
-    status: "ongoing",
-    pos: null,
-    country: null,
-    city: null,
-    sets: null,
-    status: "ongoing",
-    score: null,
-    sport: "tennis",
-    stream: []
-  };
-  // ttes les autres options que le client peut surcharger
-  // FIXME: whitelist.
-  ["country", "city", "sets", "score"].forEach(function (i) {
-    if (typeof req.body[i] !== "undefined")
-      game[i] = req.body[i];
+/*
+ * Create a game
+ *
+ * You must be authentified
+ * You must give 2 teams
+ * 
+ * Body {
+ *   pos: String,         (default="")
+ *   country: String,     (default=not exist)
+ *   rank: String,        (default="")
+ *   club: { id:..., name:... }  (default=null, name: is ignored)
+ *   type: String      (enum=default,owned default=default)
+ *   teams: [
+ *     {
+ *       points: String,  (default="")
+ *       players: [
+ *         ObjectId,      (default=not exist)            teams.players can be id
+ *         { name: "owned player" } (default=not exist)   or objects
+ *       ]
+ *     }
+ *   ]
+ * }
+ */
+app.post('/v1/games/', express.bodyParser(), function (req, res) {
+  // check sport
+  if (req.body.sport && req.body.sport !== "tennis")
+    return app.defaultError(res)("wrong sport (tennis only)");
+  // check type
+  if (req.body.type && req.body.type !== "singles")
+    return app.defaultError(res)("wrong type (singles only)");
+  // check status
+  if (req.body.status && req.body.status !== "ongoing" && req.body.status !== "finished")
+    return app.defaultError(res)("wrong status (ongoing/finished)");
+  // check teams
+  var teams = req.body.teams;
+  if (!Array.isArray(teams) || teams.length !== 2)
+    return app.defaultError(res)("teams format");
+  // check teams.players
+  var ok = teams.every(function (team) {
+    return Array.isArray(team.players) &&
+           team.players.every(function (player) {
+             return typeof player === "string" ||
+                    (typeof player === "object" &&
+                     typeof player.name !== "undefined");
+           });
   });
-  // status
-  if (typeof req.body["status"] !== "undefined" &&
-      (req.body["status"] === "finished"  ||
-      req.body["status"] === "ongoing")) {
-    game["status"] = req.body.status;
+  if (!ok) {
+    return app.defaultError(res)("teams.players format");
   }
-  // pos
-  if (typeof req.body["pos"] !== "undefined" &&
-      typeof req.body["pos"].long !== "undefined" &&
-      typeof req.body["pos"].lat !== "undefined") {
-    var long = parseFloat(req.body["pos"].long);
-    var lat = parseFloat(req.body["pos"].lat);
-    if (long >= -180 && long <= 180 &&
-        lat >= -90 && lat <= 90)
-    game["pos"] = {
-      long: long,
-      lat: lat
-    };
-  }
-  
-  // sauvegarde
-  DB.games.push(game);
-
-  // sending back saved data to the client
-  var body = JSON.stringify(game);
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.end(body);
+  DB.isAuthenticatedAsync(req.query)
+    .then(function checkPlayersExists(authentifiedPlayer) {
+      if (authentifiedPlayer === null)
+        throw "unauthorized";
+      var playersId = teams.players.reduce(function (p, team) {
+        return team.players.map(function (player) {
+          if (typeof player === "string")
+            return player;
+          return player.id;
+        }).filter(function (playerId) { return playerId });
+      }, []);
+      return DB.existAsync(DB.Model.Player, playersId);
+    }).then(function createOwnedAnonymousPlayers(exist) {
+      if (!exist)
+        throw "some player doesn't exist";
+      // creating all owned anonymous players
+      var promises = [];
+      for (var teamIndex = 0; teamIndex < teams.length; ++teamIndex) {
+        var team = teams[teamIndex];
+        var players = team.players;
+        for (var playerIndex = 0; playerIndex < players.length; ++playerIndex) {
+          var player = players[playerIndex];
+          if (typeof player !== "string" &&
+              typeof player.id !== "string") {
+            // creating owned anonymous player
+            (function createOwnedAnonymousPlayer(teamIndex, playerIndex) {
+              var p = new DB.Model.Player({
+                name: player.name || "",
+                nickname: player.nickname || "",
+                type: "owned",
+                owner: authentifiedPlayer.id
+              });
+              promises.push(DB.saveAsync(player)
+                              .then(function (player) {
+                                teams[teamIndex].players[playerIndex] = player.id;
+                              }));
+            })(teamIndex, playerIndex);
+          }
+        }
+      }
+      return Q.all(promises);
+    }).then(function createGame() {
+      // players id exist
+      // owned player are created
+      // => creating game
+      var game = new DB.Model.Game({
+        owner: authentifiedPlayer.id,
+        pos: req.body.pos || [],
+        country: req.body.country || "",
+        city: req.body.city || "",
+        sport: req.body.sport || "tennis",
+        type: "singles",
+        status: req.body.status || "ongoing",
+        sets: req.body.sets || "",
+        teams: req.body.teams,
+        stream: []
+      });
+      return DB.saveAsync(game);
+    }).then(function sendGame(game) {
+      res.end(JSON.stringifyModels(game));
+    }, app.defaultError(res));
 });
 
 app.post('/v1/games/:id', express.bodyParser(), function(req, res){
