@@ -45,7 +45,6 @@ app.get('/v1/players/', function(req, res){
  * Specific options:
  */
 app.get('/v1/players/:id', function(req, res){
-  var populate = req.query.populate;
   var fields = req.query.fields;
   
   DB.isAuthenticatedAsync(req.query)
