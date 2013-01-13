@@ -109,72 +109,16 @@ app.get('/v1/games/:id', function(req, res){
  * }
  */
 app.post('/v1/games/', express.bodyParser(), function (req, res) {
-  // check sport
-  if (req.body.sport && req.body.sport !== "tennis")
-    return app.defaultError(res)("wrong sport (tennis only)");
-  // check type
-  if (req.body.type && req.body.type !== "singles")
-    return app.defaultError(res)("wrong type (singles only)");
-  // check status
-  if (req.body.status && req.body.status !== "ongoing" && req.body.status !== "finished")
-    return app.defaultError(res)("wrong status (ongoing/finished)");
-  // check teams
-  var teams = req.body.teams;
-  if (!Array.isArray(teams) || teams.length !== 2)
-    return app.defaultError(res)("teams format");
-  // check teams.players
-  var ok = teams.every(function (team) {
-    return Array.isArray(team.players) &&
-           team.players.every(function (player) {
-             return typeof player === "string" ||
-                    (typeof player === "object" &&
-                     typeof player.name !== "undefined");
-           });
-  });
-  if (!ok) {
-    return app.defaultError(res)("teams.players format");
-  }
+  var err = DB.Model.Game.checkFields(req.body, ["sport", "type", "status", "teams"]);
+  if (err)
+    return app.defaultError(res)(err);
   DB.isAuthenticatedAsync(req.query)
     .then(function checkPlayersExists(authentifiedPlayer) {
       if (authentifiedPlayer === null)
         throw "unauthorized";
-      var playersId = teams.players.reduce(function (p, team) {
-        return team.players.map(function (player) {
-          if (typeof player === "string")
-            return player;
-          return player.id;
-        }).filter(function (playerId) { return playerId });
-      }, []);
-      return DB.existAsync(DB.Model.Player, playersId);
-    }).then(function createOwnedAnonymousPlayers(exist) {
-      if (!exist)
-        throw "some player doesn't exist";
-      // creating all owned anonymous players
-      var promises = [];
-      for (var teamIndex = 0; teamIndex < teams.length; ++teamIndex) {
-        var team = teams[teamIndex];
-        var players = team.players;
-        for (var playerIndex = 0; playerIndex < players.length; ++playerIndex) {
-          var player = players[playerIndex];
-          if (typeof player !== "string" &&
-              typeof player.id !== "string") {
-            // creating owned anonymous player
-            (function createOwnedAnonymousPlayer(teamIndex, playerIndex) {
-              var p = new DB.Model.Player({
-                name: player.name || "",
-                nickname: player.nickname || "",
-                type: "owned",
-                owner: authentifiedPlayer.id
-              });
-              promises.push(DB.saveAsync(player)
-                              .then(function (player) {
-                                teams[teamIndex].players[playerIndex] = player.id;
-                              }));
-            })(teamIndex, playerIndex);
-          }
-        }
-      }
-      return Q.all(promises);
+      return DB.Model.Game.checkTeamsPlayersExistAsync(req.body);
+    }).then(function createOwnedAnonymousPlayers() {
+      return DB.Model.Game.createOwnedAnonymousPlayersAsync(req.body);
     }).then(function createGame() {
       // players id exist
       // owned player are created
@@ -198,34 +142,59 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
 });
 
 app.post('/v1/games/:id', express.bodyParser(), function(req, res){
-  if (!DB.isAuthenticated(req.query)) {
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.end(JSON.stringify({"error": "unauthorized"}));
-    return; // FIXME: error
-  }
-  //
-  var game = DB.searchById(DB.games, req.params.id);
-  if (!game) {
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.end(JSON.stringify({"error": "game doesn't exist"}));
-    return; // FIXME: error
-  }
-  if (req.query.playerid !== game.owner) {
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.end(JSON.stringify({"error": "you are not the owner of the game"}));
-    return; // FIXME: error
-  }
-  // update des champs updatables.
-  [ "city", "type", "sets", "score", "status", "teams" ].forEach(
-    function (o) {
-      if (typeof req.body[o] !== "undefined")
-        game[o] = req.body[o];
-    }
-  );
-  // sending back saved data to the client
-  var body = JSON.stringify(game);
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.end(body);
+  var err = DB.Model.Game.checkFields(req.body, ["sport", "type", "status", "teams"]);
+  if (err)
+    return app.defaultError(res)(err);
+  // check body id
+  if (req.params.id !== req.body.id)
+     return app.defaultError(res)("body.id should equal params.id");
+  // check player is authenticated
+  DB.isAuthenticatedAsync(req.query)
+    .then(function searchGame(authentifiedPlayer) {
+      if (authentifiedPlayer === null)
+        throw "unauthorized";
+      // somme more security tests
+      var deferred = Q.defer();
+      DB.Model.Game.findById(req.body.id, function (err, game) {
+        if (err)
+          return deferred.reject(err);
+        if (game === null)
+          return deferred.reject("game doesn't exist");
+        if (game.owner !== req.query.playerid)
+          return deferred.reject("you are not the owner of the game");
+        deferred.resolve(game);
+      });
+      return deferred.promise;
+    }).then(function updateFields(game) {
+      // updatable simple fields
+      [ "country", "city", "type", "status", "sets" ].forEach(
+        function (o) {
+          if (typeof req.body[o] !== "undefined")
+            game[o] = req.body[o];
+        }
+      );
+      // updatable teams field
+      var deferred = Q.defer();
+      if (typeof req.body.teams !== "undefined")
+      {
+        DB.Model.Game.checkTeamsPlayersExistAsync(req.body)
+                     .then(function () {
+                       return DB.Model.Game.createOwnedAnonymousPlayersAsync(req.body)
+                     }).then(
+                       function () { deferred.resolve() },
+                       function () { deferred.reject()  }
+                     );
+      }
+      else
+      {
+        deferred.resolve();
+      }
+      return deferred.promise;
+    }).then(function update(game) {
+      return DB.saveAsync(game);
+    }).then(function sendGame(game) {
+      res.end(JSON.stringifyModels(game));
+    }, app.defaultError(res));
 });
 
 // writing a new entry in the stream
