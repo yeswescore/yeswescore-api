@@ -24,7 +24,7 @@ app.get('/v1/games/', function(req, res){
   var limit = req.query.limit || 10;
   var offset = req.query.offset || 0;
   var text = req.query.q;
-  var club = req.query.club;
+  var club = req.query.club || null;
   var fields = req.query.fields || "date_start,pos,country,city,type,status,sets,teams,teams.players.name,teams.players.nickname,teams.players.club";
   var order = req.query.order || "date_start";
 
@@ -46,21 +46,19 @@ app.get('/v1/games/', function(req, res){
       { _citySearchable: text },
       { _searchablePlayersNames: text },
       { _searchablePlayersNickNames: text },
-      { _searchablePlayersClubsNames: text }
+      { _searchablePlayersClubsNames: text },
+      { _searchablePlayersClubsIds: club }
     ])
-    .select(gameFields);
-  if (club)
-      query.populate("teams.players", teamPlayersFields, {"club.id": club});
-  else
-      query.populate("teams.players", teamPlayersFields);
-  query.sort(order.replace(/,/g, " "))
-       .skip(offset)
-       .limit(limit)
-       .exec(function (err, games) {
+    .select(gameFields)
+    .populate("teams.players", teamPlayersFields)
+    .sort(order.replace(/,/g, " "))
+    .skip(offset)
+    .limit(limit)
+    .exec(function (err, games) {
       if (err)
         return app.defaultError(res)(err);
       res.end(JSON.stringifyModels(games));
-  });
+    });
 });
 
 
