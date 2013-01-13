@@ -433,6 +433,80 @@ DB.Model.Club = mongoose.model("Club", DB.Schema.Club);
 DB.Model.Player = mongoose.model("Player", DB.Schema.Player);
 DB.Model.Game = mongoose.model("Game", DB.Schema.Game);
 
+DB.Model.Game.checkFields = function (game, fields) {
+  // FIXME: can some tests be done with express ? or mongoose ?
+  fields = fields || [];
+  if (fields.indexOf("sport") !== -1 && game.sport && game.sport !== "tennis")
+    return "wrong sport (tennis only)";
+  // check type
+  if (fields.indexOf("singles") !== -1 && game.type && game.type !== "singles")
+    return "wrong type (singles only)";
+  // check status
+  if (fields.indexOf("status") !== -1 && game.status && game.status !== "ongoing" && game.status !== "finished")
+    return "wrong status (ongoing/finished)";
+  // check teams
+  if (!Array.isArray(game.teams) || game.teams.length !== 2)
+    return "teams format";
+  // check teams.players
+  var ok = game.teams.every(function (team) {
+    return Array.isArray(team.players) &&
+           team.players.every(function (player) {
+             return typeof player === "string" ||
+                    (typeof player === "object" &&
+                     typeof player.name !== "undefined");
+           });
+  });
+  if (!ok)
+    return "teams.players format";
+  return null;
+}
+
+// additionnals functions
+DB.Model.Game.checkTeamsPlayersExistAsync = function (game) {
+  var playersId = game.teams.players.reduce(function (p, team) {
+    return team.players.map(function (player) {
+      if (typeof player === "string")
+        return player;
+      return player.id;
+    }).filter(function (playerId) { return playerId });
+  }, []);
+  return DB.existAsync(DB.Model.Player, playersId)
+           .then(function (exist) {
+              if (!exist)
+                throw "some player doesn't exist";
+            });
+};
+
+// replace game.teams.players object by created players ids
+DB.Model.Game.createOwnedAnonymousPlayersAsync = function (game) {
+  var promises = [];
+  var teams = game.teams;
+  for (var teamIndex = 0; teamIndex < teams.length; ++teamIndex) {
+    var team = teams[teamIndex];
+    var players = team.players;
+    for (var playerIndex = 0; playerIndex < players.length; ++playerIndex) {
+      var player = players[playerIndex];
+      if (typeof player !== "string" &&
+          typeof player.id !== "string") {
+        // creating owned anonymous player
+        (function createOwnedAnonymousPlayer(teamIndex, playerIndex) {
+          var p = new DB.Model.Player({
+            name: player.name || "",
+            nickname: player.nickname || "",
+            type: "owned",
+            owner: authentifiedPlayer.id
+          });
+          promises.push(DB.saveAsync(player)
+                          .then(function (player) {
+                            teams[teamIndex].players[playerIndex] = player.id;
+                          }));
+        })(teamIndex, playerIndex);
+      }
+    }
+  }
+  return Q.all(promises);
+};
+
 // custom JSON api
 JSON.stringifyModels = function (m, options) {
   options = options || {};
