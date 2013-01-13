@@ -35,6 +35,48 @@ app.get('/v1/players/', function(req, res){
 });
 
 /**
+ * Autocomplete search in players
+ * 
+ * Generic options:
+ *  /v1/players/autocomplete/?limit=5     (default=5)
+ *  /v1/players/autocomplete/?fields=nickname,name  (default=nickname,name,type)
+ *
+ * Specific options:
+ *  /v1/players/autocomplete/?q=Charlotte (searched text)
+ *  /v1/players/autocomplete/?owner=:id   (autocomplete centered to an owner)
+ */
+app.get('/v1/players/autocomplete/', function(req, res){
+  var fields = req.query.fields || "nickname,name,type";
+  var limit = req.query.limit || 5;
+  var owner = req.query.owner;
+  var order = req.query.order || "name";
+  var text = req.query.q;
+  
+  if (text) {
+    // slow
+    text = new RegExp("("+text.searchable().pregQuote()+")");
+    // searching
+    DB.Model.Player
+      .find({
+        $and: [
+          { $or: [ {_searchableNickname: text}, {_searchableName: text} ] },
+          { $or: [ {type: "default"}, {type: "owned", owner: owner} ] }
+        ]
+      })
+      .select(fields.replace(/,/g, " "))
+      .sort(order.replace(/,/g, " "))
+      .limit(limit)
+      .exec(function (err, players) {
+        if (err)
+          return app.defaultError(res)(err);
+        res.end(JSON.stringifyModels(players));
+      });
+  } else {
+    res.end(JSON.stringify([]));
+  }
+});
+
+/**
  * Read a player
  * 
  * Authentication provide password & token
@@ -64,47 +106,6 @@ app.get('/v1/players/:id', function(req, res){
       });
     },
     app.defaultError(res, "authentication error"));
-});
-
-/**
- * Autocomplete search in players
- * 
- * Generic options:
- *  /v1/players/autocomplete/?limit=0
- *  /v1/players/autocomplete/?fields=nickname,name
- *
- * Specific options:
- *  /v1/players/autocomplete/?q=Charlotte (searched text)
- *  /v1/players/autocomplete/?owner=:id   (autocomplete centered to an owner)
- */
-app.get('/v1/players/autocomplete/', function(req, res){
-  var fields = req.query.fields || "id,nickname,name,type";
-  var limit = req.query.limit || 5;
-  var owner = req.query.owner;
-  var text = req.query.q;
-  
-  if (text) {
-    // slow
-    text = new RegExp("("+text.searchable().pregQuote()+")");
-    // searching
-    DB.Model.Player
-      .find({
-        $and: [
-          { $or: [ {_nicknameSearchable: text}, {_nameSearchable: text} ] },
-          { $or: [ {type: "default"}, {type: "owned", owner: owner} ] }
-        ]
-      })
-      .select(fields.replace(/,/g, " "))
-      .sort('name')
-      .limit(limit)
-      .exec(function (err, players) {
-        if (err)
-          return app.defaultError(res)(err);
-        res.end(JSON.stringifyModels(players));
-      });
-  } else {
-    res.end(JSON.stringify([]));
-  }
 });
 
 /**
