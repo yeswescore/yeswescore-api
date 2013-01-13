@@ -396,7 +396,7 @@ DB.Schema.Game.post('save', function () {
   if (addedPlayersFilter.length) {
     DB.Model.Player.update(
       { $or: addedPlayersFilter }, // search filter
-      { $pull: { "games" : this.id } },
+      { $addToSet: { "games" : this.id } },
       { multi: true },
       function (err) { /* FIXME: nothing yet, but should test&log err */  }
     );
