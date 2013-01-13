@@ -65,6 +65,22 @@ var DB = {
     }
   },
   
+  existAsync: function (model, ids) {
+    var deferred = Q.defer();
+    if (typeof ids === "string") {
+      ids = [ ids ];
+    }
+    model.count({ _id: { $in: ids }})
+         .exec(function (err, count) {
+           if (err)
+             return deferred.reject(err);
+           if (count !== ids.length)
+             return deferred.resolve(false);
+           return deferred.resolve(true);
+         });
+    return deferred.promise;
+  },
+  
   /**
    * Read a random model from a model collection.
    * ex:
