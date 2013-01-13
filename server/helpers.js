@@ -194,4 +194,13 @@
     }
   );
   
+  Object.defineProperty(
+    String.prototype,
+    "startsWith",
+    {
+      enumerable: false,
+      value: function (str){ return this.indexOf(str) == 0 }
+    }
+  );
+  
 })(this);
