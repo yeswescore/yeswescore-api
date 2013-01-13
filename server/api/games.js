@@ -25,25 +25,35 @@ app.get('/v1/games/', function(req, res){
   var offset = req.query.offset || 0;
   var text = req.query.q;
   var club = req.query.club;
-  var fields = req.query.fields;
+  var fields = req.query.fields || "date_start,pos,country,city,type,status,sets,teams,teams.players.name,teams.players.nickname,teams.players.club";
   var order = req.query.order || "date_start";
 
   if (!text)
     return res.end(JSON.stringify([]));
   text = new RegExp("("+text.searchable().pregQuote()+")");
+  // preprocess fields
+  var teamPlayersFields = fields.split(',').filter(function (field) {
+      return field.startsWith("teams.players.");
+    }).map(function (field) {
+      return field.replace("teams.players.", "");
+    }).join(" ");
+  var gameFields = fields.split(',').filter(function (field) {
+      return !field.startsWith("teams.players.");
+    }).join(" ");
   // heavy...
-  var query = DB.Model.Game.find({
-    $or : [
+  var query = DB.Model.Game.find({})
+    .or([
       { _citySearchable: text },
       { _searchablePlayersNames: text },
       { _searchablePlayersNickNames: text },
       { _searchablePlayersClubsNames: text }
-    ]
-  });
-  if (fields)
-      query.select(fields.replace(/,/g, " "))
-  query.populate("teams.players", null, club? {"club.id": club} : {})
-       .sort(order.replace(/,/, " "))
+    ])
+    .select(gameFields);
+  if (club)
+      query.populate("teams.players", teamPlayersFields, {"club.id": club});
+  else
+      query.populate("teams.players", teamPlayersFields);
+  query.sort(order.replace(/,/g, " "))
        .skip(offset)
        .limit(limit)
        .exec(function (err, games) {
