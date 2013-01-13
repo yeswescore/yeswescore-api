@@ -43,6 +43,30 @@ describe('dev:games', function(){
     });
   });
 
+  describe('FIXME: create a game with no teams', function () {
+    it ('should be an error teams.players format', function (done) {
+      done(/* FIXME */);
+    });
+  });
+  
+  describe('FIXME: create a game with teams & wrong player format', function () {
+    it ('should be an error teams.players format', function (done) {
+      done(/* FIXME */);
+    });
+  });
+  
+  describe('FIXME: create a game with teams & player with wrong id', function () {
+    it ('should be an error teams.players not exist', function (done) {
+      done(/* FIXME */);
+    });
+  });
+  
+  describe('FIXME: create a game with teams & player with wrong id', function () {
+    it ('should be an error teams.players not exist', function (done) {
+      done(/* FIXME */);
+    });
+  });
+  
   describe('create a single game without info, without token', function () {
     it('should be an error', function (done) {
       var options = {
