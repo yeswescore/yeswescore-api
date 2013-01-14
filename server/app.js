@@ -24,10 +24,8 @@ app.createPopulateFields = function (fields, populate) {
   // every other fields
   populatePaths.forEach(function (populatePath) {
     result[populatePath] = fieldsPath.filter(function (field) {
-      console.log('startsWith ? ' + populatePath+"." + " Vs " + field);
       return field.startsWith(populatePath+".");
     }).map(function (field) {
-          console.log("mapped: "+field.replace(populatePath+".", ""));
       return field.replace(populatePath+".", "");
     }).join(" ");
     if (result[populatePath] === "")

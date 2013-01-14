@@ -16,9 +16,12 @@ var DB = require("../db.js")
  *
  * Specific options:
  *  /v1/games/?club=:id
+ *  /v1/games/?populate=teams.players
  * 
  * only query games with teams
  * auto-populate teams.players
+ * 
+ * fields filter works with populate : (...)?fields=teams.players.name
  */
 app.get('/v1/games/', function(req, res){
   var limit = req.query.limit || 10;
@@ -48,7 +51,6 @@ app.get('/v1/games/', function(req, res){
       { _searchablePlayersClubsIds: club }
     ])
     .select(fields.select);
-    console.log(fields["teams.players"]);
   if (populatePaths.indexOf("teams.players") !== -1) {
     query.populate("teams.players", fields["teams.players"]);
   }
