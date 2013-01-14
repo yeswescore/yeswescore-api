@@ -40,6 +40,7 @@ app.get('/v1/players/', function(req, res){
  * Generic options:
  *  /v1/players/autocomplete/?limit=5     (default=5)
  *  /v1/players/autocomplete/?fields=nickname,name  (default=nickname,name,type)
+ *  /v1/players/autocomplete/?sort=nickname (default=name)
  *
  * Specific options:
  *  /v1/players/autocomplete/?q=Charlotte (searched text)
