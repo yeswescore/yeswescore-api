@@ -27,19 +27,17 @@ app.get('/v1/games/', function(req, res){
   var club = req.query.club || null;
   var fields = req.query.fields || "date_start,pos,country,city,type,status,sets,teams,teams.players.name,teams.players.nickname,teams.players.club";
   var sort = req.query.sort || "date_start";
+  // populate option
+  var populate = "teams.players";
+  if (typeof req.query.populate !== "undefined")
+    populate = req.query.populate;
+  var populatePaths = (typeof populate === "string") ? populate.split(",") : [];
 
   if (!text)
     return res.end(JSON.stringify([]));
   text = new RegExp("("+text.searchable().pregQuote()+")");
-  // preprocess fields
-  var teamPlayersFields = fields.split(',').filter(function (field) {
-      return field.startsWith("teams.players.");
-    }).map(function (field) {
-      return field.replace("teams.players.", "");
-    }).join(" ");
-  var gameFields = fields.split(',').filter(function (field) {
-      return !field.startsWith("teams.players.");
-    }).join(" ");
+  // process fields
+  var fields = app.createPopulateFields(fields, populate);
   // heavy...
   var query = DB.Model.Game.find({})
     .or([
@@ -49,12 +47,15 @@ app.get('/v1/games/', function(req, res){
       { _searchablePlayersClubsNames: text },
       { _searchablePlayersClubsIds: club }
     ])
-    .select(gameFields)
-    .populate("teams.players", teamPlayersFields)
-    .sort(sort.replace(/,/g, " "))
-    .skip(offset)
-    .limit(limit)
-    .exec(function (err, games) {
+    .select(fields.select);
+    console.log(fields["teams.players"]);
+  if (populatePaths.indexOf("teams.players") !== -1) {
+    query.populate("teams.players", fields["teams.players"]);
+  }
+  query.sort(sort.replace(/,/g, " "))
+       .skip(offset)
+       .limit(limit)
+       .exec(function (err, games) {
       if (err)
         return app.defaultError(res)(err);
       res.end(JSON.stringifyModels(games));
@@ -73,16 +74,21 @@ app.get('/v1/games/', function(req, res){
  *  /v1/games/:id/?populate=teams.players
  */
 app.get('/v1/games/:id', function(req, res){
-  var populate = req.query.populate;
+  var fields = req.query.fields || "date_start,pos,country,city,type,status,sets,teams,teams.players.name,teams.players.nickname,teams.players.club";
+  // populate option
+  var populate = "teams.players";
+  if (typeof req.query.populate !== "undefined")
+    populate = req.query.populate;
   var populatePaths = (typeof populate === "string") ? populate.split(",") : [];
-  var fields = req.query.fields;
-  
+
+  // preprocess fields
+  var fields = app.createPopulateFields(fields, populate);
   // searching player by id.
-  var query = DB.Model.Game.findOne({_id:req.params.id});
-  if (fields)
-      query.select(fields.replace(/,/g, " "))
-  if (populatePaths.indexOf("teams.players") !== -1)
-    query.populate("teams.players");
+  var query = DB.Model.Game.findOne({_id:req.params.id})
+     .select(fields.select);
+  if (populatePaths.indexOf("teams.players") !== -1) {
+    query.populate("teams.players", fields["teams.players"]);
+  }
   query.exec(function (err, game) {
     if (err)
       return app.defaultError(res)(err);
