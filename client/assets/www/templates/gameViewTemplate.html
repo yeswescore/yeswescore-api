@@ -35,8 +35,8 @@
 </div>
  -->
 <div class="ui-grid-a">
-	<div class="ui-block-a"><a id="endButton" data-role="button">Terminer la partie</a></div>
-	<div class="ui-block-b"><a id="cancelButton" data-role="button">Annuler la dernière action</a></div>
+	<div class="ui-block-a"><a id="endButton" data-role="button">Terminer</a></div>
+	<div class="ui-block-b"><a id="cancelButton" data-role="button">Annuler</a></div>
 </div>
 	
 </form>
@@ -45,7 +45,21 @@
 //else {
 %>
 <br/>
-<div id="incomingComment" data-role="listview"></div>     
+<!-- 
+
+$("#incomingMessages").append(
+                   "<div class='message'><span class='username'>" +
+                   (message.chatName || 'Anonymous') +
+                   "</span> : " +
+                   (message.text || ' ') +
+                   "</div>"
+               );
+               $("#incomingMessages").scrollTop(
+                   $("#incomingMessages")[0].scrollHeight
+               );
+ -->
+
+<div id="incomingComment" data-role="listview" class="msgContainerDiv"></div>     
 <br/>
  <form id="frmAttachment" class="ui-body ui-body-b">
 
