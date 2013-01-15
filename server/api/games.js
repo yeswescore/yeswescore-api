@@ -15,8 +15,10 @@ var DB = require("../db.js")
  *  /v1/games/?sort=date_start      (default=date_start)
  *
  * Specific options:
+ *  /v1/games/?q=text
  *  /v1/games/?club=:id
  *  /v1/games/?populate=teams.players
+ *  /v1/games/?player=:id
  * 
  * only query games with teams
  * auto-populate teams.players
@@ -213,48 +215,52 @@ app.post('/v1/games/:id', express.bodyParser(), function(req, res){
     }, app.defaultError(res));
 });
 
-// writing a new entry in the stream
-// POST /v1/games/:id/stream/?id=...&token=...
+/*
+ * Post in the stream
+ *
+ * You must be authentified
+ * 
+ * Body {
+ *     type: "comment",   (default="comment")
+ *     owner: ObjectId    (must equal ?playerid)
+ *     data: { text: "..." }
+ *   }
+ * }
+ */
 app.post('/v1/games/:id/stream/', express.bodyParser(), function(req, res){
-  /*       {
-  *          id: checksum,
-  *          date: string,
-  *          type: "comment",
-  *          owner: id,
-  *          data: { text: "...." }
-  *        }
-  */
-  if (!DB.isAuthenticated(req.query)) {
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.end(JSON.stringify({"error": "unauthorized"}));
-    return; // FIXME: error
-  }
-  var game = DB.searchById(DB.games, req.params.id);
-  if (!game) {
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.end(JSON.stringify({"error": "game not found"}));
-    return; // FIXME: error
-  }
-  if (req.body.type !== "comment" || typeof req.body.data === "undefined") {
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.end(JSON.stringify({"error": "wrong format"}));
-    return; // FIXME: error
-  }
-  // we can post anything in a stream
-  var streamObj = {
-    id: DB.generateFakeId(),
-    date: new Date().toISO(),
-    owner: req.query.playerid
-  };
-  // should copy type & data
-  for (var i in req.body) {
-    if (typeof streamObj[i] === "undefined")
-      streamObj[i] = req.body[i];
-  }
-  // adding comment to stream
-  game.stream.push(streamObj);
-  // sending back saved data to the client
-  var body = JSON.stringify(streamObj);
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.end(body);
+  DB.isAuthenticatedAsync(req.query)
+    .then(function checkGameExist(authentifiedPlayer) {
+      if (authentifiedPlayer === null)
+        throw "unauthorized";
+      var deferred = Q.defer();
+      DB.Model.Game.findById(query.params.id, function (err, game) {
+        if (err)
+          return deferred.reject(err);
+        if (game === null)
+          return deferred.reject("can't find game");
+        return deferred.resolve(game);
+      });
+      return deferred.promise;
+    }).then(function pushIntoStream(game) {
+      var streamItem = {};
+      // creating fields
+      streamItem.type = "comment";
+      streamItem.owner = req.query.playerid;
+      // adding text
+      if (req.body.data && req.body.data.text)
+        streamItem.data = { text: req.body.data.text };
+      var deferred = Q.defer();
+      DB.Model.game.findByIdAndUpdate(
+        game._id,
+        { $push: { streams: streamItem } },
+        function (err, unknownObj) {
+          if (err)
+            return deferred.reject(err);
+          return deferred.resolve(unknownObj);
+        }
+      );
+      return deferred.promise;
+    }).then(function (unknownObj) {
+      res.end(JSON.stringifyModels(unknownObj));
+    }, app.defaultError(res));
 });
