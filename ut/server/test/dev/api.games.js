@@ -84,7 +84,7 @@ describe('dev:games', function(){
   });
   
   describe('create a single game without info, then read it', function () {
-    it('should create & give a game (not empty & valid)', function (done){
+    it('should be an error missing team info', function (done){
       // read a player
       var options = {
         host: Conf["http.host"],
@@ -92,17 +92,54 @@ describe('dev:games', function(){
         path: Conf["documents.players"]+"random"
       };
       http.getJSON(options, function (randomPlayer) {
-        assert.isPlayerWithToken(randomPlayer);
+        assert.isObject(randomPlayer, "random player must exist");
       
         var options = {
           host: Conf["http.host"],
           port: Conf["http.port"],
-          path: Conf["api.games"]+"?playerid="+randomPlayer.id+"&token="+randomPlayer.token
+          path: Conf["api.games"]+"?playerid="+randomPlayer._id+"&token="+randomPlayer.token
         };
         
-        var newGame = { };
+        var newGame = { /* missing teams info */  };
+        http.post(options, newGame, function (error) {
+          assert.isError(error, "missing info => creating game should end in error");
+          assert(error.error === "teams format", "error should be 'teams format'");
+          done();
+        });
+      });
+    });
+  });
+  
+  describe('create a single game between 2 teams of anonymous players, then read it', function () {
+    it('should create & give the game (not empty & valid)', function (done){
+      // read a player
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.players"]+"random"
+      };
+      http.getJSON(options, function (randomPlayer) {
+        assert.isObject(randomPlayer, "random player must exist");
+      
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["api.games"]+"?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+        };
+        
+        var newGame = {
+          teams: [ { id: null, players: [ { name : "toto" } ] },
+                   { id: null, players: [ { name : "titi" } ] } ]
+        };
         http.post(options, newGame, function (game) {
-          assert.isGame(game);
+          console.log(game);
+          
+          assert.isGame(game, "game was correctly created");
+          assert(Array.isArray(game.teams) && game.teams.length === 2, "two teams");
+          assert(game.teams[0].players[0].name === "toto", "first player is toto");
+          assert(game.teams[1].players[0].name === "titi", "second player is titi");
+          assert.isId(game.teams[0].players[0].id, "first player should have an id");
+          assert.isId(game.teams[1].players[0].id, "second player should have an id");
           done();
         });
       });
@@ -150,37 +187,7 @@ describe('dev:games', function(){
     });
   });
   
-  describe('create a single game between 2 teams of anonymous players, then read it', function () {
-    it('should create & give the game (not empty & valid)', function (done){
-      // read a player
-      var options = {
-        host: Conf["http.host"],
-        port: Conf["http.port"],
-        path: Conf["documents.players"]+"random"
-      };
-      http.getJSON(options, function (randomPlayer) {
-        assert.isPlayerWithToken(randomPlayer);
-      
-        var options = {
-          host: Conf["http.host"],
-          port: Conf["http.port"],
-          path: Conf["api.games"]+"?playerid="+randomPlayer.id+"&token="+randomPlayer.token
-        };
-        
-        var newGame = {
-          teams: [ { id: null, players: [ { name : "toto" } ] },
-                   { id: null, players: [ { name : "titi" } ] } ]
-        };
-        http.post(options, newGame, function (game) {
-          assert.isGame(game);
-          assert(Array.isArray(game.teams) && game.teams.length === 2, "two teams");
-          assert(game.teams[0].players[0].name === "toto", "first player is toto");
-          assert(game.teams[1].players[0].name === "titi", "second player is titi");
-          done();
-        });
-      });
-    });
-  });
+
   
   describe('create a single game, then modify it', function () {
     it('should create & give the game (not empty & valid)', function (done){
