@@ -132,8 +132,6 @@ describe('dev:games', function(){
                    { id: null, players: [ { name : "titi" } ] } ]
         };
         http.post(options, newGame, function (game) {
-          console.log(game);
-          
           assert.isGame(game, "game was correctly created");
           assert(Array.isArray(game.teams) && game.teams.length === 2, "two teams");
           assert(game.teams[0].players[0].name === "toto", "first player is toto");
@@ -146,7 +144,7 @@ describe('dev:games', function(){
     });
   });
   
-  describe('create a single game, no teams, then read it', function () {
+  describe('create a single game, then read it', function () {
     it('should create & give the game (not empty & valid)', function (done){
       // read a player
       var options = {
@@ -155,27 +153,30 @@ describe('dev:games', function(){
         path: Conf["documents.players"]+"random"
       };
       http.getJSON(options, function (randomPlayer) {
-        assert.isPlayerWithToken(randomPlayer);
+        assert.isObject(randomPlayer, "random player must exist");
       
         var options = {
           host: Conf["http.host"],
           port: Conf["http.port"],
-          path: Conf["api.games"]+"?playerid="+randomPlayer.id+"&token="+randomPlayer.token
+          path: Conf["api.games"]+"?playerid="+randomPlayer._id+"&token="+randomPlayer.token
         };
         
         var newGame = {
-          pos: { long: 42.4242, lat: 43.4343 },
+          pos: [ 42.4242, 43.4343 ],
           country: "FRANCE",
           city: "marck",
           type: "singles",
           sets: "0/0",
           score: "0/0",
-          status: "ongoing"
+          status: "ongoing",
+          teams: [ { id: null, players: [ { name : "toto" } ] },
+                   { id: null, players: [ { name : "titi" } ] } ]
         };
         http.post(options, newGame, function (game) {
+          console.log(game);
           assert.isGame(game);
-          assert(game.pos.long === newGame.pos.long, "long should be the same");
-          assert(game.pos.lat === newGame.pos.lat, "lat should be the same");
+          assert(game.pos[0] === newGame.pos[0], "long should be the same");
+          assert(game.pos[1] === newGame.pos[1], "lat should be the same");
           assert(game.country === newGame.country, "country should be the same");
           assert(game.city === newGame.city, "city should be the same");
           assert(game.sets === newGame.sets, "sets should be the same");
@@ -186,8 +187,6 @@ describe('dev:games', function(){
       });
     });
   });
-  
-
   
   describe('create a single game, then modify it', function () {
     it('should create & give the game (not empty & valid)', function (done){
