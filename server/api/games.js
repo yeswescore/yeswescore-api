@@ -29,7 +29,7 @@ app.get('/v1/games/', function(req, res){
   var offset = req.query.offset || 0;
   var text = req.query.q;
   var club = req.query.club || null;
-  var fields = req.query.fields || "date_start,pos,country,city,type,status,sets,teams,teams.players.name,teams.players.nickname,teams.players.club";
+  var fields = req.query.fields || "date_creation,date_start,date_end,owner,pos,country,city,sport,type,status,sets,teams,teams.players.name,teams.players.nickname,teams.players.club";
   var sort = req.query.sort || "date_start";
   // populate option
   var populate = "teams.players";
@@ -77,7 +77,7 @@ app.get('/v1/games/', function(req, res){
  *  /v1/games/:id/?populate=teams.players
  */
 app.get('/v1/games/:id', function(req, res){
-  var fields = req.query.fields || "date_start,pos,country,city,type,status,sets,teams,teams.players.name,teams.players.nickname,teams.players.club";
+  var fields = req.query.fields || "date_creation,date_start,date_end,owner,pos,country,city,sport,type,status,sets,teams,teams.players.name,teams.players.nickname,teams.players.club";
   // populate option
   var populate = "teams.players";
   if (typeof req.query.populate !== "undefined")
