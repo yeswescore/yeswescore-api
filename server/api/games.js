@@ -176,10 +176,12 @@ app.post('/v1/games/:id', express.bodyParser(), function(req, res){
   if (req.params.id !== req.body.id)
      return app.defaultError(res)("body.id should equal params.id");
   // check player is authenticated
+  var owner = null;
   DB.isAuthenticatedAsync(req.query)
     .then(function searchGame(authentifiedPlayer) {
       if (authentifiedPlayer === null)
         throw "unauthorized";
+      owner = authentifiedPlayer.id;
       // somme more security tests
       var deferred = Q.defer();
       DB.Model.Game.findById(req.body.id, function (err, game) {
@@ -187,14 +189,15 @@ app.post('/v1/games/:id', express.bodyParser(), function(req, res){
           return deferred.reject(err);
         if (game === null)
           return deferred.reject("game doesn't exist");
-        if (game.owner !== req.query.playerid)
-          return deferred.reject("you are not the owner of the game");
+        if (game.owner != req.query.playerid) // /!\ cant do '!==' on objectId
+          return deferred.reject("you are not the owner of the game : "+game.owner+" " + req.query.playerid);
         deferred.resolve(game);
       });
       return deferred.promise;
     }).then(function updateFields(game) {
+      console.log('updateFields');
       // updatable simple fields
-      [ "country", "city", "type", "status", "sets" ].forEach(
+      [ "country", "city", "type", "status", "sets", "score" ].forEach(
         function (o) {
           if (typeof req.body[o] !== "undefined")
             game[o] = req.body[o];
@@ -206,15 +209,15 @@ app.post('/v1/games/:id', express.bodyParser(), function(req, res){
       {
         DB.Model.Game.checkTeamsPlayersExistAsync(req.body)
                      .then(function () {
-                       return DB.Model.Game.createOwnedAnonymousPlayersAsync(req.body)
+                       return DB.Model.Game.createOwnedAnonymousPlayersAsync(req.body, owner)
                      }).then(
-                       function () { deferred.resolve() },
+                       function () { deferred.resolve(game) },
                        function () { deferred.reject()  }
                      );
       }
       else
       {
-        deferred.resolve();
+        deferred.resolve(game);
       }
       return deferred.promise;
     }).then(function update(game) {
