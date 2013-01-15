@@ -14,6 +14,10 @@ var isDate = function (s) {
   return (isString(s) && isNotEmpty(s)) || s === null; /* FIXME */
 };
 
+var isId = function (id, m) {
+  return isString(id) && isNotEmpty(id) && isHexa(id);
+};
+
 assert.isObject = function (s, m) {
   assert(isObject(s), m);
 };
@@ -202,7 +206,7 @@ assert.isGame = function (game) {
   assert.isDate(game.date_start, "isGame: date_start must be a date");
   assert.isUndefinedOrDate(game.date_end, "isGame: date_end must be a date");
   assert.isUndefinedOrPos(game.pos, "isGame: pos must be a pos");
-  assert.isArray(game.stream, "isGame: stream must be an array");
+  assert.isUndefinedOrArray(game.stream, "isGame: stream must be an array");
   // 
   assert.isUndefinedOrString(game.country, "isGame: country");
   assert.isUndefinedOrString(game.city, "isGame: city");
@@ -218,9 +222,11 @@ assert.isGame = function (game) {
          game.status === "ongoing", "isGame: game.status can only be finished or ongoing");
   
   // only stream comment actually
-  game.stream.forEach(function (streamObject) {
-    assert.isStreamComment(streamObject, "isGame: game can only contain stream comments");
-  });
+  if (Array.isArray(game.stream)) {
+    game.stream.forEach(function (streamObject) {
+      assert.isStreamComment(streamObject, "isGame: game can only contain stream comments");
+    });
+  }
   
   // teams
   assert.isArray(game.teams, "isGame: teams must be an array");
@@ -246,8 +252,15 @@ assert.isGameTeam = function (o, m) {
   assert.isObject(o, "isGameTeam: must be an object");
   assert.isArray(o.players, "isGameTeam: players must be an array");
   assert(o.players.length === 1, "isGameTeam: only singles are handle yet");
-  o.players.forEach(function (playerId) {
-    assert.isId(playerId, "isGameTeam: team.players[*] mut be player ids");
+  o.players.forEach(function (player) {
+    // player can be a simple ObjectId
+    // or an object depending if populate=teams.players was activated
+    if (isId(player) ||
+        (isObject(player) && isId(player.id))) {
+      // ok
+    } else {
+      assert(false, "isGameTeam: team.players[*] mut be player ids");
+    }
   });
 };
 
