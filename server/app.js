@@ -14,7 +14,7 @@ app.get = (function (oldGet) {
 
 app.internalRedirect = function (route) {
   return routes[route];
-}
+};
   
 app.defaultError = function (res, msg) { 
   return function (err) { res.end(JSON.stringify({error:err, message:msg})); };
