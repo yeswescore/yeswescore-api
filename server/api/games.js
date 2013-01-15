@@ -29,7 +29,7 @@ app.get('/v1/games/', function(req, res){
   var offset = req.query.offset || 0;
   var text = req.query.q;
   var club = req.query.club || null;
-  var fields = req.query.fields || "date_creation,date_start,date_end,owner,pos,country,city,sport,type,status,sets,teams,teams.players.name,teams.players.nickname,teams.players.club";
+  var fields = req.query.fields || "date_creation,date_start,date_end,owner,pos,country,city,sport,type,status,sets,score,teams,teams.players.name,teams.players.nickname,teams.players.club";
   var sort = req.query.sort || "date_start";
   // populate option
   var populate = "teams.players";
@@ -76,8 +76,8 @@ app.get('/v1/games/', function(req, res){
  * Specific options:
  *  /v1/games/:id/?populate=teams.players
  */
-app.get('/v1/games/:id', function(req, res){
-  var fields = req.query.fields || "date_creation,date_start,date_end,owner,pos,country,city,sport,type,status,sets,teams,teams.players.name,teams.players.nickname,teams.players.club";
+app.get('/v1/games/:id', function (req, res){
+  var fields = req.query.fields || "date_creation,date_start,date_end,owner,pos,country,city,sport,type,status,sets,score,teams,teams.players.name,teams.players.nickname,teams.players.club";
   // populate option
   var populate = "teams.players";
   if (typeof req.query.populate !== "undefined")
@@ -107,6 +107,8 @@ app.get('/v1/games/:id', function(req, res){
  *
  * You must be authentified
  * You must give 2 teams
+ * 
+ * /!\ Default output will be have teams.players populated
  * 
  * Body {
  *   pos: String,         (default="")
@@ -150,13 +152,19 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
         sport: req.body.sport || "tennis",
         type: "singles",
         status: req.body.status || "ongoing",
-        sets: req.body.sets || "",
+        sets: req.body.sets || "",
+        score: req.body.score || "",
         teams: req.body.teams,
         stream: []
       });
       return DB.saveAsync(game);
     }).then(function sendGame(game) {
-      res.end(JSON.stringifyModels(game));
+      app.internalRedirect('/v1/games/:id')(
+        {
+          query: { },
+          params: { id: game.id }
+        },
+        res);
     }, app.defaultError(res));
 });
 
@@ -212,7 +220,12 @@ app.post('/v1/games/:id', express.bodyParser(), function(req, res){
     }).then(function update(game) {
       return DB.saveAsync(game);
     }).then(function sendGame(game) {
-      res.end(JSON.stringifyModels(game));
+      app.internalRedirect('/v1/games/:id')(
+        {
+          query: { },
+          params: { id: game.id }
+        },
+        res);
     }, app.defaultError(res));
 });
 
