@@ -1,6 +1,21 @@
 var express = require("express")
   , app = express();
 
+var routes = { /* "/v1/games/:id" : function (req, res) { ... } */ };
+app.get = (function (oldGet) {
+  return function () {
+    if (typeof arguments[1] === "function")
+      routes[arguments[0]] = arguments[1];
+    if (typeof arguments[2] === "function")
+      routes[arguments[0]] = arguments[2];
+    oldGet.apply(app, arguments);
+  }
+})(app.get);
+
+app.internalRedirect = function (route) {
+  return routes[route];
+}
+  
 app.defaultError = function (res, msg) { 
   return function (err) { res.end(JSON.stringify({error:err, message:msg})); };
 };
