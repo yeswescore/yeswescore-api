@@ -15,10 +15,9 @@ var DB = require("../db.js")
  *  /v1/games/?sort=date_start      (default=date_start)
  *
  * Specific options:
- *  /v1/games/?q=text
+ *  /v1/games/?q=text                (Mandatory)
  *  /v1/games/?club=:id
- *  /v1/games/?populate=teams.players
- *  /v1/games/?player=:id
+ *  /v1/games/?populate=teams.players (default=teams.players)
  * 
  * only query games with teams
  * auto-populate teams.players
