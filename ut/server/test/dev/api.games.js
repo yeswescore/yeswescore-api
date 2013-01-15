@@ -173,7 +173,6 @@ describe('dev:games', function(){
                    { id: null, players: [ { name : "titi" } ] } ]
         };
         http.post(options, newGame, function (game) {
-          console.log(game);
           assert.isGame(game);
           assert(game.pos[0] === newGame.pos[0], "long should be the same");
           assert(game.pos[1] === newGame.pos[1], "lat should be the same");
@@ -197,15 +196,19 @@ describe('dev:games', function(){
         path: Conf["documents.players"]+"random"
       };
       http.getJSON(options, function (randomPlayer) {
-        assert.isPlayerWithToken(randomPlayer);
+        assert.isObject(randomPlayer, "random player must exist");
       
         var options = {
           host: Conf["http.host"],
           port: Conf["http.port"],
-          path: Conf["api.games"]+"?playerid="+randomPlayer.id+"&token="+randomPlayer.token
+          path: Conf["api.games"]+"?playerid="+randomPlayer._id+"&token="+randomPlayer.token
         };
         
-        var newGame = { score: "0/0" };
+        var newGame = {
+          score: "0/0",
+          teams: [ { id: null, players: [ { name : "toto" } ] },
+                   { id: null, players: [ { name : "titi" } ] } ]
+        };
         http.post(options, newGame, function (game) {
           assert.isGame(game);
           assert(game.score === newGame.score, "score should be the same");
@@ -213,7 +216,7 @@ describe('dev:games', function(){
           var options = {
             host: Conf["http.host"],
             port: Conf["http.port"],
-            path: Conf["api.games"]+game.id+"/?playerid="+randomPlayer.id+"&token="+randomPlayer.token
+            path: Conf["api.games"]+game.id+"/?playerid="+randomPlayer._id+"&token="+randomPlayer.token
           };
           
           var newScore = "15/0";
