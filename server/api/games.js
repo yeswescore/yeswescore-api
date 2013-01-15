@@ -129,19 +129,21 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
   var err = DB.Model.Game.checkFields(req.body, ["sport", "type", "status", "teams"]);
   if (err)
     return app.defaultError(res)(err);
+  var owner = null;
   DB.isAuthenticatedAsync(req.query)
     .then(function checkPlayersExists(authentifiedPlayer) {
       if (authentifiedPlayer === null)
         throw "unauthorized";
+      owner = authentifiedPlayer.id;
       return DB.Model.Game.checkTeamsPlayersExistAsync(req.body);
     }).then(function createOwnedAnonymousPlayers() {
-      return DB.Model.Game.createOwnedAnonymousPlayersAsync(req.body);
+      return DB.Model.Game.createOwnedAnonymousPlayersAsync(req.body, owner);
     }).then(function createGame() {
       // players id exist
       // owned player are created
       // => creating game
       var game = new DB.Model.Game({
-        owner: authentifiedPlayer.id,
+        owner: owner,
         pos: req.body.pos || [],
         country: req.body.country || "",
         city: req.body.city || "",

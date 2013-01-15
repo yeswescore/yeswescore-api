@@ -463,12 +463,12 @@ DB.Model.Game.checkFields = function (game, fields) {
 
 // additionnals functions
 DB.Model.Game.checkTeamsPlayersExistAsync = function (game) {
-  var playersId = game.teams.players.reduce(function (p, team) {
-    return team.players.map(function (player) {
+  var playersId = game.teams.reduce(function (p, team) {
+    return p.concat(team.players.map(function (player) {
       if (typeof player === "string")
-        return player;
+        return player; // player is an id
       return player.id;
-    }).filter(function (playerId) { return playerId });
+    }).filter(function (p) { return p !== null && typeof p !== "undefined"; }));
   }, []);
   return DB.existAsync(DB.Model.Player, playersId)
            .then(function (exist) {
@@ -478,7 +478,7 @@ DB.Model.Game.checkTeamsPlayersExistAsync = function (game) {
 };
 
 // replace game.teams.players object by created players ids
-DB.Model.Game.createOwnedAnonymousPlayersAsync = function (game) {
+DB.Model.Game.createOwnedAnonymousPlayersAsync = function (game, owner) {
   var promises = [];
   var teams = game.teams;
   for (var teamIndex = 0; teamIndex < teams.length; ++teamIndex) {
@@ -494,11 +494,11 @@ DB.Model.Game.createOwnedAnonymousPlayersAsync = function (game) {
             name: player.name || "",
             nickname: player.nickname || "",
             type: "owned",
-            owner: authentifiedPlayer.id
+            owner: owner
           });
-          promises.push(DB.saveAsync(player)
-                          .then(function (player) {
-                            teams[teamIndex].players[playerIndex] = player.id;
+          promises.push(DB.saveAsync(p)
+                          .then(function (p) {
+                            teams[teamIndex].players[playerIndex] = p.id;
                           }));
         })(teamIndex, playerIndex);
       }
