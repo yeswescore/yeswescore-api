@@ -169,6 +169,7 @@ DB.Definition.Game = {
   type: { type: String, enum: [ "singles", "doubles" ] },
   status: { type: String, enum: [ "ongoing", "finished" ], default: "ongoing" },
   sets: String,
+  score: String,
   teams: [ DB.Schema.Team ],
   stream: [ DB.Schema.StreamItem ],
   // private searchable fields
