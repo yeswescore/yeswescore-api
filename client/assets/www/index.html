@@ -35,12 +35,14 @@
 
     function checkConnection() {
     
+ 
         var networkState = navigator.connection.type;
 
         if (networkState==='none') 
         	appConfig.networkState='false';
         else 
         	appConfig.networkState='true';
+	    
   
     }    
     </script>    	
@@ -58,9 +60,14 @@
 	
 	<script type="text/javascript" src="scripts/lodash.min.js"></script>
 	<script type="text/javascript" src="scripts/backbone-min.js"></script>
-	<script type="text/javascript" src="scripts/backbone.localstorage.js"></script>	
 
+	<script type="text/javascript" src="scripts/backbone.dualstorage.js"></script>		
+	<!-- 
+	Stockage
+	<script type="text/javascript" src="scripts/backbone.localstorage.js"></script>	
+	<script type="text/javascript" src="scripts/backbone-sync-localstorage.js"></script>		
 	<script type="text/javascript" src="scripts/backbone.safe.js"></script>
+	 -->
 	<script type="text/javascript" src="scripts/backbone.poller.min.js"></script>
 	  
   	<!-- Core -->	
