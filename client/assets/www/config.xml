@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<widget xmlns = "http://www.w3.org/ns/widgets" xmlns:gap = "http://phonegap.com/ns/1.0" id = "com.zenodus.client" version = "0.0.0.6">
+<widget xmlns = "http://www.w3.org/ns/widgets" xmlns:gap = "http://phonegap.com/ns/1.0" id = "com.zenodus.client" version = "0.0.0.7">
 
 <preference name="phonegap-version" value="2.2.0" />
 
@@ -7,7 +7,7 @@
 
 <description>
 - Live score on Internet
-- Send your results to Facebook and Twiter
+- Send your results to Facebook
 - Few different types of scoring plus custom option. 
 - Full scoreboard always visible
 </description>
