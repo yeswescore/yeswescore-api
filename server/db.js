@@ -303,7 +303,7 @@ DB.Schema.Player.post('save', function () {
       }
       // When ? we don't know & we don't mind *yet* :)
       game.save();
-    });
+    }, this);
   });
 });
 
