@@ -252,7 +252,8 @@ describe('dev:games', function(){
         path: Conf["documents.games"]+"random"
       };
       http.getJSON(options, function (randomGame) {
-        assert.isGame(randomGame);
+        assert.isObject(randomGame, "random game must exist");
+        
         // nb Element ds le stream.
         var nbElementInStream = randomGame.stream.length;
         // request random player
@@ -262,7 +263,7 @@ describe('dev:games', function(){
           path: Conf["documents.players"]+"random"
         };
         http.getJSON(options, function (randomPlayer) {
-          assert.isPlayerWithToken(randomPlayer);
+          assert.isObject(randomPlayer, "random player must exist");
           // adding comment in game stream
           var streamObj = {
             type: "comment",
@@ -271,7 +272,7 @@ describe('dev:games', function(){
           var options = {
             host: Conf["http.host"],
             port: Conf["http.port"],
-            path: Conf["api.games"]+randomGame.id+"/stream/?playerid="+randomPlayer.id+"&token="+randomPlayer.token
+            path: Conf["api.games"]+randomGame._id+"/stream/?playerid="+randomPlayer._id+"&token="+randomPlayer.token
           };
           http.post(options, streamObj, function (s) {
             assert.isStreamComment(s);
@@ -279,7 +280,7 @@ describe('dev:games', function(){
             var options = {
               host: Conf["http.host"],
               port: Conf["http.port"],
-              path: Conf["api.games"]+randomGame.id
+              path: Conf["api.games"]+randomGame._id+"/?stream=true"
             };
             http.getJSON(options, function (game) {
               assert.isGame(game);

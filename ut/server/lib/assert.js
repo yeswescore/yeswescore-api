@@ -280,7 +280,7 @@ assert.isStreamObject = function (o, m) {
   assert(typeof o.type !== "undefined", "isStreamObject: streamObject.type cannot be undefined");
   assert(typeof o.date_creation !== "undefined", "isStreamObject: streamObject.date_creation cannot be undefined");
   assert(typeof o.owner !== "undefined", "isStreamObject: streamObject.owner cannot be undefined");
-  assert(typeof o.data !== "undefined", "isStreamObject: streamObject.data cannot be undefined");
+  assert(typeof o.data !== "undefined", "isStreamObject: streamObject.data cannot be undefined \n\n"+JSON.stringify(o));
   assert.isId(o.id, "isStreamObject: streamObject.id must be an hexa string");
   assert.isId(o.owner, "isStreamObject: streamObject.owner must be an hexa string");
   assert.isDate(o.date_creation, "isStreamObject: streamObject.date_creation must be a date");
