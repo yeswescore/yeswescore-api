@@ -257,6 +257,8 @@ DB.Schema.Player.post('save', function () {
       this._wasModified.indexOf("club") === -1)
     return;
 
+  var wasModified = this._wasModified; // is garbage collected by mongoose ?
+  
   // ASYNC STUFF HERE
   // maybe we should use player.games
   DB.Model.Game.find({"teams.players": this.id})
@@ -267,8 +269,7 @@ DB.Schema.Player.post('save', function () {
       return; //FIXME: log
     // for
     games.forEach(function postSaveUpdateForEachGame(game) {
-      //
-      if (this._wasModified.indexOf("name") !== -1) {
+      if (wasModified.indexOf("name") !== -1) {
         game._searchablePlayersNames = game.teams.reduce(function (p, team) {
           return p.concat(team.players.map(function (player) {
             return player.name.searchable();
@@ -276,7 +277,7 @@ DB.Schema.Player.post('save', function () {
         }, []);
       }
       //
-      if (this._wasModified.indexOf("nickname") !== -1) {
+      if (wasModified.indexOf("nickname") !== -1) {
         game._searchablePlayersNickNames = game.teams.reduce(function (p, team) {
           return p.concat(team.players.map(function (player) {
             return player.nickname.searchable();
@@ -284,7 +285,7 @@ DB.Schema.Player.post('save', function () {
         }, []);
       }
       //
-      if (this._wasModified.indexOf("club") !== -1) {
+      if (wasModified.indexOf("club") !== -1) {
         game._searchablePlayersClubsIds = game.teams.reduce(function (p, team) {
           return p.concat(team.players.filter(function (player) {
             return player.club && player.club.id;
