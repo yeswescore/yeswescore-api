@@ -1,7 +1,9 @@
 var DB = require("../db.js")
   , express = require("express")
   , app = require("../app.js")
-  , Q = require("q");
+  , Q = require("q")
+  , mongoose = require("mongoose")
+  , ObjectId = mongoose.Types.ObjectId;
 
 
 /**
@@ -37,21 +39,22 @@ app.get('/v1/games/', function(req, res){
     populate = req.query.populate;
   var populatePaths = (typeof populate === "string") ? populate.split(",") : [];
 
-  if (!text)
-    return res.end(JSON.stringify([]));
-  text = new RegExp("("+text.searchable().pregQuote()+")");
   // process fields
   var fields = app.createPopulateFields(fields, populate);
   // heavy...
-  var query = DB.Model.Game.find({})
-    .or([
+  var query = DB.Model.Game.find({});
+  if (text) {
+    text = new RegExp("("+text.searchable().pregQuote()+")");
+    query.or([
       { _citySearchable: text },
       { _searchablePlayersNames: text },
       { _searchablePlayersNickNames: text },
-      { _searchablePlayersClubsNames: text },
-      { _searchablePlayersClubsIds: club }
-    ])
-    .select(fields.select);
+      { _searchablePlayersClubsNames: text }
+    ]);
+  }
+  if (club)
+    query.where('_searchablePlayersClubsIds', club);
+  query.select(fields.select);
   if (populatePaths.indexOf("teams.players") !== -1) {
     query.populate("teams.players", fields["teams.players"]);
   }
@@ -75,9 +78,12 @@ app.get('/v1/games/', function(req, res){
  *
  * Specific options:
  *  /v1/games/:id/?populate=teams.players
+ *  /v1/games/:id/?stream=true
  */
 app.get('/v1/games/:id', function (req, res){
   var fields = req.query.fields || "date_creation,date_start,date_end,owner,pos,country,city,sport,type,status,sets,score,teams,teams.players.name,teams.players.nickname,teams.players.club";
+  if (req.query.stream === "true")
+    fields += ",stream"
   // populate option
   var populate = "teams.players";
   if (typeof req.query.populate !== "undefined")
@@ -195,7 +201,6 @@ app.post('/v1/games/:id', express.bodyParser(), function(req, res){
       });
       return deferred.promise;
     }).then(function updateFields(game) {
-      console.log('updateFields');
       // updatable simple fields
       [ "country", "city", "type", "status", "sets", "score" ].forEach(
         function (o) {
@@ -237,6 +242,11 @@ app.post('/v1/games/:id', express.bodyParser(), function(req, res){
  *
  * You must be authentified
  * 
+ * WARNING WARNING WARNING
+ *  DO NOT TRUST THE RESULT
+ *  might have race conditions on result.
+ * WARNING WARNING WARNING
+ * 
  * Body {
  *     type: "comment",   (default="comment")
  *     owner: ObjectId    (must equal ?playerid)
@@ -245,12 +255,14 @@ app.post('/v1/games/:id', express.bodyParser(), function(req, res){
  * }
  */
 app.post('/v1/games/:id/stream/', express.bodyParser(), function(req, res){
+  if (req.body.type !== "comment")
+    return app.defaultError(res)("type must be comment");
   DB.isAuthenticatedAsync(req.query)
     .then(function checkGameExist(authentifiedPlayer) {
       if (authentifiedPlayer === null)
         throw "unauthorized";
       var deferred = Q.defer();
-      DB.Model.Game.findById(query.params.id, function (err, game) {
+      DB.Model.Game.findById(req.params.id, function (err, game) {
         if (err)
           return deferred.reject(err);
         if (game === null)
@@ -259,25 +271,22 @@ app.post('/v1/games/:id/stream/', express.bodyParser(), function(req, res){
       });
       return deferred.promise;
     }).then(function pushIntoStream(game) {
+      // FIXME: performance issue here...
+      //  we should be using { $push: { stream: streamItem } }
+      //  but there are 2 problems :
+      //   - how can we get the new _id with $push api ? (need to read using slice -1 ? might be race conditions :(
+      //   - seems to be a bug: no _id is created in mongo :(
       var streamItem = {};
-      // creating fields
       streamItem.type = "comment";
       streamItem.owner = req.query.playerid;
       // adding text
       if (req.body.data && req.body.data.text)
         streamItem.data = { text: req.body.data.text };
-      var deferred = Q.defer();
-      DB.Model.game.findByIdAndUpdate(
-        game._id,
-        { $push: { streams: streamItem } },
-        function (err, unknownObj) {
-          if (err)
-            return deferred.reject(err);
-          return deferred.resolve(unknownObj);
-        }
-      );
-      return deferred.promise;
-    }).then(function (unknownObj) {
-      res.end(JSON.stringifyModels(unknownObj));
+      game.stream.push(streamItem);
+      return DB.saveAsync(game);
+    }).then(function sendGame(game) {
+      if (game.stream.length === 0)
+        throw "no streamItem added";
+      res.end(JSON.stringifyModels(game.stream[game.stream.length - 1]));
     }, app.defaultError(res));
 });
