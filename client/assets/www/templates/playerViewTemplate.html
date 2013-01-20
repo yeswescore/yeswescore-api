@@ -13,6 +13,9 @@ if (follow === 'true')
 <%
 }
 %>
+
+  <span class="success label label-info hide" style="color:red"></span>	
+
 <h3><%= player.name %> alias <%= player.nickname %></h3>
 
 Club : <%= player.club.name %> <a href="#clubs/<%= player.club.id %>">Plus d'infos</a><br/>
@@ -22,12 +25,12 @@ Classement : <%= player.rank %><br/>
 if (follow === 'true') 
 {
 %>
-<a href="#players/nofollow/<%= player.id %>" data-role="button" id="followPlayer">Ne plus suivre ce joueur</a>
+<a data-role="button" id="nofollowPlayerButton">Ne plus suivre ce joueur</a>
 <%
 }
 else {
 %>
-<a href="#players/follow/<%= player.id %>" data-role="button" id="followPlayer">Suivre ce joueur</a>
+<a data-role="button" id="followPlayerButton">Suivre ce joueur</a>
 <%
 }
 %>
