@@ -148,44 +148,70 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
         club: inlinedClub, // will be undefined !
         type: req.body.type || "default"
     });
-    
-    DB.saveAsync(player)
-      .then(
-        function (player) { res.end(JSON.stringifyModels(player, { unhide: [ "token", "password"] })) },
-        app.defaultError(res)
-      );
+    return DB.saveAsync(player);
+  }).then(function (player) {
+    res.end(JSON.stringifyModels(player, { unhide: [ "token", "password"] }));
   }, app.defaultError(res));
 });
 
-// POST /v1/players/:id/?playerid=...&token=...
+/**
+ * update a player
+ * 
+ * You must be authentified (?playerid=...&token=...)
+ * 
+ * Body {
+ *   nickname: String, (default=undefined)
+ *   name: String,     (default=undefined)
+ *   rank: String,     (default=undefined)
+ *   club: { id:..., name:... }  (default=undefined, name: is ignored)
+ *   password: String  (default=undefined)
+ * }
+ */
 app.post('/v1/players/:id', express.bodyParser(), function(req, res){
   if (req.params.id !== req.body.id ||
       req.params.id !== req.query.playerid) {
     return app.defaultError(res)("id differs");
   }
-  DB.isAuthenticatedAsync(req.query)
-    .then(function (authentifiedPlayer) {
-      if (!authentifiedPlayer)
-        return app.defaultError(res)("player not authenticated");
-      // FIXME: use http://mongoosejs.com/docs/api.html#model_Model-findByIdAndUpdate
-      DB.Model.Player.findOne({_id:req.params.id})
-                     .exec(function (err, player) {
-         if (err)
-           return app.defaultError(res)(err);
-         if (player === null)
-           return app.defaultError(res)("no player found");
-        // updating player
-        ["nickname", "name", "rank", "password", "club"].forEach(function (o) {
-          if (typeof req.body[o] !== "undefined")
-            player[o] = req.body[o];
+  var deferred = Q.defer();
+  var club = req.body.club;
+  if (club && club.id) {
+    DB.Model.Club.findById(club.id, function (err, club) {
+      if (err)
+        return deferred.reject(err);
+      deferred.resolve(club);
+    });
+  } else {
+    deferred.resolve(null);
+  }
+  deferred.promise.then(function (club) {
+    DB.isAuthenticatedAsync(req.query)
+      .then(function (authentifiedPlayer) {
+        if (!authentifiedPlayer)
+          return app.defaultError(res)("player not authenticated");
+        // FIXME: use http://mongoosejs.com/docs/api.html#model_Model-findByIdAndUpdate
+        DB.Model.Player.findOne({_id:req.params.id})
+                      .exec(function (err, player) {
+          if (err)
+            return app.defaultError(res)(err);
+          if (player === null)
+            return app.defaultError(res)("no player found");
+          // updating player
+          var inlinedClub = (club) ? { id: club.id, name: club.name } : null;
+          if (inlinedClub) {
+            player["club"] = inlinedClub;
+          }
+          ["nickname", "name", "rank", "password"].forEach(function (o) {
+            if (typeof req.body[o] !== "undefined")
+              player[o] = req.body[o];
+          });
+          // saving player
+          DB.saveAsync(player)
+            .then(function (player) {
+              res.end(JSON.stringifyModels(player, { unhide: [ "token", "password"] }));
+            },
+          app.defaultError(res, "update error"));
         });
-        // saving player
-        DB.saveAsync(player)
-          .then(function (player) {
-            res.end(JSON.stringifyModels(player, { unhide: [ "token", "password"] }));
-          },
-        app.defaultError(res, "update error"));
-      });
-    },
-    app.defaultError(res, "authentication error"));
+      },
+      app.defaultError(res, "authentication error"));
+  }, app.defaultError(res));
 });
