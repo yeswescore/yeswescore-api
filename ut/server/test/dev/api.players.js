@@ -271,6 +271,80 @@ describe('dev:players', function(){
     });
   });
   
+  describe('update a player (name,nickname,rank,password,club)', function () {
+    it('should modify the player (name,nickname,rank,password,club)', function (done) {
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.clubs"]+"random"
+      };
+      http.getJSON(options, function (randomClub) {
+        assert.isObject(randomClub);
+        assert.isId(randomClub._id);
+        assert.isString(randomClub.name);
+        
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["documents.players"]+"random"
+        };
+        http.getJSON(options, function (randomPlayer) {
+          assert.isObject(randomPlayer);
+          assert.isId(randomPlayer._id);
+          
+          var playerid = randomPlayer._id;
+          var now = new Date().getTime();
+          var rnd = function () { return String(Math.round(Math.random() * 1000000)); }
+          var nickname = "nickname"+now +rnd();
+          var name = "name"+now +rnd();
+          var rank = "rank"+now +rnd();
+          var password = "password"+now +rnd();
+          var clubid = randomClub._id;
+          
+          var modifiedPlayer = {
+            id: playerid,
+            name: name,
+            nickname: nickname,
+            rank: rank,
+            password: password,
+            club: { id: clubid }
+          };
+          // saving
+          var options = {
+            host: Conf["http.host"],
+            port: Conf["http.port"],
+            path: Conf["api.players"]+playerid+"/?playerid="+playerid+"&token="+randomPlayer.token
+          };
+          
+          http.post(options, modifiedPlayer, function (player) {
+            assert.isPlayerWithToken(player);
+            assert(modifiedPlayer.name === player.name, "must have same name");
+            assert(modifiedPlayer.nickname = player.nickname, "must have same nickname");
+            assert(modifiedPlayer.rank === player.rank, "must have same rank");
+            assert(modifiedPlayer.password === player.password, "must have same password");
+            assert(modifiedPlayer.club.id === player.club.id, "must have same club");
+            
+            // read from DB
+            var options = {
+              host: Conf["http.host"],
+              port: Conf["http.port"],
+              path: Conf["api.players"]+playerid
+            };
+            http.getJSON(options, function (player) {
+              assert.isPlayer(player);
+              assert(modifiedPlayer.name === player.name, "must have same name");
+              assert(modifiedPlayer.nickname = player.nickname, "must have same nickname");
+              assert(modifiedPlayer.rank === player.rank, "must have same rank");
+              assert(modifiedPlayer.club.id === player.club.id, "must have same club");
+              
+              done();
+            });
+          });
+        });
+      });
+    });
+  });
+  
   describe('FIXME: read players filtering by club', function() {
     it('should read player checking params: security, pregQuote, ...', function (done) {
       done(/* FIXME */);
