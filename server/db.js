@@ -451,19 +451,21 @@ DB.Model.Game.checkFields = function (game, fields) {
   if (fields.indexOf("status") !== -1 && game.status && game.status !== "ongoing" && game.status !== "finished")
     return "wrong status (ongoing/finished)";
   // check teams
-  if (!Array.isArray(game.teams) || game.teams.length !== 2)
-    return "teams format";
-  // check teams.players
-  var ok = game.teams.every(function (team) {
-    return Array.isArray(team.players) &&
-           team.players.every(function (player) {
-             return typeof player === "string" ||
-                    (typeof player === "object" &&
-                     typeof player.name !== "undefined");
-           });
-  });
-  if (!ok)
-    return "teams.players format";
+  if (fields.indexOf("teams") !== -1 && game.teams) {
+    if (!Array.isArray(game.teams) || game.teams.length !== 2)
+      return "teams format";
+    // check teams.players
+    var ok = game.teams.every(function (team) {
+      return Array.isArray(team.players) &&
+            team.players.every(function (player) {
+              return typeof player === "string" ||
+                      (typeof player === "object" &&
+                      typeof player.name !== "undefined");
+            });
+    });
+    if (!ok)
+      return "teams.players format";
+  }
   return null;
 }
 
