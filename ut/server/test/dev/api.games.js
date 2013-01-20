@@ -128,7 +128,7 @@ describe('dev:games', function(){
         };
         
         var newGame = {
-          teams: [ { id: null, players: [ { name : "toto" } ] },
+          teams: [ { id: null, players: [ { name : "toto", nickname: "nick", email: "foo@zescore.com", rank: "15/2" } ] },
                    { id: null, players: [ { name : "titi" } ] } ]
         };
         http.post(options, newGame, function (game) {
@@ -138,6 +138,10 @@ describe('dev:games', function(){
           assert(game.teams[1].players[0].name === "titi", "second player is titi");
           assert.isId(game.teams[0].players[0].id, "first player should have an id");
           assert.isId(game.teams[1].players[0].id, "second player should have an id");
+          assert(game.teams[0].players[0].nickname === newGame.teams[0].players[0].nickname, "nick");
+          assert(game.teams[0].players[0].email === newGame.teams[0].players[0].email, "email");
+          assert(game.teams[0].players[0].rank === newGame.teams[0].players[0].rank, "rank");
+          
           done();
         });
       });
