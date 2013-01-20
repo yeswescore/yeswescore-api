@@ -113,6 +113,10 @@ var DB = {
 //
 // Definitions
 //
+
+// ClubID,Name,Ligue,Zip,City,Outdoor,Indoor,Players,Players-1AN,Teams,Teams-1AN,School?
+// =>
+// fftid,name,ligue,zip,city,outdoor,indoor,countPlayers,countPlayers1AN,countTeams,countTeams1AN,school
 DB.Definition.Club = {
   sport: String,
   date_creation: { type: Date, default: Date.now },
@@ -120,6 +124,16 @@ DB.Definition.Club = {
   city: String,
   pos: {type: [Number], index: '2d'},
   address: String,
+  fftid: String,
+  ligue: String,
+  zip: String,
+  outdoor: Number,
+  indoor: Number,
+  countPlayers: Number,
+  countPlayers1AN: Number,
+  countTeams: Number,
+  countTeams1AN: Number,
+  school: String,
   // private searchable fields
   _searchableName: String  // AUTO-FIELD (Club pre save)
 };
