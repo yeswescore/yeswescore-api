@@ -463,9 +463,55 @@ DB.Model.Game.checkFields = function (game, fields) {
   return null;
 }
 
+/**
+ * FIXME: documentation
+ * @return promise , callback val = game
+ */
+DB.Model.Game.updateTeamsAsync = function (game, teams) {
+  // updatable teams.points
+  if (!Array.isArray(teams))
+    return Q.resolve(game);
+  teams.forEach(function (team, teamIndex) {
+    if (!Array.isArray(game.teams))
+      game.teams = [];
+    if (typeof game.teams[teamIndex] === "undefined")
+      game.teams[teamIndex] = { };
+    if (typeof team.points === "string")
+      game.teams[teamIndex].points = team.points;
+  });
+  // update teams.players
+  return DB.Model.Game.updateTeamsPlayersAsync(game, teams); 
+};
+
+/**
+ * FIXME: documentation
+ * @return promise , callback val = game
+ */
+DB.Model.Game.updateTeamsPlayersAsync = function (game, teams) {
+  if (!Array.isArray(teams))
+    return Q.resolve(game); // nothing to do.
+  return DB.Model.Game.checkTeamsAsync(teams).then(function () {
+    // teams exist => create owned players
+    return DB.Model.Game.createOwnedPlayersAsync(teams, game.owner)
+  }).then(function () {
+    // update game teams players
+    teams.forEach(function (team, teamIndex) {
+      team.players.forEach(function (player, playerIndex) {
+        var playerid = (typeof player === "string") ? player: player.id;
+        var oldPlayerId = game.teams[teamIndex].players[playerIndex];
+        if (playerid != oldPlayerId)
+          game.markModified('teams');
+        game.teams[teamIndex].players[playerIndex] = playerid;
+      });
+    });
+    return game;
+  });
+};
+
+
 // additionnals functions
-DB.Model.Game.checkTeamsPlayersExistAsync = function (game) {
-  var playersId = game.teams.reduce(function (p, team) {
+DB.Model.Game.checkTeamsAsync = function (teams) {
+  var playersId = teams.reduce(function (p, team) {
     return p.concat(team.players.map(function (player) {
       if (typeof player === "string")
         return player; // player is an id
@@ -474,15 +520,15 @@ DB.Model.Game.checkTeamsPlayersExistAsync = function (game) {
   }, []);
   return DB.existAsync(DB.Model.Player, playersId)
            .then(function (exist) {
+             
               if (!exist)
                 throw "some player doesn't exist";
             });
 };
 
 // replace game.teams.players object by created players ids
-DB.Model.Game.createOwnedAnonymousPlayersAsync = function (game, owner) {
+DB.Model.Game.createOwnedPlayersAsync = function (teams) {
   var promises = [];
-  var teams = game.teams;
   for (var teamIndex = 0; teamIndex < teams.length; ++teamIndex) {
     var team = teams[teamIndex];
     var players = team.players;
@@ -841,7 +887,7 @@ var generateGamesAsync = function () {
         // saving players
         DB.saveAsync(owned).then(function () {
           deferred.resolve();
-        }, function (e) { deferred.reject(); console.log('error ' + e); } );
+        }, function (e) { deferred.reject(); );
       });
     });
   });
