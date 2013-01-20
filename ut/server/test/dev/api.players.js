@@ -319,7 +319,7 @@ describe('dev:players', function(){
           http.post(options, modifiedPlayer, function (player) {
             assert.isPlayerWithToken(player);
             assert(modifiedPlayer.name === player.name, "must have same name");
-            assert(modifiedPlayer.nickname = player.nickname, "must have same nickname");
+            assert(modifiedPlayer.nickname === player.nickname, "must have same nickname");
             assert(modifiedPlayer.rank === player.rank, "must have same rank");
             assert(modifiedPlayer.password === player.password, "must have same password");
             assert(modifiedPlayer.club.id === player.club.id, "must have same club");
@@ -333,7 +333,7 @@ describe('dev:players', function(){
             http.getJSON(options, function (player) {
               assert.isPlayer(player);
               assert(modifiedPlayer.name === player.name, "must have same name");
-              assert(modifiedPlayer.nickname = player.nickname, "must have same nickname");
+              assert(modifiedPlayer.nickname === player.nickname, "must have same nickname");
               assert(modifiedPlayer.rank === player.rank, "must have same rank");
               assert(modifiedPlayer.club.id === player.club.id, "must have same club");
               
