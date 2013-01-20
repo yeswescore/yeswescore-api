@@ -178,9 +178,6 @@ app.post('/v1/games/:id', express.bodyParser(), function(req, res){
   var err = DB.Model.Game.checkFields(req.body, ["sport", "type", "status", "teams"]);
   if (err)
     return app.defaultError(res)(err);
-  // check body id
-  if (req.params.id !== req.body.id)
-     return app.defaultError(res)("body.id should equal params.id");
   // check player is authenticated
   var owner = null;
   DB.isAuthenticatedAsync(req.query)
@@ -190,7 +187,7 @@ app.post('/v1/games/:id', express.bodyParser(), function(req, res){
       owner = authentifiedPlayer.id;
       // somme more security tests
       var deferred = Q.defer();
-      DB.Model.Game.findById(req.body.id, function (err, game) {
+      DB.Model.Game.findById(req.params.id, function (err, game) {
         if (err)
           return deferred.reject(err);
         if (game === null)
