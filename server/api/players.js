@@ -47,7 +47,7 @@ app.get('/v1/players/', function(req, res){
  *  /v1/players/autocomplete/?owner=:id   (autocomplete centered to an owner)
  */
 app.get('/v1/players/autocomplete/', function(req, res){
-  var fields = req.query.fields || "nickname,name,type";
+  var fields = req.query.fields || "nickname,name,type,club";
   var limit = req.query.limit || 5;
   var owner = req.query.owner;
   var sort = req.query.sort || "name";
