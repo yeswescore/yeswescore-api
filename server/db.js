@@ -887,7 +887,7 @@ var generateGamesAsync = function () {
         // saving players
         DB.saveAsync(owned).then(function () {
           deferred.resolve();
-        }, function (e) { deferred.reject(); );
+        }, function (e) { deferred.reject(); } );
       });
     });
   });
