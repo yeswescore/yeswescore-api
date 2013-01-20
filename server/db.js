@@ -298,7 +298,7 @@ DB.Schema.Player.post('save', function () {
           return p.concat(team.players.filter(function (player) {
             return player.club && player.club.name;
           }).map(function (player) {
-            return player.club.name.searchable;
+            return player.club.name.searchable();
           }));
         }, []);
       }
