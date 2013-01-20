@@ -338,4 +338,106 @@ describe('autofields:player', function(){
       });
     });
   });
+  
+  describe('update game player', function () {
+    it('should update player.games ', function (done) {
+      // FIXME: MIGHT NOT BE PERTINENT IF RANDOM GAME === current player game.
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.games"]+"random"
+      };
+      http.getJSON(options, function (randomGame) {
+        assert.isObject(randomGame);
+        var gameid = randomGame._id;
+        //
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["documents.players"]+randomGame.owner
+        };
+        http.getJSON(options, function (owner) {
+          var ownerid = owner._id;
+          var ownertoken = owner.token;
+          //
+          var options = {
+            host: Conf["http.host"],
+            port: Conf["http.port"],
+            path: Conf["documents.players"]+"random"
+          };
+          http.getJSON(options, function (randomPlayer) {
+            assert.isObject(randomPlayer);
+            
+            // extract player from this game
+            var playerid = randomPlayer._id;
+            var oldPlayerid = randomGame.teams[0].players[0];
+            
+            // modifying game
+            var options = {
+              host: Conf["http.host"],
+              port: Conf["http.port"],
+              path: Conf["api.games"]+gameid+"/?playerid="+ownerid+"&token="+ownertoken
+            };
+            var modifiedGame = {
+              id: gameid,
+              teams: [
+                { players: [ playerid ] },
+                { players: [ randomGame.teams[1].players[0] ] }
+              ]
+            };
+            
+            http.post(options, modifiedGame, function (game) {
+              assert.isObject(game, "must be a game");
+              assert(game.teams[0].players[0].id == playerid, "team must be updated ("+
+                game.teams[0].players[0].id+" vs "+playerid+")"
+              );
+              
+              // checking player.games
+              var options = {
+                host: Conf["http.host"],
+                port: Conf["http.port"],
+                path: Conf["api.players"]+playerid
+              };
+              http.getJSON(options, function (player) {
+                assert(player.games.indexOf(gameid) !== -1, "player must be linked to new game");
+              
+                // now, changing back playerid
+                var options = {
+                  host: Conf["http.host"],
+                  port: Conf["http.port"],
+                  path: Conf["api.games"]+gameid+"/?playerid="+ownerid+"&token="+ownertoken
+                };
+                var modifiedGame = {
+                  id: gameid,
+                  teams: [
+                    { players: [ oldPlayerid ] },
+                    { players: [ randomGame.teams[1].players[0] ] }
+                  ]
+                };
+                
+                http.post(options, modifiedGame, function (game) {
+                  assert.isObject(game, "must be a game");
+                  assert(game.teams[0].players[0].id == oldPlayerid, "team must be updated (2) ("+
+                    game.teams[0].players[0].id+" vs "+oldPlayerid+")"
+                  );
+                  
+                  // checking player.games
+                  var options = {
+                    host: Conf["http.host"],
+                    port: Conf["http.port"],
+                    path: Conf["api.players"]+playerid
+                  };
+                  http.getJSON(options, function (player) {
+                    assert(player.games.indexOf(gameid) === -1, "player must be unlinked from new game");
+                  
+                    done();
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+  });
 });
