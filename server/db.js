@@ -118,6 +118,8 @@ DB.Definition.Club = {
   date_creation: { type: Date, default: Date.now },
   name: String,
   city: String,
+  pos: {type: [Number], index: '2d'},
+  address: String,
   // private searchable fields
   _searchableName: String  // AUTO-FIELD (Club pre save)
 };
@@ -126,6 +128,8 @@ DB.Definition.Player = {
   name: String,
   date_creation: { type: Date, default: Date.now },
   date_modification: Date,
+  email: String,
+  idlicense: String,
   password: { type: String, default: null },
   token: { type: String, default: DB.generateToken },
   rank: String,

@@ -140,6 +140,8 @@ assert.isPlayerScheme = function (player, m) {
   // optionnals
   assert.isUndefinedOrString(player.nickname, "isPlayerScheme: nickname");
   assert.isUndefinedOrString(player.name, "isPlayerScheme: name");
+  assert.isUndefinedOrString(player.email, "isPlayerScheme: email");
+  assert.isUndefinedOrString(player.idlicense, "isPlayerScheme: idlicense");
   assert.isUndefinedOrDate(player.date_creation, "isPlayerScheme: date_creation");
   assert.isUndefinedOrDate(player.date_modification, "isPlayerScheme: date_modification");
   assert.isUndefinedOrString(player.rank, "isPlayerScheme: rank");
@@ -160,7 +162,7 @@ assert.isPlayerScheme = function (player, m) {
     assert.isId(gameId, "isPlayerScheme: games[*] must be id");
   });
   //
-  assert.allowedFields(player, ["id", "nickname", "name", "date_creation", "date_modification", "rank", "club", "games", "owner", "password", "token", "type"]);
+  assert.allowedFields(player, ["id", "nickname", "name", "date_creation", "date_modification", "email", "idlicense", "rank", "club", "games", "owner", "password", "token", "type"]);
   // FIXME:
   // - rank format
   // - no password => allowed blank fields

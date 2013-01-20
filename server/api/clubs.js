@@ -39,8 +39,13 @@ app.post('/v1/clubs/', express.bodyParser(), function(req, res){
     var club = new DB.Model.Club({
       sport: "tennis",
       name: req.body.name,
+      address: req.body.address || "",
       city: req.body.city || ""
     });
+    if (Array.isArray(req.body.pos) &&
+        req.body.pos.length === 2) {
+      club.pos = req.body.pos;
+    }
     DB.saveAsync(club)
       .then(
         function (club) { res.end(JSON.stringifyModels(club)) },

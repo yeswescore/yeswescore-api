@@ -145,6 +145,8 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
         nickname: req.body.nickname || "",
         name: req.body.name || "",
         rank: req.body.rank || "",
+        email: req.body.email || "",
+        idlicense: req.body.idlicense || "",
         club: inlinedClub, // will be undefined !
         type: req.body.type || "default"
     });
@@ -200,7 +202,7 @@ app.post('/v1/players/:id', express.bodyParser(), function(req, res){
           if (inlinedClub) {
             player["club"] = inlinedClub;
           }
-          ["nickname", "name", "rank", "password"].forEach(function (o) {
+          ["nickname", "name", "rank", "password", "idlicense", "email"].forEach(function (o) {
             if (typeof req.body[o] !== "undefined")
               player[o] = req.body[o];
           });
