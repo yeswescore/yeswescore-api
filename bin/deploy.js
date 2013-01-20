@@ -32,7 +32,7 @@ program
   .option('-t, --tag <tag>', 'git tag')
   .parse(process.argv);
 
-branch = program.tag || program.branch || branch;
+branch = program.tag || program.branch || branch;
 
 // FIXME: checkout bonne branche
 

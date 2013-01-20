@@ -146,7 +146,7 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
         name: req.body.name || "",
         rank: req.body.rank || "",
         email: req.body.email || "",
-        idlicense: req.body.idlicense || "",
+        idlicense: req.body.idlicense || "",
         club: inlinedClub, // will be undefined !
         type: req.body.type || "default"
     });

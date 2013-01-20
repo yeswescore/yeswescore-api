@@ -11,8 +11,8 @@ var DB = {
   status : "disconnected",
   
   // mongoose data.
-  Definition: { },  // schema definitions
-  Schema: { },      // mongoose schemas
+  Definition: { },  // schema definitions
+  Schema: { },      // mongoose schemas
   Model: { },       // mongoose models
   
   /*
@@ -134,11 +134,11 @@ DB.Definition.Player = {
   token: { type: String, default: DB.generateToken },
   rank: String,
   club: {
-    id: { type: Schema.Types.ObjectId, ref: "Club" },
+    id: { type: Schema.Types.ObjectId, ref: "Club" },
     name: String // AUTO-FIELD (Player pre save)
   },
   games: [ { type: Schema.Types.ObjectId, ref: "Game" } ], // AUTO-FIELD (Game post save)
-  owner: { type: Schema.Types.ObjectId, ref: "Player" },
+  owner: { type: Schema.Types.ObjectId, ref: "Player" },
   type: { type: String, enum: [ "default", "owned" ], default: "default" },
   // private searchable fields
   _searchableNickname: String,  // AUTO-FIELD (Player pre save)
@@ -560,7 +560,7 @@ DB.Model.Game.createOwnedPlayersAsync = function (teams, owner) {
 
 // custom JSON api
 JSON.stringifyModels = function (m, options) {
-  options = options || {};
+  options = options || {};
   if (options && typeof options.virtuals === "undefined")
     options.virtuals = true;
   if (options && typeof options.transform === "undefined")
@@ -837,7 +837,7 @@ var generateGamesAsync = function () {
         if (Math.random() < 0.2) {
           if (Math.random() < 0.3) {
             game.teams = [
-              { players: [ ownedplayer1.id ] },
+              { players: [ ownedplayer1.id ] },
               { players: [ ownedplayer2.id ] } 
             ];
           } else {
