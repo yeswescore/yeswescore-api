@@ -104,11 +104,13 @@ assert.isClub = function (club) {
   // mandatory
   assert.isId(club.id, "isClub: id must be an hexa string");
   // optionnals
+  assert.isUndefinedOrArray(club.pos, "isClub: pos");
+  assert.isUndefinedOrString(club.address, "isClub: address");
   assert.isUndefinedOrString(club.sport, "isClub: sport");
   assert.isUndefinedOrString(club.name, "isClub: name");
   assert.isUndefinedOrString(club.city, "isClub: city");
   assert.isUndefinedOrDate(club.date_creation, "isClub: date_creation");
-  assert.allowedFields(club, ["id", "sport", "name", "city", "date_creation"]);
+  assert.allowedFields(club, ["id", "sport", "name", "city", "date_creation", "pos", "address"]);
 };
 
 /*
