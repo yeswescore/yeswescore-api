@@ -459,8 +459,7 @@ DB.Model.Game.checkFields = function (game, fields) {
       return Array.isArray(team.players) &&
             team.players.every(function (player) {
               return typeof player === "string" ||
-                      (typeof player === "object" &&
-                      typeof player.name !== "undefined");
+                      (typeof player === "object" && typeof player.id !== "undefined");
             });
     });
     if (!ok)
