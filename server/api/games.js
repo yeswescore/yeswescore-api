@@ -119,9 +119,11 @@ app.get('/v1/games/:id', function (req, res){
  * Body {
  *   pos: String,         (default="")
  *   country: String,     (default=not exist)
- *   rank: String,        (default="")
- *   club: { id:..., name:... }  (default=null, name: is ignored)
- *   type: String      (enum=default,owned default=default)
+ *   city: String,        (default="")
+ *   sport: String,       (default="tennis")
+ *   status: String       (default="ongoing")
+ *   sets: String         (default="")
+ *   score: String        (default="")
  *   teams: [
  *     {
  *       points: String,  (default="")
@@ -132,6 +134,8 @@ app.get('/v1/games/:id', function (req, res){
  *     }
  *   ]
  * }
+ * 
+ * result is a redirect to /v1/games/:newid
  */
 app.post('/v1/games/', express.bodyParser(), function (req, res) {
   var err = DB.Model.Game.checkFields(req.body, ["sport", "type", "status", "teams"]);
@@ -173,7 +177,35 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
     }, app.defaultError(res));
 });
 
-// FIXME: documentation
+/*
+ * Update a game
+ *
+ * You must be authentified
+ * 
+ * FIXME: unoptimized, no fields options yet.
+ * 
+ * /!\ Default output will be have teams.players populated
+ * 
+ * Body {
+ *   pos: String,         (default="")
+ *   country: String,     (default=not exist)
+ *   city: String,        (default="")
+ *   status: String       (default="ongoing")
+ *   sets: String         (default="")
+ *   score: String        (default="")
+ *   teams: [
+ *     {
+ *       points: String,  (default="")
+ *       players: [
+ *         ObjectId,      (default=not exist)            teams.players can be id
+ *         { name: "owned player" } (default=not exist)   or objects
+ *       ]
+ *     }
+ *   ]
+ * }
+ * 
+ * result is a redirect to /v1/games/:newid
+ */
 app.post('/v1/games/:id', express.bodyParser(), function(req, res){
   var err = DB.Model.Game.checkFields(req.body, ["sport", "type", "status", "teams"]);
   if (err)
