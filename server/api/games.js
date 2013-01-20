@@ -174,6 +174,7 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
     }, app.defaultError(res));
 });
 
+// FIXME: documentation
 app.post('/v1/games/:id', express.bodyParser(), function(req, res){
   var err = DB.Model.Game.checkFields(req.body, ["sport", "type", "status", "teams"]);
   if (err)
@@ -208,23 +209,8 @@ app.post('/v1/games/:id', express.bodyParser(), function(req, res){
             game[o] = req.body[o];
         }
       );
-      // updatable teams field
-      var deferred = Q.defer();
-      if (typeof req.body.teams !== "undefined")
-      {
-        DB.Model.Game.checkTeamsPlayersExistAsync(req.body)
-                     .then(function () {
-                       return DB.Model.Game.createOwnedAnonymousPlayersAsync(req.body, owner)
-                     }).then(
-                       function () { deferred.resolve(game) },
-                       function () { deferred.reject()  }
-                     );
-      }
-      else
-      {
-        deferred.resolve(game);
-      }
-      return deferred.promise;
+      //
+      return DB.Model.Game.updateTeamsAsync(game, req.body.teams);
     }).then(function update(game) {
       return DB.saveAsync(game);
     }).then(function sendGame(game) {
