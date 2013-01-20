@@ -81,7 +81,7 @@ app.get('/v1/games/', function(req, res){
  *  /v1/games/:id/?stream=true
  */
 app.get('/v1/games/:id', function (req, res){
-  var fields = req.query.fields || "date_creation,date_start,date_end,owner,pos,country,city,sport,type,status,sets,score,teams,teams.players.name,teams.players.nickname,teams.players.club,teams.players.rank";
+  var fields = req.query.fields || "date_creation,date_start,date_end,owner,pos,country,city,sport,type,status,sets,score,teams,teams.players.name,teams.players.nickname,teams.players.club,teams.players.rank,teams.players.email";
   if (req.query.stream === "true")
     fields += ",stream"
   // populate option
