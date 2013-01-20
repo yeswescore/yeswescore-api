@@ -540,6 +540,8 @@ DB.Model.Game.createOwnedPlayersAsync = function (teams, owner) {
           var p = new DB.Model.Player({
             name: player.name || "",
             nickname: player.nickname || "",
+            email: player.email || "",
+            rank: player.rank || "",
             type: "owned",
             owner: owner
           });
