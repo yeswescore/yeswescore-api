@@ -17,7 +17,7 @@
        <label for="team<%= select %>_choice">
         <% if (player!==undefined) print(player.name); %>&nbsp; 
         <% if (player!==undefined) print(player.rank); %>&nbsp;
-        <% if (player!==undefined) print(player.club.name); %> 
+        <% if (player!==undefined) if (player.club!==undefined) print(player.club.name); %> 
        </label></fieldset>
       
         </li>
