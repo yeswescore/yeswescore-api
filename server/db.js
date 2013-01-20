@@ -472,10 +472,6 @@ DB.Model.Game.updateTeamsAsync = function (game, teams) {
   if (!Array.isArray(teams))
     return Q.resolve(game);
   teams.forEach(function (team, teamIndex) {
-    if (!Array.isArray(game.teams))
-      game.teams = [];
-    if (typeof game.teams[teamIndex] === "undefined")
-      game.teams[teamIndex] = { };
     if (typeof team.points === "string")
       game.teams[teamIndex].points = team.points;
   });
@@ -520,14 +516,13 @@ DB.Model.Game.checkTeamsAsync = function (teams) {
   }, []);
   return DB.existAsync(DB.Model.Player, playersId)
            .then(function (exist) {
-             
               if (!exist)
                 throw "some player doesn't exist";
             });
 };
 
 // replace game.teams.players object by created players ids
-DB.Model.Game.createOwnedPlayersAsync = function (teams) {
+DB.Model.Game.createOwnedPlayersAsync = function (teams, owner) {
   var promises = [];
   for (var teamIndex = 0; teamIndex < teams.length; ++teamIndex) {
     var team = teams[teamIndex];
