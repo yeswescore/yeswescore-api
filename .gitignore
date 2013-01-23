@@ -1,0 +1,6 @@
+#
+node_modules
+# excluding port file in server 
+.port
+#
+nohup.out
