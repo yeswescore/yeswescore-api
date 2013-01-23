@@ -8,12 +8,8 @@
 # 
 # /!\ depends on node supervisor.
 # npm install supervisor -g
-if [ "$USER" != "root" ]
-then
-  echo "You must be root"
-  echo "Usage: $0 {start|stop|status|logs}"
-  exit 1
-fi
+#
+# [FIXME] restrict this script to root
 case "$1" in
 start)
 echo "Starting ZeScore Api."
