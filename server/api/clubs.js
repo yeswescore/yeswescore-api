@@ -23,6 +23,33 @@ app.get('/v1/clubs/:id', function(req, res){
   });
 });
 
+/*
+app.get('/v1/clubs/autocomplete/', function(req, res){
+  var fields = req.query.fields || "sport,date_creation,name,city,address,fftid,ligue,zip,outdoor,indoor";
+  var limit = req.query.limit || 5;
+  var sort = req.query.sort || "name";
+  var text = req.query.q;
+  
+  if (text) {
+    // slow
+    text = new RegExp("("+text.searchable().pregQuote()+")");
+    // searching
+    DB.Model.Club
+      .find({_searchableName: text})
+      .select(fields.replace(/,/g, " "))
+      .sort(sort.replace(/,/g, " "))
+      .limit(limit)
+      .exec(function (err, clubs) {
+        if (err)
+          return app.defaultError(res)(err);
+        res.end(JSON.stringifyModels(clubs));
+      });
+  } else {
+    res.end(JSON.stringify([]));
+  }
+});
+*/
+
 /**
  * Create a new club
  * 
