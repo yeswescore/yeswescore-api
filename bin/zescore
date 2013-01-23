@@ -28,7 +28,7 @@ sudo cat /tmp/supervisor.log
 ;;
 status)
 # Check to see if the process is running
-sudo pgrep '^node.*supervisor.*server.js'
+sudo pgrep -f '^node.*supervisor.*server.js' && echo "  ^--- pid of zescore server"
 ;;
  
 *)
