@@ -14,7 +14,7 @@ case "$1" in
 start)
 echo "Starting ZeScore Api."
 sudo su node -c 'date > /tmp/supervisor.log'
-sudo su node -c 'export NODE_ENV="PROD"; /usr/bin/supervisor -w /opt/web/zescore/server/ /opt/web/zescore/server/server.js &>> /tmp/supervisor.log &'
+sudo su node -c 'export NODE_ENV="PROD"; /usr/bin/supervisor -w /opt/web/zescore/server/ &>> /tmp/supervisor.log &'
 ;;
 stop)
 echo "Stopping ZeScore Api."
