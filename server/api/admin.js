@@ -8,3 +8,7 @@ if (Conf.env === "DEV") {
       process.exit(0);
   });
 }
+
+app.get('/version/', function (req, res) {
+    req.end("version 0.0");
+});
