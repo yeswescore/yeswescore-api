@@ -1,0 +1,37 @@
+#!/bin/bash
+#
+# ZeScore startup service script
+# USAGE: start|stop|status|logs
+#
+# INSTALL: sudo cp zescore /etc/init.d/; sudo chmod +x /etc/init.d/zescore
+# LAUNCH:  sudo service zescore start
+# 
+# /!\ depends on node supervisor.
+# npm install supervisor -g
+case "$1" in
+start)
+echo "Starting ZeScore Api."
+date > /tmp/supervisor.log
+/usr/bin/supervisor -w /opt/web/zescore/server/ /opt/web/zescore/server/server.js &>> /tmp/supervisor.log &
+;;
+stop)
+echo "Stopping ZeScore Api."
+pkill -f '.*supervisor.*'
+sleep 1
+pkill -9 -f '.*supervisor.*'
+;;
+logs)
+echo "Zescore supervisor log."
+cat /tmp/supervisor.log
+;;
+status)
+# Check to see if the process is running
+pgrep '.*supervisor.*'
+;;
+ 
+*)
+echo “Zescore service”
+echo $”Usage: $0 {start|stop|status|logs}”
+exit 1
+esac
+exit 0
