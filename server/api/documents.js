@@ -4,38 +4,62 @@ var Conf = require("../conf.js")
 
 if (Conf.env === "DEV") {
   app.get('/documents/games/random', function (req, res) {
-    var game = DB.games.random();
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.end(JSON.stringify(game));
+    DB.Model.Game.randomAsync().then(
+      function success(game) {
+        res.end(JSON.stringify(game));
+      },
+      app.defaultError(res)
+    );
   });
 
   app.get('/documents/games/:id', function (req, res) {
-    var game = DB.searchById(DB.games, req.params.id);
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.end(JSON.stringify(game));
+    DB.Model.Game.findOne({_id:req.params.id})
+                 .exec(function (err, game) {
+      if (err)
+        return app.defaultError(res)(err);
+      if (game === null)
+        return app.defaultError(res)("no game found");
+      res.end(JSON.stringify(game));
+    });
   });
 
   app.get('/documents/players/random', function (req, res) {
-    var player = DB.players.random();
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.end(JSON.stringify(player));
+    DB.Model.Player.randomAsync().then(
+      function success(player) {
+        res.end(JSON.stringify(player));
+      },
+      app.defaultError(res)
+    );
   });
 
   app.get('/documents/players/:id', function (req, res) {
-    var player = DB.searchById(DB.players, req.params.id);
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.end(JSON.stringify(player));
+    DB.Model.Player.findOne({_id:req.params.id})
+                   .exec(function (err, player) {
+      if (err)
+        return app.defaultError(res)(err);
+      if (player === null)
+        return app.defaultError(res)("no player found");
+      res.end(JSON.stringify(player));
+    });
   });
 
   app.get('/documents/clubs/random', function (req, res) {
-    var club = DB.clubs.random();
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.end(JSON.stringify(club));
+    DB.Model.Club.randomAsync().then(
+      function success(club) {
+        res.end(JSON.stringify(club));
+      },
+      app.defaultError(res)
+    );
   });
 
   app.get('/documents/clubs/:id', function (req, res) {
-    var club = DB.searchById(DB.clubs, req.params.id);
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.end(JSON.stringify(club));
+    DB.Model.Player.findOne({_id:req.params.id})
+                   .exec(function (err, club) {
+      if (err)
+        return app.defaultError(res)(err);
+      if (club === null)
+        return app.defaultError(res)("no club found");
+      res.end(JSON.stringify(club));
+    });
   });
 };

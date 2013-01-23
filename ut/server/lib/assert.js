@@ -14,6 +14,10 @@ var isDate = function (s) {
   return (isString(s) && isNotEmpty(s)) || s === null; /* FIXME */
 };
 
+var isId = function (id, m) {
+  return isString(id) && isNotEmpty(id) && isHexa(id);
+};
+
 assert.isObject = function (s, m) {
   assert(isObject(s), m);
 };
@@ -38,11 +42,32 @@ assert.isNotEmpty = function (s, m) {
 assert.isId = function (id, m) {
   assert.isString(id, m+" > isId: must be a string");
   assert.isNotEmpty(id, m+" > isId: cannot be empty");
-  assert.isHexa(id, m+" > isId: must be hexa");
+  assert.isHexa(id, m+" > isId: must be hexa ("+id+")");
 };
 
 assert.isNullableString = function (s, m) {
   assert(isString(s) || s === null, m+" >isNullableString: must be null or string");
+};
+
+assert.isUndefinedOrString = function (s, m) {
+  assert(typeof s === "undefined" || typeof s === "string", m+" >isUndefinedOrString: must be undefined or string");  
+};
+
+assert.isUndefinedOrNullableString = function (s, m) {
+  assert(typeof s === "undefined" || typeof s === "string" || s === null, m+" >isUndefinedOrString: must be undefined or string");  
+};
+
+assert.isUndefinedOrArray = function (s, m) {
+  assert(typeof s === "undefined" || isArray(s), m);
+};
+
+assert.isUndefinedOrDate = function (s, m) {
+  assert(typeof s === "undefined" || isDate(s), m);
+};
+
+assert.isUndefinedOrId = function (s, m) {
+  if (typeof s === "undefined") return;
+  assert.isId(s, m);
 };
 
 assert.isDate = function (s, m) {
@@ -50,12 +75,14 @@ assert.isDate = function (s, m) {
 };
 
 assert.isPos = function (s, m) {
-  assert(typeof s === "object" || s === null, m+" >isPos: must be an object");
-  if (s) {
-    assert(typeof s.long !== "undefined", m+" >isPos: must have { pos: ... } attribute");
-    assert(typeof s.lat !== "undefined", m+" >isPos: must have { lat: ... } attribute");
-  }
+  assert(Array.isArray(s), m+" >isPos: must be an array (index 2d)");
 };
+
+assert.isUndefinedOrPos = function (s, m) {
+  if (typeof s === "undefined") return;
+  assert.isPos(s, m);
+};
+
 
 assert.allowedFields = function (o, fields, m) {
   for (var i in o) {
@@ -76,10 +103,14 @@ assert.isClub = function (club) {
   assert.isObject(club, "isClub: club must be an object");
   // mandatory
   assert.isId(club.id, "isClub: id must be an hexa string");
-  assert.isNullableString(club.sport, "isClub: sport");
-  assert.isNullableString(club.name, "isClub: name");
-  assert.isNullableString(club.city, "isClub: city");
-  assert.allowedFields(club, ["id", "sport", "name", "city"]);
+  // optionnals
+  assert.isUndefinedOrArray(club.pos, "isClub: pos");
+  assert.isUndefinedOrString(club.address, "isClub: address");
+  assert.isUndefinedOrString(club.sport, "isClub: sport");
+  assert.isUndefinedOrString(club.name, "isClub: name");
+  assert.isUndefinedOrString(club.city, "isClub: city");
+  assert.isUndefinedOrDate(club.date_creation, "isClub: date_creation");
+  assert.allowedFields(club, ["id", "sport", "name", "city", "date_creation", "pos", "address"]);
 };
 
 /*
@@ -105,23 +136,35 @@ assert.isPlayerScheme = function (player, m) {
   assert.isObject(player, "isPlayerScheme: player must be an object");
   // mandatory
   assert.isId(player.id, "isPlayerScheme: id must be an hexa string");
-  // token is optionnal
-  assert.isNullableString(player.token, "isPlayerScheme: token");
+  // token & password can be undefined
+  assert.isUndefinedOrString(player.token, "isPlayerScheme: token");
+  assert.isUndefinedOrNullableString(player.password, "isPlayerScheme: password");
   // optionnals
-  assert.isNullableString(player.nickname, "isPlayerScheme: nickname");
-  assert.isNullableString(player.name, "isPlayerScheme: name");
-  assert.isNullableString(player.rank, "isPlayerScheme: rank");
-  assert.isNullableString(player.password, "isPlayerScheme: password");
+  assert.isUndefinedOrString(player.nickname, "isPlayerScheme: nickname");
+  assert.isUndefinedOrString(player.name, "isPlayerScheme: name");
+  assert.isUndefinedOrString(player.email, "isPlayerScheme: email");
+  assert.isUndefinedOrString(player.idlicense, "isPlayerScheme: idlicense");
+  assert.isUndefinedOrDate(player.date_creation, "isPlayerScheme: date_creation");
+  assert.isUndefinedOrDate(player.date_modification, "isPlayerScheme: date_modification");
+  assert.isUndefinedOrString(player.rank, "isPlayerScheme: rank");
+  // owner
+  if (player.owner)
+    assert.isId(player.owner, "isPlayerScheme: owner must be an id (or null)");
   // club
-  assert(player.club === null || 
+  assert(typeof player.club === "undefined" || 
          (typeof player.club === "object" && player.club.id), "isPlayerScheme: club must be null or object");
+  // type
+  assert(typeof player.type === "undefined" ||
+         player.type === "default" ||
+         player.type === "owned", "isPlayerScheme: type must be undefined, default or owned");
+         
   // games
-  assert.isArray(player.games, "isPlayerScheme: games must be an array");
+  assert.isUndefinedOrArray(player.games, "isPlayerScheme: games must be an array");
   player.games.forEach(function (gameId) {
     assert.isId(gameId, "isPlayerScheme: games[*] must be id");
   });
   //
-  assert.allowedFields(player, ["id", "nickname", "name", "rank", "club", "games", "password", "token"]);
+  assert.allowedFields(player, ["id", "nickname", "name", "date_creation", "date_modification", "email", "idlicense", "rank", "club", "games", "owner", "password", "token", "type"]);
   // FIXME:
   // - rank format
   // - no password => allowed blank fields
@@ -130,8 +173,8 @@ assert.isPlayerScheme = function (player, m) {
 
 assert.isPlayer = function (player) {
   assert.isPlayerScheme(player, "isPlayer: must be a player");
-  assert(player.token === null, "isPlayer: token must be null");
-  assert(player.password === null, "isPlayer: password must be null");
+  assert(typeof player.token === "undefined", "isPlayer: token must be undefined");
+  assert(typeof player.password === "undefined", "isPlayer: password must be undefined");
 };
 
 assert.isPlayerWithToken = function (player) {
@@ -165,17 +208,17 @@ assert.isGame = function (game) {
   assert.isId(game.owner, "isGame: owner must be an hexa string");
   assert.isDate(game.date_creation, "isGame: date_creation must be a date");
   assert.isDate(game.date_start, "isGame: date_start must be a date");
-  assert.isDate(game.date_end, "isGame: date_end must be a date");
-  assert.isPos(game.pos, "isGame: pos must be a pos");
-  assert.isArray(game.stream, "isGame: stream must be an array");
+  assert.isUndefinedOrDate(game.date_end, "isGame: date_end must be a date");
+  assert.isUndefinedOrPos(game.pos, "isGame: pos must be a pos");
+  assert.isUndefinedOrArray(game.stream, "isGame: stream must be an array");
   // 
-  assert.isNullableString(game.country, "isGame: country");
-  assert.isNullableString(game.city, "isGame: city");
-  assert.isNullableString(game.type, "isGame: type");
-  assert.isNullableString(game.sets, "isGame: sets");
-  assert.isNullableString(game.score, "isGame: score");
-  assert.isNullableString(game.sport, "isGame: sport");
-  assert.isNullableString(game.status, "isGame: status");
+  assert.isUndefinedOrString(game.country, "isGame: country");
+  assert.isUndefinedOrString(game.city, "isGame: city");
+  assert.isUndefinedOrString(game.type, "isGame: type");
+  assert.isUndefinedOrString(game.sets, "isGame: sets");
+  assert.isUndefinedOrString(game.score, "isGame: score");
+  assert.isString(game.sport, "isGame: sport");
+  assert.isUndefinedOrString(game.status, "isGame: status");
   //
   assert(game.type === "singles", "isGame: game.type can only be singles");
   assert(game.sport === "tennis", "isGame: game.sport can only be tennis");
@@ -183,9 +226,11 @@ assert.isGame = function (game) {
          game.status === "ongoing", "isGame: game.status can only be finished or ongoing");
   
   // only stream comment actually
-  game.stream.forEach(function (streamObject) {
-    assert.isStreamComment(streamObject, "isGame: game can only contain stream comments");
-  });
+  if (Array.isArray(game.stream)) {
+    game.stream.forEach(function (streamObject) {
+      assert.isStreamComment(streamObject, "isGame: game can only contain stream comments");
+    });
+  }
   
   // teams
   assert.isArray(game.teams, "isGame: teams must be an array");
@@ -201,35 +246,26 @@ assert.isGame = function (game) {
 };
 
 /**
- * accepted teamplayer object
-  {
-    id: "b79f6e2c83429a8d37a99660"
-  }
-  or
-  {
-    name: "..."
-  }
-*/
-assert.isTeamPlayer = function (o, m) {
-  assert.isObject(o, "isTeamPlayer: must be an object");
-  assert(typeof o.id === "string" || typeof o.name === "string", "isTeamPlayer: must have 'id' or 'name' field");
-  if (typeof o.id !== "undefined")
-    assert.isId(o.id, "isTeamPlayer: o.id must be an hexa id string");
-};
-
-/**
  * accepted gameteam object
   {
     id: null,
-    players: [ teamplayer, teamplayer, ... ]
+    players: [ id, id, ... ]
   }
 */
 assert.isGameTeam = function (o, m) {
   assert.isObject(o, "isGameTeam: must be an object");
-  assert(o.id === null, "isGameTeam: id must be null (no team yet)");
   assert.isArray(o.players, "isGameTeam: players must be an array");
   assert(o.players.length === 1, "isGameTeam: only singles are handle yet");
-  assert.isTeamPlayer(o.players[0], "isGameTeam: team.players[0] must be a teamplayer");
+  o.players.forEach(function (player) {
+    // player can be a simple ObjectId
+    // or an object depending if populate=teams.players was activated
+    if (isId(player) ||
+        (isObject(player) && isId(player.id))) {
+      // ok
+    } else {
+      assert(false, "isGameTeam: team.players[*] mut be player ids");
+    }
+  });
 };
 
 /**
@@ -246,12 +282,13 @@ assert.isStreamObject = function (o, m) {
   assert.isObject(o, "isStreamObject: o must be an object");
   assert(typeof o.id !== "undefined", "isStreamObject: streamObject.id cannot be undefined");
   assert(typeof o.type !== "undefined", "isStreamObject: streamObject.type cannot be undefined");
-  assert(typeof o.date !== "undefined", "isStreamObject: streamObject.date cannot be undefined");
+  assert(typeof o.date_creation !== "undefined", "isStreamObject: streamObject.date_creation cannot be undefined");
   assert(typeof o.owner !== "undefined", "isStreamObject: streamObject.owner cannot be undefined");
-  assert(typeof o.data !== "undefined", "isStreamObject: streamObject.data cannot be undefined");
+  assert(typeof o.data !== "undefined", "isStreamObject: streamObject.data cannot be undefined \n\n"+JSON.stringify(o));
   assert.isId(o.id, "isStreamObject: streamObject.id must be an hexa string");
   assert.isId(o.owner, "isStreamObject: streamObject.owner must be an hexa string");
-  assert.isDate(o.date, "isStreamObject: streamObject.date must be a date");
+  assert.isDate(o.date_creation, "isStreamObject: streamObject.date_creation must be a date");
+  assert.isUndefinedOrDate(o.date_modification, "isStreamObject: streamObject.date_modification must be a date");
   assert.isNotEmpty(o.type, "isStreamObject: streamObject.type cannot be empty");
   assert.isObject(o.data, "isStreamObject: streamObject.data must be an object");
 };

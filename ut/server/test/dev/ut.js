@@ -14,13 +14,14 @@ describe('documents', function(){
         path: Conf["documents.clubs"]+"random"
       };
       http.getJSON(options, function (club) {
-        assert(club, "club must exist (be an object)");
-        assert(typeof club.id === "string");
-        options.path = Conf["api.clubs"]+club.id;
-        var clubid = club.id;
+        assert.isObject(club, "club must exist (be an object)");
+        assert.isId(club._id);
+        
+        var clubid = club._id;
+        options.path = Conf["api.clubs"]+clubid;
         http.getJSON(options, function (club) {
-          assert(club, "club must exist (be an object)");
-          assert(typeof club.id === "string");
+          assert.isObject(club, "club must exist (be an object)");
+          assert.isId(club.id);
           assert(clubid === club.id);
           done();
         });
@@ -37,13 +38,14 @@ describe('documents', function(){
       };
       
       http.getJSON(options, function (player) {
-        assert(player, "player must exist (be an object)");
-        assert(typeof player.id === "string");
-        options.path = Conf["api.players"]+player.id;
-        var playerid = player.id;
+        assert.isObject(player, "player must exist (be an object)");
+        assert.isId(player._id);
+        
+        var playerid = player._id;
+        options.path = Conf["api.players"]+playerid;
         http.getJSON(options, function (player) {
-          assert(player, "player must exist (be an object)");
-          assert(typeof player.id === "string");
+          assert.isObject(player, "player must exist (be an object)");
+          assert.isId(player.id);
           assert(playerid === player.id);
           done();
         });
@@ -60,13 +62,13 @@ describe('documents', function(){
       };
       
       http.getJSON(options, function (game) {
-        assert(game, "game must exist (be an object)");
-        assert(typeof game.id === "string");
-        options.path = Conf["api.games"]+game.id;
-        var gameid = game.id;
+        assert.isObject(game, "game must exist (be an object)");
+        assert.isId(game._id);
+        var gameid = game._id;
+        options.path = Conf["api.games"]+gameid;
         http.getJSON(options, function (game) {
-          assert(game, "game must exist (be an object)");
-          assert(typeof game.id === "string");
+          assert.isObject(game, "game must exist (be an object)");
+          assert.isId(game.id);
           assert(gameid === game.id);
           done();
         });

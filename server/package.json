@@ -1,0 +1,23 @@
+{
+  "name": "zescore",
+  "private": true,
+  "description": "zescore api",
+  "version": "0.0.1",
+  "engines": { "node": "0.8.x" },
+  "dependencies": {
+    "express": "3.0.x",
+    "mongoose": "3.5.x",
+    "q": "0.8.x"
+  },
+  "devDependencies": {
+    "mocha": "1.8.1"
+  },
+  "author": "Marc Dassonneville <marcd@zescore.com>",
+  "scripts": {
+    "test": "../ut/server/mocha"
+  },
+  "repository": {
+    "type" : "git",
+    "url" : "git://github.com/syndr0m/zescore.git"
+  }
+}

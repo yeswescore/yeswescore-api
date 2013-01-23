@@ -1,397 +1,306 @@
 var DB = require("../db.js")
   , express = require("express")
-  , app = require("../app.js");
+  , app = require("../app.js")
+  , Q = require("q")
+  , mongoose = require("mongoose")
+  , ObjectId = mongoose.Types.ObjectId;
+
+
+/**
+ * Read games
+ * a bit complex due to "populate" option.
+ * 
+ * Generic options:
+ *  /v1/games/?limit=10              (default=10)
+ *  /v1/games/?offset=0              (default=0)
+ *  /v1/games/?fields=nickname,name  (default=)
+ *  /v1/games/?sort=date_start      (default=date_start)
+ *
+ * Specific options:
+ *  /v1/games/?q=text                (Mandatory)
+ *  /v1/games/?club=:id
+ *  /v1/games/?populate=teams.players (default=teams.players)
+ * 
+ * only query games with teams
+ * auto-populate teams.players
+ * 
+ * fields filter works with populate : (...)?fields=teams.players.name
+ */
+app.get('/v1/games/', function(req, res){
+  var limit = req.query.limit || 10;
+  var offset = req.query.offset || 0;
+  var text = req.query.q;
+  var club = req.query.club || null;
+  var fields = req.query.fields || "date_creation,date_start,date_end,owner,pos,country,city,sport,type,status,sets,score,teams,teams.players.name,teams.players.nickname,teams.players.club,teams.players.rank";
+  var sort = req.query.sort || "date_start";
+  // populate option
+  var populate = "teams.players";
+  if (typeof req.query.populate !== "undefined")
+    populate = req.query.populate;
+  var populatePaths = (typeof populate === "string") ? populate.split(",") : [];
+
+  // process fields
+  var fields = app.createPopulateFields(fields, populate);
+  // heavy...
+  var query = DB.Model.Game.find({});
+  if (text) {
+    text = new RegExp("("+text.searchable().pregQuote()+")");
+    query.or([
+      { _citySearchable: text },
+      { _searchablePlayersNames: text },
+      { _searchablePlayersNickNames: text },
+      { _searchablePlayersClubsNames: text }
+    ]);
+  }
+  if (club)
+    query.where('_searchablePlayersClubsIds', club);
+  query.select(fields.select);
+  if (populatePaths.indexOf("teams.players") !== -1) {
+    query.populate("teams.players", fields["teams.players"]);
+  }
+  query.sort(sort.replace(/,/g, " "))
+       .skip(offset)
+       .limit(limit)
+       .exec(function (err, games) {
+      if (err)
+        return app.defaultError(res)(err);
+      res.end(JSON.stringifyModels(games));
+    });
+});
+
+
+/**
+ * Read a game
+ * a bit complex due to "populate" option.
+ * 
+ * Generic options:
+ *  /v1/games/:id/?fields=nickname,name
+ *
+ * Specific options:
+ *  /v1/games/:id/?populate=teams.players
+ *  /v1/games/:id/?stream=true
+ */
+app.get('/v1/games/:id', function (req, res){
+  var fields = req.query.fields || "date_creation,date_start,date_end,owner,pos,country,city,sport,type,status,sets,score,teams,teams.players.name,teams.players.nickname,teams.players.club,teams.players.rank,teams.players.email";
+  if (req.query.stream === "true")
+    fields += ",stream"
+  // populate option
+  var populate = "teams.players";
+  if (typeof req.query.populate !== "undefined")
+    populate = req.query.populate;
+  var populatePaths = (typeof populate === "string") ? populate.split(",") : [];
+
+  // preprocess fields
+  var fields = app.createPopulateFields(fields, populate);
+  // searching player by id.
+  var query = DB.Model.Game.findOne({_id:req.params.id})
+     .select(fields.select);
+  if (populatePaths.indexOf("teams.players") !== -1) {
+    query.populate("teams.players", fields["teams.players"]);
+  }
+  query.exec(function (err, game) {
+    if (err)
+      return app.defaultError(res)(err);
+    if (game === null)
+      return app.defaultError(res)("no game found");
+    // should we hide the owner ?
+    res.end(JSON.stringifyModels(game));
+  });
+});
 
 /*
-  * SEARCHING GAMES :
-  * 
-  * json format:
-  * {
-  *   id: string,
-  *    date_creation: string,
-  *    date_start: string
-  *    date_end: string
-  *    pos: { long: float, lat: float },
-  *    country: string,
-  *    city: string,
-  *    sport: string,
-  *    type: string,
-  *    sets: string,
-  *    score: string,
-  *    status: string,
-  *    teams: [
-  *      {
-  *        id: null,
-  *        players: [
-  *          {
-  *            id: string,
-  *            nickname: string,
-  *            name: string,
-  *            rank: string,
-  *            club: {
-  *              id: string,
-  *              name: string
-  *            }
-  *          }
-  *        ]
-  *      },
-  *      {
-  *        id: null,
-  *        players: [
-  *          {
-  *            id: string,
-  *            nickname: string,
-  *            name: string,
-  *            rank: string,
-  *            club: {
-  *              id: string,
-  *              name: string
-  *            }
-  *          }
-  *        ]
-  *      },
-  *    ]
-  * }
-  */
-app.get('/v1/games/', function(req, res){
-  console.log("query="+req.query.q);
-  var games = DB.games, query = req.query.q, club = req.query.club;
-
-  // params de recherche ?
-  if (query) {
-    // query inside games
-    games = games.filter(function (g) {
-      // FIXME: trim, removeDiacritics, security
-      return g.city.removeDiacritics().toLowerCase().indexOf(query) !== -1;
-    });
-    console.log(games.length + " games matchent");
-    // query inside players (couteux!)
-    var players = DB.players.filter(function (p) {
-      return p.nickname.removeDiacritics().toLowerCase().indexOf(query) !== -1 ||
-            p.name.removeDiacritics().toLowerCase().indexOf(query) !== -1;
-    });
-    console.log(players.length + " players matchent");
-    players.forEach(function (player) {
-      player.games.forEach(function (gameId) {
-        // unique, couteux.
-        if (!DB.searchById(games, gameId))
-          games.push(DB.searchById(DB.games, gameId));
+ * Create a game
+ *
+ * You must be authentified
+ * You must give 2 teams
+ * 
+ * /!\ Default output will be have teams.players populated
+ * 
+ * Body {
+ *   pos: String,         (default="")
+ *   country: String,     (default=not exist)
+ *   city: String,        (default="")
+ *   sport: String,       (default="tennis")
+ *   status: String       (default="ongoing")
+ *   sets: String         (default="")
+ *   score: String        (default="")
+ *   teams: [
+ *     {
+ *       points: String,  (default="")
+ *       players: [
+ *         ObjectId,      (default=not exist)            teams.players can be id
+ *         { name: "owned player" } (default=not exist)   or objects
+ *       ]
+ *     }
+ *   ]
+ * }
+ * 
+ * result is a redirect to /v1/games/:newid
+ */
+app.post('/v1/games/', express.bodyParser(), function (req, res) {
+  var err = DB.Model.Game.checkFields(req.body, ["sport", "type", "status", "teams"]);
+  if (err)
+    return app.defaultError(res)(err);
+  DB.isAuthenticatedAsync(req.query)
+    .then(function checkPlayersExists(authentifiedPlayer) {
+      if (authentifiedPlayer === null)
+        throw "unauthorized";
+      // players id exist
+      // owned player are created
+      // => creating game
+      var game = new DB.Model.Game({
+        owner: authentifiedPlayer.id,
+        pos: req.body.pos || [],
+        country: req.body.country || "",
+        city: req.body.city || "",
+        sport: req.body.sport || "tennis",
+        type: "singles",
+        status: req.body.status || "ongoing",
+        sets: req.body.sets || "",
+        score: req.body.score || "",
+        teams: [ // game has 2 teams (default)
+          { points: "", players: [] },
+          { points: "", players: [] }
+        ],
+        stream: []
       });
-    });
-  }
-  
-  // filtre par club ?
-  if (club) {
-    games = games.filter(function (game) {
-      var fromClub = false;
-      if (game.teams) {
-        game.teams.forEach(function (team) {
-          if (team) {
-            team.players.forEach(function (playerInfo) {
-              if (playerInfo && playerInfo.id) {
-                var player = DB.searchById(DB.players, playerInfo.id);
-                if (player && player.club &&
-                    player.club.id && club === player.club.id) {
-                  fromClub = true;
-                }
-              }
-            });
-          }
-        });
-      }
-      return fromClub;
-    });
-  }
-  
-  console.log(games.length + ' games');
-  
-  // formating DB data.
-  games = games.map(function (game) {
-    return {
-      id: game.id,
-      date_creation: game.date_creation,
-      date_start: game.date_start,
-      date_end: game.date_end,
-      pos: game.pos,
-      country: game.country,
-      city: game.city,
-      type: game.type,
-      sets: game.sets,
-      score: game.score,
-      sport: game.sport,
-      status: game.status,
-      owner: game.owner,
-      stream: [], // empty
-      teams: game.teams.map(function (teamInfo) {
-        //
-        var players = teamInfo.players.map(function (playerInfo) {
-          if (typeof playerInfo.id !== "undefined") {
-            var player = DB.searchById(DB.players, playerInfo.id);
-            return {
-                id: player.id,
-                nickname: player.nickname,
-                name: player.name,
-                rank: player.rank,
-                club: player.club
-              };
-          }
-          return playerInfo;
-        });
-        //
-        return { 
-          id: null,
-          players: players,
-          points: teamInfo.points
-        };
-      })
-    }
-  });
-  // 
-  var body = JSON.stringify(games);
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.end(body);
+      return DB.Model.Game.updateTeamsAsync(game, req.body.teams);
+    }).then(function saveAsync(game) {
+      return DB.saveAsync(game);
+    }).then(function sendGame(game) {
+      app.internalRedirect('/v1/games/:id')(
+        {
+          query: { },
+          params: { id: game.id }
+        },
+        res);
+    }, app.defaultError(res));
 });
 
-// searching a specific game
-app.get('/v1/games/:id', function(req, res){
-  var game = DB.searchById(DB.games, req.params.id);
-  var result = {};
-  if (game) {
-    result = {
-      id: game.id,
-      date_creation: game.date_creation,
-      date_start: game.date_start,
-      date_end: game.date_end,
-      pos: game.pos,
-      country: game.country,
-      city: game.city,
-      type: game.type,
-      sets: game.sets,
-      score: game.score,
-      sport: game.sport,
-      status: game.status,
-      owner: game.owner,
-      teams: game.teams.map(function (teamInfo) {
-        //
-        var players = teamInfo.players.map(function (playerInfo) {
-          if (typeof playerInfo.id !== "undefined") {
-            var player = DB.searchById(DB.players, playerInfo.id);
-            return {
-                id: player.id,
-                nickname: player.nickname,
-                name: player.name,
-                rank: player.rank,
-                club: player.club
-              };
-          }
-          return playerInfo;
-        });
-        //
-        return { 
-          id: null,
-          players: players,
-          points: teamInfo.points
-        };
-      }),
-      stream: game.stream
-    };
-  };
-  
-  var body = JSON.stringify(result);
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.end(body);
-});
-
-
-
-/* creation partie
-* POST /v1/games/?playerid=...&token=...
-* {
-*   players : [
-*      {
-*        id: null/string
-*        nickname: string
-*        rank:
-*      }
-*   ]
-* }
-*/
-app.post('/v1/games/', express.bodyParser(), function (req, res) {  
-  // on verifie que l'owner est authentifie
-  if (!DB.isAuthenticated(req.query)) {
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.end(JSON.stringify({"error": "unauthorized"}));
-    return; // FIXME: error
-  }
-
-  /*
-  * document game:
-  * {
-  *   id: string, // checksum hexa
-  *   date_creation: string, // date iso 8601
-  *   date_start: string, // date iso 8601
-  *   date_end: string, // date iso 8601
-  *   owner,
-  *   pos: { long: float, lat: float }, // index geospatial
-  *   country: string,
-  *   city: string,
-  *   type: string, // singles / doubles
-  *   sets: string, // ex: 6,2;6,3  (precomputed)
-  *   status: string, // ongoing, canceled, finished (precomputed)
-  *   teams: [
-  *     string, // id
-  *     string  // id
-  *   ],
-  *   stream: [
-  *       FIXME: historique du match, action / date / heure / commentaire / video / photo etc
-  *   ]
-  */
-  // si aucune teams, on cree 2
-  if (!Array.isArray(req.body.teams))
-    req.body.teams = [{}, {}]; // double team vide.s
-  // on cree la partie
-  var game = {
-    id: DB.generateFakeId(),
-    date_creation: new Date().toISO(),
-    date_start: new Date().toISO(),
-    date_end: null,
-    owner: req.query.playerid,
-    teams: req.body.teams.map(function (teamInfo) {
-        if (typeof teamInfo.players !== "undefined" &&
-            Array.isArray(teamInfo.players) &&
-            typeof teamInfo.players[0] !== "undefined" &&
-            typeof teamInfo.players[0].id !== "undefined" &&
-            DB.searchById(DB.players, teamInfo.players[0].id))
-          return { id:null, points:null, players: [ { id: teamInfo.players[0].id } ] };
-        if (typeof teamInfo.players !== "undefined" &&
-            Array.isArray(teamInfo.players) &&
-            typeof teamInfo.players[0] !== "undefined" &&
-            typeof teamInfo.players[0].name !== "undefined")
-          return { id:null, points:null, players: [ { name: teamInfo.players[0].name } ] };
-        return { id:null, points:null, players: [ { name: "" } ] };
-    }),
-    type: "singles",
-    status: "ongoing",
-    pos: null,
-    country: null,
-    city: null,
-    sets: null,
-    status: "ongoing",
-    score: null,
-    sport: "tennis",
-    stream: []
-  };
-  // ttes les autres options que le client peut surcharger
-  // FIXME: whitelist.
-  ["country", "city", "sets", "score"].forEach(function (i) {
-    if (typeof req.body[i] !== "undefined")
-      game[i] = req.body[i];
-  });
-  // status
-  if (typeof req.body["status"] !== "undefined" &&
-      (req.body["status"] === "finished"  ||
-      req.body["status"] === "ongoing")) {
-    game["status"] = req.body.status;
-  }
-  // pos
-  if (typeof req.body["pos"] !== "undefined" &&
-      typeof req.body["pos"].long !== "undefined" &&
-      typeof req.body["pos"].lat !== "undefined") {
-    var long = parseFloat(req.body["pos"].long);
-    var lat = parseFloat(req.body["pos"].lat);
-    if (long >= -180 && long <= 180 &&
-        lat >= -90 && lat <= 90)
-    game["pos"] = {
-      long: long,
-      lat: lat
-    };
-  }
-  
-  // sauvegarde
-  DB.games.push(game);
-
-  // sending back saved data to the client
-  var body = JSON.stringify(game);
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.end(body);
-});
-
-/* update  partie
-* POST /v1/games/id
-*/
+/*
+ * Update a game
+ *
+ * You must be authentified
+ * 
+ * FIXME: unoptimized, no fields options yet.
+ * 
+ * /!\ Default output will be have teams.players populated
+ * 
+ * Body {
+ *   pos: String,         (default="")
+ *   country: String,     (default=not exist)
+ *   city: String,        (default="")
+ *   status: String       (default="ongoing")
+ *   sets: String         (default="")
+ *   score: String        (default="")
+ *   teams: [
+ *     {
+ *       points: String,  (default="")
+ *       players: [
+ *         ObjectId,      (default=not exist)            teams.players can be id
+ *         { name: "owned player" } (default=not exist)   or objects
+ *       ]
+ *     }
+ *   ]
+ * }
+ * 
+ * result is a redirect to /v1/games/:newid
+ */
 app.post('/v1/games/:id', express.bodyParser(), function(req, res){
-  if (!DB.isAuthenticated(req.query)) {
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.end(JSON.stringify({"error": "unauthorized"}));
-    return; // FIXME: error
-  }
-  //
-  var game = DB.searchById(DB.games, req.params.id);
-  if (!game) {
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.end(JSON.stringify({"error": "game doesn't exist"}));
-    return; // FIXME: error
-  }
-  if (req.query.playerid !== game.owner) {
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.end(JSON.stringify({"error": "you are not the owner of the game"}));
-    return; // FIXME: error
-  }
-  // update des champs updatables.
-  [ "city", "type", "sets", "score", "status", "teams" ].forEach(
-    function (o) {
-      if (typeof req.body[o] !== "undefined")
-        game[o] = req.body[o];
-    }
-  );
-  // sending back saved data to the client
-  var body = JSON.stringify(game);
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.end(body);
+  var err = DB.Model.Game.checkFields(req.body, ["sport", "type", "status", "teams"]);
+  if (err)
+    return app.defaultError(res)(err);
+  // check player is authenticated
+  var owner = null;
+  DB.isAuthenticatedAsync(req.query)
+    .then(function searchGame(authentifiedPlayer) {
+      if (authentifiedPlayer === null)
+        throw "unauthorized";
+      owner = authentifiedPlayer.id;
+      // somme more security tests
+      var deferred = Q.defer();
+      DB.Model.Game.findById(req.params.id, function (err, game) {
+        if (err)
+          return deferred.reject(err);
+        if (game === null)
+          return deferred.reject("game doesn't exist");
+        if (game.owner != req.query.playerid) // /!\ cant do '!==' on objectId
+          return deferred.reject("you are not the owner of the game : "+game.owner+" " + req.query.playerid);
+        deferred.resolve(game);
+      });
+      return deferred.promise;
+    }).then(function updateFields(game) {
+      // updatable simple fields
+      [ "country", "city", "type", "status", "sets", "score" ].forEach(
+        function (o) {
+          if (typeof req.body[o] !== "undefined")
+            game[o] = req.body[o];
+        }
+      );
+      //
+      return DB.Model.Game.updateTeamsAsync(game, req.body.teams);
+    }).then(function update(game) {
+      return DB.saveAsync(game);
+    }).then(function sendGame(game) {
+      app.internalRedirect('/v1/games/:id')(
+        {
+          query: { },
+          params: { id: game.id }
+        },
+        res);
+    }, app.defaultError(res));
 });
 
-// writing a new entry in the stream
-// POST /v1/games/:id/stream/?id=...&token=...
+/*
+ * Post in the stream
+ *
+ * You must be authentified
+ * 
+ * WARNING WARNING WARNING
+ *  DO NOT TRUST THE RESULT
+ *  might have race conditions on result.
+ * WARNING WARNING WARNING
+ * 
+ * Body {
+ *     type: "comment",   (default="comment")
+ *     owner: ObjectId    (must equal ?playerid)
+ *     data: { text: "..." }
+ *   }
+ * }
+ */
 app.post('/v1/games/:id/stream/', express.bodyParser(), function(req, res){
-  /*       {
-  *          id: checksum,
-  *          date: string,
-  *          type: "comment",
-  *          owner: id,
-  *          data: { text: "...." }
-  *        }
-  */
-  if (!DB.isAuthenticated(req.query)) {
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.end(JSON.stringify({"error": "unauthorized"}));
-    return; // FIXME: error
-  }
-  var game = DB.searchById(DB.games, req.params.id);
-  if (!game) {
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.end(JSON.stringify({"error": "game not found"}));
-    return; // FIXME: error
-  }
-  if (req.body.type !== "comment" || typeof req.body.data === "undefined") {
-    res.setHeader('Content-Type', 'application/json; charset=utf-8');
-    res.end(JSON.stringify({"error": "wrong format"}));
-    return; // FIXME: error
-  }
-  // we can post anything in a stream
-  var streamObj = {
-    id: DB.generateFakeId(),
-    date: new Date().toISO(),
-    owner: req.query.playerid
-  };
-  // should copy type & data
-  for (var i in req.body) {
-    if (typeof streamObj[i] === "undefined")
-      streamObj[i] = req.body[i];
-  }
-  // adding comment to stream
-  game.stream.push(streamObj);
-  // sending back saved data to the client
-  var body = JSON.stringify(streamObj);
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.end(body);
+  if (req.body.type !== "comment")
+    return app.defaultError(res)("type must be comment");
+  DB.isAuthenticatedAsync(req.query)
+    .then(function checkGameExist(authentifiedPlayer) {
+      if (authentifiedPlayer === null)
+        throw "unauthorized";
+      var deferred = Q.defer();
+      DB.Model.Game.findById(req.params.id, function (err, game) {
+        if (err)
+          return deferred.reject(err);
+        if (game === null)
+          return deferred.reject("can't find game");
+        return deferred.resolve(game);
+      });
+      return deferred.promise;
+    }).then(function pushIntoStream(game) {
+      // FIXME: performance issue here...
+      //  we should be using { $push: { stream: streamItem } }
+      //  but there are 2 problems :
+      //   - how can we get the new _id with $push api ? (need to read using slice -1 ? might be race conditions :(
+      //   - seems to be a bug: no _id is created in mongo :(
+      var streamItem = {};
+      streamItem.type = "comment";
+      streamItem.owner = req.query.playerid;
+      // adding text
+      if (req.body.data && req.body.data.text)
+        streamItem.data = { text: req.body.data.text };
+      game.stream.push(streamItem);
+      return DB.saveAsync(game);
+    }).then(function sendGame(game) {
+      if (game.stream.length === 0)
+        throw "no streamItem added";
+      res.end(JSON.stringifyModels(game.stream[game.stream.length - 1]));
+    }, app.defaultError(res));
 });

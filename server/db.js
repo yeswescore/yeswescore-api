@@ -1,101 +1,598 @@
-// on simule une DB mongo
-var DB = {};
+var mongoose = require("mongoose")
+  , Schema = mongoose.Schema
+  , Conf = require("./conf.js")
+  , Q = require("q");
 
-// @see http://lehelk.com/2011/05/06/script-to-remove-diacritics/
-// evaluated once; using closure.
-var defaultDiacriticsRemovalMap = [
-    { 'base': 'A', 'letters': /[\u0041\u24B6\uFF21\u00C0\u00C1\u00C2\u1EA6\u1EA4\u1EAA\u1EA8\u00C3\u0100\u0102\u1EB0\u1EAE\u1EB4\u1EB2\u0226\u01E0\u00C4\u01DE\u1EA2\u00C5\u01FA\u01CD\u0200\u0202\u1EA0\u1EAC\u1EB6\u1E00\u0104\u023A\u2C6F]/g },
-    { 'base': 'AA', 'letters': /[\uA732]/g },
-    { 'base': 'AE', 'letters': /[\u00C6\u01FC\u01E2]/g },
-    { 'base': 'AO', 'letters': /[\uA734]/g },
-    { 'base': 'AU', 'letters': /[\uA736]/g },
-    { 'base': 'AV', 'letters': /[\uA738\uA73A]/g },
-    { 'base': 'AY', 'letters': /[\uA73C]/g },
-    { 'base': 'B', 'letters': /[\u0042\u24B7\uFF22\u1E02\u1E04\u1E06\u0243\u0182\u0181]/g },
-    { 'base': 'C', 'letters': /[\u0043\u24B8\uFF23\u0106\u0108\u010A\u010C\u00C7\u1E08\u0187\u023B\uA73E]/g },
-    { 'base': 'D', 'letters': /[\u0044\u24B9\uFF24\u1E0A\u010E\u1E0C\u1E10\u1E12\u1E0E\u0110\u018B\u018A\u0189\uA779]/g },
-    { 'base': 'DZ', 'letters': /[\u01F1\u01C4]/g },
-    { 'base': 'Dz', 'letters': /[\u01F2\u01C5]/g },
-    { 'base': 'E', 'letters': /[\u0045\u24BA\uFF25\u00C8\u00C9\u00CA\u1EC0\u1EBE\u1EC4\u1EC2\u1EBC\u0112\u1E14\u1E16\u0114\u0116\u00CB\u1EBA\u011A\u0204\u0206\u1EB8\u1EC6\u0228\u1E1C\u0118\u1E18\u1E1A\u0190\u018E]/g },
-    { 'base': 'F', 'letters': /[\u0046\u24BB\uFF26\u1E1E\u0191\uA77B]/g },
-    { 'base': 'G', 'letters': /[\u0047\u24BC\uFF27\u01F4\u011C\u1E20\u011E\u0120\u01E6\u0122\u01E4\u0193\uA7A0\uA77D\uA77E]/g },
-    { 'base': 'H', 'letters': /[\u0048\u24BD\uFF28\u0124\u1E22\u1E26\u021E\u1E24\u1E28\u1E2A\u0126\u2C67\u2C75\uA78D]/g },
-    { 'base': 'I', 'letters': /[\u0049\u24BE\uFF29\u00CC\u00CD\u00CE\u0128\u012A\u012C\u0130\u00CF\u1E2E\u1EC8\u01CF\u0208\u020A\u1ECA\u012E\u1E2C\u0197]/g },
-    { 'base': 'J', 'letters': /[\u004A\u24BF\uFF2A\u0134\u0248]/g },
-    { 'base': 'K', 'letters': /[\u004B\u24C0\uFF2B\u1E30\u01E8\u1E32\u0136\u1E34\u0198\u2C69\uA740\uA742\uA744\uA7A2]/g },
-    { 'base': 'L', 'letters': /[\u004C\u24C1\uFF2C\u013F\u0139\u013D\u1E36\u1E38\u013B\u1E3C\u1E3A\u0141\u023D\u2C62\u2C60\uA748\uA746\uA780]/g },
-    { 'base': 'LJ', 'letters': /[\u01C7]/g },
-    { 'base': 'Lj', 'letters': /[\u01C8]/g },
-    { 'base': 'M', 'letters': /[\u004D\u24C2\uFF2D\u1E3E\u1E40\u1E42\u2C6E\u019C]/g },
-    { 'base': 'N', 'letters': /[\u004E\u24C3\uFF2E\u01F8\u0143\u00D1\u1E44\u0147\u1E46\u0145\u1E4A\u1E48\u0220\u019D\uA790\uA7A4]/g },
-    { 'base': 'NJ', 'letters': /[\u01CA]/g },
-    { 'base': 'Nj', 'letters': /[\u01CB]/g },
-    { 'base': 'O', 'letters': /[\u004F\u24C4\uFF2F\u00D2\u00D3\u00D4\u1ED2\u1ED0\u1ED6\u1ED4\u00D5\u1E4C\u022C\u1E4E\u014C\u1E50\u1E52\u014E\u022E\u0230\u00D6\u022A\u1ECE\u0150\u01D1\u020C\u020E\u01A0\u1EDC\u1EDA\u1EE0\u1EDE\u1EE2\u1ECC\u1ED8\u01EA\u01EC\u00D8\u01FE\u0186\u019F\uA74A\uA74C]/g },
-    { 'base': 'OI', 'letters': /[\u01A2]/g },
-    { 'base': 'OO', 'letters': /[\uA74E]/g },
-    { 'base': 'OU', 'letters': /[\u0222]/g },
-    { 'base': 'P', 'letters': /[\u0050\u24C5\uFF30\u1E54\u1E56\u01A4\u2C63\uA750\uA752\uA754]/g },
-    { 'base': 'Q', 'letters': /[\u0051\u24C6\uFF31\uA756\uA758\u024A]/g },
-    { 'base': 'R', 'letters': /[\u0052\u24C7\uFF32\u0154\u1E58\u0158\u0210\u0212\u1E5A\u1E5C\u0156\u1E5E\u024C\u2C64\uA75A\uA7A6\uA782]/g },
-    { 'base': 'S', 'letters': /[\u0053\u24C8\uFF33\u1E9E\u015A\u1E64\u015C\u1E60\u0160\u1E66\u1E62\u1E68\u0218\u015E\u2C7E\uA7A8\uA784]/g },
-    { 'base': 'T', 'letters': /[\u0054\u24C9\uFF34\u1E6A\u0164\u1E6C\u021A\u0162\u1E70\u1E6E\u0166\u01AC\u01AE\u023E\uA786]/g },
-    { 'base': 'TZ', 'letters': /[\uA728]/g },
-    { 'base': 'U', 'letters': /[\u0055\u24CA\uFF35\u00D9\u00DA\u00DB\u0168\u1E78\u016A\u1E7A\u016C\u00DC\u01DB\u01D7\u01D5\u01D9\u1EE6\u016E\u0170\u01D3\u0214\u0216\u01AF\u1EEA\u1EE8\u1EEE\u1EEC\u1EF0\u1EE4\u1E72\u0172\u1E76\u1E74\u0244]/g },
-    { 'base': 'V', 'letters': /[\u0056\u24CB\uFF36\u1E7C\u1E7E\u01B2\uA75E\u0245]/g },
-    { 'base': 'VY', 'letters': /[\uA760]/g },
-    { 'base': 'W', 'letters': /[\u0057\u24CC\uFF37\u1E80\u1E82\u0174\u1E86\u1E84\u1E88\u2C72]/g },
-    { 'base': 'X', 'letters': /[\u0058\u24CD\uFF38\u1E8A\u1E8C]/g },
-    { 'base': 'Y', 'letters': /[\u0059\u24CE\uFF39\u1EF2\u00DD\u0176\u1EF8\u0232\u1E8E\u0178\u1EF6\u1EF4\u01B3\u024E\u1EFE]/g },
-    { 'base': 'Z', 'letters': /[\u005A\u24CF\uFF3A\u0179\u1E90\u017B\u017D\u1E92\u1E94\u01B5\u0224\u2C7F\u2C6B\uA762]/g },
-    { 'base': 'a', 'letters': /[\u0061\u24D0\uFF41\u1E9A\u00E0\u00E1\u00E2\u1EA7\u1EA5\u1EAB\u1EA9\u00E3\u0101\u0103\u1EB1\u1EAF\u1EB5\u1EB3\u0227\u01E1\u00E4\u01DF\u1EA3\u00E5\u01FB\u01CE\u0201\u0203\u1EA1\u1EAD\u1EB7\u1E01\u0105\u2C65\u0250]/g },
-    { 'base': 'aa', 'letters': /[\uA733]/g },
-    { 'base': 'ae', 'letters': /[\u00E6\u01FD\u01E3]/g },
-    { 'base': 'ao', 'letters': /[\uA735]/g },
-    { 'base': 'au', 'letters': /[\uA737]/g },
-    { 'base': 'av', 'letters': /[\uA739\uA73B]/g },
-    { 'base': 'ay', 'letters': /[\uA73D]/g },
-    { 'base': 'b', 'letters': /[\u0062\u24D1\uFF42\u1E03\u1E05\u1E07\u0180\u0183\u0253]/g },
-    { 'base': 'c', 'letters': /[\u0063\u24D2\uFF43\u0107\u0109\u010B\u010D\u00E7\u1E09\u0188\u023C\uA73F\u2184]/g },
-    { 'base': 'd', 'letters': /[\u0064\u24D3\uFF44\u1E0B\u010F\u1E0D\u1E11\u1E13\u1E0F\u0111\u018C\u0256\u0257\uA77A]/g },
-    { 'base': 'dz', 'letters': /[\u01F3\u01C6]/g },
-    { 'base': 'e', 'letters': /[\u0065\u24D4\uFF45\u00E8\u00E9\u00EA\u1EC1\u1EBF\u1EC5\u1EC3\u1EBD\u0113\u1E15\u1E17\u0115\u0117\u00EB\u1EBB\u011B\u0205\u0207\u1EB9\u1EC7\u0229\u1E1D\u0119\u1E19\u1E1B\u0247\u025B\u01DD]/g },
-    { 'base': 'f', 'letters': /[\u0066\u24D5\uFF46\u1E1F\u0192\uA77C]/g },
-    { 'base': 'g', 'letters': /[\u0067\u24D6\uFF47\u01F5\u011D\u1E21\u011F\u0121\u01E7\u0123\u01E5\u0260\uA7A1\u1D79\uA77F]/g },
-    { 'base': 'h', 'letters': /[\u0068\u24D7\uFF48\u0125\u1E23\u1E27\u021F\u1E25\u1E29\u1E2B\u1E96\u0127\u2C68\u2C76\u0265]/g },
-    { 'base': 'hv', 'letters': /[\u0195]/g },
-    { 'base': 'i', 'letters': /[\u0069\u24D8\uFF49\u00EC\u00ED\u00EE\u0129\u012B\u012D\u00EF\u1E2F\u1EC9\u01D0\u0209\u020B\u1ECB\u012F\u1E2D\u0268\u0131]/g },
-    { 'base': 'j', 'letters': /[\u006A\u24D9\uFF4A\u0135\u01F0\u0249]/g },
-    { 'base': 'k', 'letters': /[\u006B\u24DA\uFF4B\u1E31\u01E9\u1E33\u0137\u1E35\u0199\u2C6A\uA741\uA743\uA745\uA7A3]/g },
-    { 'base': 'l', 'letters': /[\u006C\u24DB\uFF4C\u0140\u013A\u013E\u1E37\u1E39\u013C\u1E3D\u1E3B\u017F\u0142\u019A\u026B\u2C61\uA749\uA781\uA747]/g },
-    { 'base': 'lj', 'letters': /[\u01C9]/g },
-    { 'base': 'm', 'letters': /[\u006D\u24DC\uFF4D\u1E3F\u1E41\u1E43\u0271\u026F]/g },
-    { 'base': 'n', 'letters': /[\u006E\u24DD\uFF4E\u01F9\u0144\u00F1\u1E45\u0148\u1E47\u0146\u1E4B\u1E49\u019E\u0272\u0149\uA791\uA7A5]/g },
-    { 'base': 'nj', 'letters': /[\u01CC]/g },
-    { 'base': 'o', 'letters': /[\u006F\u24DE\uFF4F\u00F2\u00F3\u00F4\u1ED3\u1ED1\u1ED7\u1ED5\u00F5\u1E4D\u022D\u1E4F\u014D\u1E51\u1E53\u014F\u022F\u0231\u00F6\u022B\u1ECF\u0151\u01D2\u020D\u020F\u01A1\u1EDD\u1EDB\u1EE1\u1EDF\u1EE3\u1ECD\u1ED9\u01EB\u01ED\u00F8\u01FF\u0254\uA74B\uA74D\u0275]/g },
-    { 'base': 'oi', 'letters': /[\u01A3]/g },
-    { 'base': 'ou', 'letters': /[\u0223]/g },
-    { 'base': 'oo', 'letters': /[\uA74F]/g },
-    { 'base': 'p', 'letters': /[\u0070\u24DF\uFF50\u1E55\u1E57\u01A5\u1D7D\uA751\uA753\uA755]/g },
-    { 'base': 'q', 'letters': /[\u0071\u24E0\uFF51\u024B\uA757\uA759]/g },
-    { 'base': 'r', 'letters': /[\u0072\u24E1\uFF52\u0155\u1E59\u0159\u0211\u0213\u1E5B\u1E5D\u0157\u1E5F\u024D\u027D\uA75B\uA7A7\uA783]/g },
-    { 'base': 's', 'letters': /[\u0073\u24E2\uFF53\u00DF\u015B\u1E65\u015D\u1E61\u0161\u1E67\u1E63\u1E69\u0219\u015F\u023F\uA7A9\uA785\u1E9B]/g },
-    { 'base': 't', 'letters': /[\u0074\u24E3\uFF54\u1E6B\u1E97\u0165\u1E6D\u021B\u0163\u1E71\u1E6F\u0167\u01AD\u0288\u2C66\uA787]/g },
-    { 'base': 'tz', 'letters': /[\uA729]/g },
-    { 'base': 'u', 'letters': /[\u0075\u24E4\uFF55\u00F9\u00FA\u00FB\u0169\u1E79\u016B\u1E7B\u016D\u00FC\u01DC\u01D8\u01D6\u01DA\u1EE7\u016F\u0171\u01D4\u0215\u0217\u01B0\u1EEB\u1EE9\u1EEF\u1EED\u1EF1\u1EE5\u1E73\u0173\u1E77\u1E75\u0289]/g },
-    { 'base': 'v', 'letters': /[\u0076\u24E5\uFF56\u1E7D\u1E7F\u028B\uA75F\u028C]/g },
-    { 'base': 'vy', 'letters': /[\uA761]/g },
-    { 'base': 'w', 'letters': /[\u0077\u24E6\uFF57\u1E81\u1E83\u0175\u1E87\u1E85\u1E98\u1E89\u2C73]/g },
-    { 'base': 'x', 'letters': /[\u0078\u24E7\uFF58\u1E8B\u1E8D]/g },
-    { 'base': 'y', 'letters': /[\u0079\u24E8\uFF59\u1EF3\u00FD\u0177\u1EF9\u0233\u1E8F\u00FF\u1EF7\u1E99\u1EF5\u01B4\u024F\u1EFF]/g },
-    { 'base': 'z', 'letters': /[\u007A\u24E9\uFF5A\u017A\u1E91\u017C\u017E\u1E93\u1E95\u01B6\u0225\u0240\u2C6C\uA763]/g }
-];
-String.prototype.removeDiacritics = function () {
-    var str = this;
-    for (var i = 0; i < defaultDiacriticsRemovalMap.length; i++) {
-        str = str.replace(defaultDiacriticsRemovalMap[i].letters, defaultDiacriticsRemovalMap[i].base);
+mongoose.connection.on('error', function () { DB.status = "disconnected" });
+mongoose.connection.on('connected', function () { DB.status = "connected" });
+mongoose.connect(Conf.get("mongo.url"));
+
+var DB = {
+  status : "disconnected",
+  
+  // mongoose data.
+  Definition: { },  // schema definitions
+  Schema: { },      // mongoose schemas
+  Model: { },       // mongoose models
+  
+  /*
+   * Saving one or many mongo documents.
+   * 
+   * ex: 
+   *   var player = new DB.Model.Player({ "name" : "vincent" });
+   *   DB.saveAsync(player).then(
+   *     function success() { console.log('saved') },
+   *     function error() { console.log('error') }
+   *   );
+   * 
+   * ex:
+   *   var playerA = new DB.Model.Player({ "name" : "vincent" });
+   *   var playerB = new DB.Model.Player({ "name" : "marc" });
+   *   DB.saveAsync([playerA, playerB])
+   *     .then(
+   *     function success(players) {
+   *        console.log(players.length + ' models saved')
+   *     },
+   *     function error() { console.log('error') }
+   *   );
+   */
+  saveAsync: function (doc) {
+    if (Array.isArray(doc)) {
+      var promises = doc.map(function _save(doc) {
+        var simpleDeferred = Q.defer();
+        // saving
+        doc.save(function (err) {
+          if (err) {
+            simpleDeferred.reject(err);
+          } else {
+            simpleDeferred.resolve(doc);
+          }
+        });
+        return simpleDeferred.promise;
+      });
+      //
+      return Q.all(promises);
+    } else {
+      var simpleDeferred = Q.defer();
+      doc.save(function (err) {
+        if (err) {
+          simpleDeferred.reject(err);
+        } else {
+          simpleDeferred.resolve(doc);
+        }
+      });
+      return simpleDeferred.promise;
     }
-    return str;
+  },
+  
+  existAsync: function (model, ids) {
+    var deferred = Q.defer();
+    if (typeof ids === "string") {
+      ids = [ ids ];
+    }
+    model.count({ _id: { $in: ids }})
+         .exec(function (err, count) {
+           if (err)
+             return deferred.reject(err);
+           if (count !== ids.length)
+             return deferred.resolve(false);
+           return deferred.resolve(true);
+         });
+    return deferred.promise;
+  },
+  
+  /**
+   * Read a random model from a model collection.
+   * ex:
+   *   DB.getRandomModelAsync(DB.Model.Player)
+   *     .then(function (randomPlayer) {
+   *        console.log("got a randomPlayer ! ");
+   *     });
+   */
+  getRandomModelAsync : function (model) {
+    var deferred = Q.defer();
+    //
+    model.count({}, function (err, nb) {
+      if (err)
+        return deferred.reject(err);
+      var randomIndex = Math.floor(Math.random() * nb);
+      model.find({}).skip(randomIndex).limit(1).exec(function (err, result) {
+        if (err)
+          return deferred.reject(err);
+        return deferred.resolve(result[0]);
+      });
+    });
+    return deferred.promise;
+  },
+  
+  generateToken : function () {
+    return String(Math.floor(Math.random()*10000000));
+  }
 };
+
+//
+// Definitions
+//
+
+// ClubID,Name,Ligue,Zip,City,Outdoor,Indoor,Players,Players-1AN,Teams,Teams-1AN,School?
+// =>
+// fftid,name,ligue,zip,city,outdoor,indoor,countPlayers,countPlayers1AN,countTeams,countTeams1AN,school
+DB.Definition.Club = {
+  sport: String,
+  date_creation: { type: Date, default: Date.now },
+  name: String,
+  city: String,
+  pos: {type: [Number], index: '2d'},
+  address: String,
+  fftid: String,
+  ligue: String,
+  zip: String,
+  outdoor: Number,
+  indoor: Number,
+  countPlayers: Number,
+  countPlayers1AN: Number,
+  countTeams: Number,
+  countTeams1AN: Number,
+  school: String,
+  // private searchable fields
+  _searchableName: String  // AUTO-FIELD (Club pre save)
+};
+DB.Definition.Player = {
+  nickname: String,
+  name: String,
+  date_creation: { type: Date, default: Date.now },
+  date_modification: Date,
+  email: String,
+  idlicense: String,
+  password: { type: String, default: null },
+  token: { type: String, default: DB.generateToken },
+  rank: String,
+  club: {
+    id: { type: Schema.Types.ObjectId, ref: "Club" },
+    name: String // AUTO-FIELD (Player pre save)
+  },
+  games: [ { type: Schema.Types.ObjectId, ref: "Game" } ], // AUTO-FIELD (Game post save)
+  owner: { type: Schema.Types.ObjectId, ref: "Player" },
+  type: { type: String, enum: [ "default", "owned" ], default: "default" },
+  // private searchable fields
+  _searchableNickname: String,  // AUTO-FIELD (Player pre save)
+  _searchableName: String,      // AUTO-FIELD (Player pre save)
+  _searchableClubName: String   // AUTO-FIELD (Player pre save)
+};
+DB.Definition.Team = {
+  players: [ { type: Schema.Types.ObjectId, ref: "Player" } ],
+  points: String
+};
+DB.Definition.StreamItem = {
+  date_creation: { type: Date, default: Date.now },
+  date_modification: Date,
+  type: { type: String, enum: [ "comment" ] },
+  owner: { type: Schema.Types.ObjectId, ref: "Player" },
+  data: Schema.Types.Mixed
+};
+// WE must instantiate Team & Stream Schema FIRST.
+DB.Schema.Team = new Schema(DB.Definition.Team);
+DB.Schema.StreamItem = new Schema(DB.Definition.StreamItem);
+// 
+DB.Definition.Game = {
+  date_creation: { type: Date, default: Date.now },
+  date_modification: Date,
+  date_start: { type: Date, default: Date.now },
+  date_end: Date,
+  owner: { type: Schema.Types.ObjectId, ref: "Player" },
+  pos: {type: [Number], index: '2d'},
+  country: String,
+  city: String,
+  sport: { type: String, enum: ["tennis"] },
+  type: { type: String, enum: [ "singles", "doubles" ] },
+  status: { type: String, enum: [ "ongoing", "finished" ], default: "ongoing" },
+  sets: String,
+  score: String,
+  teams: [ DB.Schema.Team ],
+  stream: [ DB.Schema.StreamItem ],
+  // private searchable fields
+  _searchableCity: String,                                // AUTO-FIELD (Game pre save)
+  _searchablePlayersNames: [ String ],                    // AUTO-FIELD (Player post save) ASYNC
+  _searchablePlayersNickNames: [ String ],                // AUTO-FIELD (Player post save) ASYNC
+  _searchablePlayersClubsIds: [ Schema.Types.ObjectId ],  // AUTO-FIELD (Player post save) ASYNC
+  _searchablePlayersClubsNames: [ String ]                // AUTO-FIELD (Player post save) ASYNC
+};
+
+//
+// Schemas
+//
+DB.Schema.Club = new Schema(DB.Definition.Club);
+DB.Schema.Player = new Schema(DB.Definition.Player);
+DB.Schema.Game = new Schema(DB.Definition.Game);
+
+// AUTO-FIELDS
+DB.Schema.Club.pre('save', function (next) {
+  // club._searchableName
+  if (this.isModified('name'))
+    this._searchableName = this.name.searchable();
+  next();
+});
+
+/*
+ * Before saving a player we might need to 
+ *  - update searchableNickname
+ *  - update searchableName
+ *  - update searchableClubName
+ */
+DB.Schema.Player.pre('save', function (next) {
+  if (this.isModified("games") && this.games.length !== 0)
+    throw "should not save games "+JSON.stringify(this);
+  // infos for post save
+  this._wasModified = [];
+  // player._searchableNickname
+  if (this.isModified('nickname')) {
+    this._wasModified.push('nickname');
+    this._searchableNickname = this.nickname.searchable();
+  }
+  // player._searchableName
+  if (this.isModified('name')) {
+    this._wasModified.push('name');
+    this._searchableName = this.name.searchable();
+  }
+  // player._searchableClubName
+  // player.club.name
+  var self = this;
+  if (this.isModified('club')) {
+    this._wasModified.push('club');
+    DB.Model.Club.findById(this.club.id, function (err, club) {
+      if (err)
+        return next(); // FIXME: log.
+      self.club.name = club.name;
+      self._searchableClubName = club.name.searchable();
+      next();
+    });
+  } else {
+    next();
+  }
+});
+
+//
+// Optim: post('exec', ...) => 
+//     save in _dbValue = [ nickname, name, ... ]
+//  => prevent populate :
+//   - find(...).exec(
+//       $pull: oldPlayerName
+//   )
+//
+
+/*
+ * After saving a player we might need to 
+ *  - update Game searchableNickname
+ *  - update Game searchableName
+ *  - update Game searchableClubName
+ *  - update Game searchableClubId
+ */
+DB.Schema.Player.post('save', function () {
+  // SUPER HEAVY PLAYER GAMES UPDATE
+  // SHOULD BE DISPATCHED TO A WORKER, ASYNC STUFF.
+  if (this._wasModified.indexOf("name") === -1 &&
+      this._wasModified.indexOf("nickname") === -1 &&
+      this._wasModified.indexOf("club") === -1)
+    return;
+
+  var wasModified = this._wasModified; // is garbage collected by mongoose ?
+  
+  // ASYNC STUFF HERE
+  // maybe we should use player.games
+  DB.Model.Game.find({"teams.players": this.id})
+                .select("teams")
+                .populate("teams.players")
+                .exec(function (err, games) {
+    if (err)
+      return; //FIXME: log
+    // for
+    games.forEach(function postSaveUpdateForEachGame(game) {
+      if (wasModified.indexOf("name") !== -1) {
+        game._searchablePlayersNames = game.teams.reduce(function (p, team) {
+          return p.concat(team.players.map(function (player) {
+            return player.name.searchable();
+          }));
+        }, []);
+      }
+      //
+      if (wasModified.indexOf("nickname") !== -1) {
+        game._searchablePlayersNickNames = game.teams.reduce(function (p, team) {
+          return p.concat(team.players.map(function (player) {
+            return player.nickname.searchable();
+          }));
+        }, []);
+      }
+      //
+      if (wasModified.indexOf("club") !== -1) {
+        game._searchablePlayersClubsIds = game.teams.reduce(function (p, team) {
+          return p.concat(team.players.filter(function (player) {
+            return player.club && player.club.id;
+          }).map(function (player) {
+            return player.club.id;
+          }));
+        }, []);
+        
+        game._searchablePlayersClubsNames = game.teams.reduce(function (p, team) {
+          return p.concat(team.players.filter(function (player) {
+            return player.club && player.club.name;
+          }).map(function (player) {
+            return player.club.name.searchable();
+          }));
+        }, []);
+      }
+      // When ? we don't know & we don't mind *yet* :)
+      game.save();
+    }, this);
+  });
+});
+
+/*
+ * Before saving a game we might need to 
+ *  - update searchableNickname   (teams were modified)
+ *  - update searchableName
+ *  - update searchableClubName
+ *  - update searchableClubIds
+ * 
+ * FIXME: performance: need to read teams.players ?
+ * 
+ */
+DB.Schema.Game.pre('save', function (next) {
+  // infos for post save
+  this._wasModified = [];
+  // game._searchableCity
+  if (this.isModified('city'))
+    this._searchableCity = this.city.searchable();
+  // game._teams
+  if (this.isModified('teams')) {
+    this._wasModified.push('teams');
+    // we need first to read the players from DB, to get the old "players"
+    //  and be able to "remove" potentially added players
+    DB.Model.Game.findById(this.id)
+                 .select("teams.players")
+                 .exec(function (err, oldGame) {
+      if (err)
+        return next(); // FIXME: we should log this error.
+      // reading players from DB.
+      this._newPlayersIds = this.teams.reduce(function (p, team) {
+        return p.concat(team.players);
+      }, []);
+      if (oldGame) {
+        this._oldPlayersIds = oldGame.teams.reduce(function (p, team) {
+          return p.concat(team.players);
+        }, []);
+      } else {
+        this._oldPlayersIds = []; // might be no old game (creation).
+      }
+      // players should exist in db
+      DB.Model.Player.find({_id: { $in: this._newPlayersIds } }, function (err, players) {
+        if (err)
+          return next(); // FIXME: we should log this error.
+        if (!players)
+          return next(); // FIXME: we should log this error.
+        this._searchablePlayersNames = players.map(function (p) { return p.name.searchable() });
+        this._searchablePlayersNickNames = players.map(function (p) { return p.nickname.searchable() });
+        this._searchablePlayersClubsIds = players.filter(function (p) { return p.club && p.club.id })
+                                                .map(function (p) { return p.club.id });
+        this._searchablePlayersClubsNames = players.filter(function (p) { return p.club && p.club.name })
+                                                  .map(function (p) { return p.club.name.searchable() });
+        next();
+      }.bind(this));
+    }.bind(this));
+  } else {
+    next();
+  }
+});
+
+/*
+ * After saving a game we might need to 
+ *  - update Player games
+ * 
+ * FIXME: update Player.games sync or async ?
+ */
+DB.Schema.Game.post('save', function () {
+  if (this._wasModified.indexOf('teams') === -1)
+    return;
+  
+  // teams were modified, we need to update players.games
+  var removedPlayersFilter =
+    this._oldPlayersIds.exclude(this._newPlayersIds)
+                       .map(function (oldPlayerId) {
+      return { _id: oldPlayerId };
+    });
+  var addedPlayersFilter =
+    this._newPlayersIds.exclude(this._oldPlayersIds)
+                       .map(function (newPlayerId) {
+      return { _id: newPlayerId };
+    });
+  // should we do unique ? or should we let do player A vs player A ?
+  if (removedPlayersFilter.length) {
+    DB.Model.Player.update(
+      { $or: removedPlayersFilter }, // search filter
+      { $pull: { "games" : this.id } },
+      { multi: true },
+      function (err) { /* FIXME: nothing yet, but should test&log err */  }
+    );
+  }
+  if (addedPlayersFilter.length) {
+    DB.Model.Player.update(
+      { $or: addedPlayersFilter }, // search filter
+      { $addToSet: { "games" : this.id } },
+      { multi: true },
+      function (err) { /* FIXME: nothing yet, but should test&log err */  }
+    );
+  }
+});
+
+// Hidden fields
+var hiddenFields = ["password", "token"];
+for (var schemaName in DB.Schema) {
+  (function (schema) {
+    // Adding transform default func
+    schema.options.toObject = {
+      transform : function (doc, ret, options) {
+        var hide = hiddenFields;
+        if (options.unhide) {
+          hide = hide.slice(); // clone
+          options.unhide.forEach(function (field) { hide.remove(field) });
+        }
+        // removing private fields
+        Object.keys(ret).forEach(function (key) {
+          if (key[0] === "_") delete ret[key];
+        });
+        // removing hidden fields
+        hide.forEach(function (prop) { delete ret[prop] });
+      }
+    };
+  })(DB.Schema[schemaName]);
+}
+
+//
+// Models
+//
+DB.Model.Club = mongoose.model("Club", DB.Schema.Club);
+DB.Model.Player = mongoose.model("Player", DB.Schema.Player);
+DB.Model.Game = mongoose.model("Game", DB.Schema.Game);
+
+DB.Model.Game.checkFields = function (game, fields) {
+  // FIXME: can some tests be done with express ? or mongoose ?
+  fields = fields || [];
+  if (fields.indexOf("sport") !== -1 && game.sport && game.sport !== "tennis")
+    return "wrong sport (tennis only)";
+  // check type
+  if (fields.indexOf("singles") !== -1 && game.type && game.type !== "singles")
+    return "wrong type (singles only)";
+  // check status
+  if (fields.indexOf("status") !== -1 && game.status && game.status !== "ongoing" && game.status !== "finished")
+    return "wrong status (ongoing/finished)";
+  // check teams
+  if (fields.indexOf("teams") !== -1 && game.teams) {
+    if (!Array.isArray(game.teams) || game.teams.length !== 2)
+      return "teams format";
+    // check teams.players
+    var ok = game.teams.every(function (team) {
+      return Array.isArray(team.players) &&
+            team.players.every(function (player) {
+              return typeof player === "string" ||
+                     typeof player === "object"; // FIXME: should be more strict ..
+            });
+    });
+    if (!ok)
+      return "teams.players format";
+  }
+  return null;
+}
+
+/**
+ * FIXME: documentation
+ * @return promise , callback val = game
+ */
+DB.Model.Game.updateTeamsAsync = function (game, teams) {
+  // updatable teams.points
+  if (!Array.isArray(teams))
+    return Q.resolve(game);
+  teams.forEach(function (team, teamIndex) {
+    if (typeof team.points === "string")
+      game.teams[teamIndex].points = team.points;
+  });
+  // update teams.players
+  return DB.Model.Game.updateTeamsPlayersAsync(game, teams); 
+};
+
+/**
+ * FIXME: documentation
+ * @return promise , callback val = game
+ */
+DB.Model.Game.updateTeamsPlayersAsync = function (game, teams) {
+  if (!Array.isArray(teams))
+    return Q.resolve(game); // nothing to do.
+  return DB.Model.Game.checkTeamsAsync(teams).then(function () {
+    // teams exist => create owned players
+    return DB.Model.Game.createOwnedPlayersAsync(teams, game.owner)
+  }).then(function () {
+    // update game teams players
+    teams.forEach(function (team, teamIndex) {
+      team.players.forEach(function (player, playerIndex) {
+        var playerid = (typeof player === "string") ? player: player.id;
+        var oldPlayerId = game.teams[teamIndex].players[playerIndex];
+        if (playerid != oldPlayerId)
+          game.markModified('teams');
+        game.teams[teamIndex].players[playerIndex] = playerid;
+      });
+    });
+    return game;
+  });
+};
+
+
+// additionnals functions
+DB.Model.Game.checkTeamsAsync = function (teams) {
+  var playersId = teams.reduce(function (p, team) {
+    return p.concat(team.players.map(function (player) {
+      if (typeof player === "string")
+        return player; // player is an id
+      return player.id;
+    }).filter(function (p) { return p !== null && typeof p !== "undefined"; }));
+  }, []);
+  return DB.existAsync(DB.Model.Player, playersId)
+           .then(function (exist) {
+              if (!exist)
+                throw "some player doesn't exist";
+            });
+};
+
+// replace game.teams.players object by created players ids
+DB.Model.Game.createOwnedPlayersAsync = function (teams, owner) {
+  var promises = [];
+  for (var teamIndex = 0; teamIndex < teams.length; ++teamIndex) {
+    var team = teams[teamIndex];
+    var players = team.players;
+    for (var playerIndex = 0; playerIndex < players.length; ++playerIndex) {
+      var player = players[playerIndex];
+      if (typeof player !== "string" &&
+          typeof player.id !== "string") {
+        // creating owned anonymous player
+        (function createOwnedAnonymousPlayer(teamIndex, playerIndex) {
+          var p = new DB.Model.Player({
+            name: player.name || "",
+            nickname: player.nickname || "",
+            email: player.email || "",
+            rank: player.rank || "",
+            type: "owned",
+            owner: owner
+          });
+          promises.push(DB.saveAsync(p)
+                          .then(function (p) {
+                            teams[teamIndex].players[playerIndex] = p.id;
+                          }));
+        })(teamIndex, playerIndex);
+      }
+    }
+  }
+  return Q.all(promises);
+};
+
+// custom JSON api
+JSON.stringifyModels = function (m, options) {
+  options = options || {};
+  if (options && typeof options.virtuals === "undefined")
+    options.virtuals = true;
+  if (options && typeof options.transform === "undefined")
+    options.transform = true;
+  if (Array.isArray(m)) {
+    return JSON.stringify(m.map(function (model) {
+      return model.toObject(options);
+    }));
+  }
+  return JSON.stringify(m.toObject(options));
+};
+
+// random api
+if (Conf.env === "DEV") {
+  DB.Model.Club.randomAsync = function () { return DB.getRandomModelAsync(DB.Model.Club); };
+  DB.Model.Player.randomAsync = function () { return DB.getRandomModelAsync(DB.Model.Player); };
+  DB.Model.Game.randomAsync = function () { return DB.getRandomModelAsync(DB.Model.Game); };
+}
+
 
 // fonctions de generation de contenu
 var generateFakeId = function () { 
@@ -224,198 +721,263 @@ DB.games = [
 
 
 
-var generateClubs = function () {
+var generateClubsAsync = function () {
   var names = ["CAEN TC", "CAEN LA BUTTE", "LOUVIGNY TC", "MONDEVILLE USO", "CONDE SUR NOIREAU TC", "ARROMANCHE TENNIS PORT WILSON", "FLEURY TENNIS CLUB"];
-  DB.clubs = names.map(function (clubName) {
-    return {
-      id: generateFakeId(),
+  var clubs = names.map(function (clubName) {
+    return new DB.Model.Club({
       sport: "tennis",
       name: clubName,
       city: generateFakeCity()
-    }
+    });
   });
+  return DB.saveAsync(clubs);
 };
 
-var generatePlayers = function () {
-  // generating 20 players
-  for (var i = 0; i < 20; ++i) {
-    var club = DB.clubs.random();
-    var player = {
-      id: generateFakeId(),
-      nickname: generateFakePseudo(),
-      name: generateFakeFirstName() + " " + generateFakeName(),
-      rank: "15/2",
-      club: { id: club.id, name: club.name },
-      games: [ ],
-      //
-      password: null,
-      token: String(Math.floor(Math.random()*10000000)),
-    };
-    DB.players.push(player);
+var generatePlayersAsync = function () {
+  // reading random club
+  var nbPlayers = 40;
+  var randomClubs = [];
+  for (var i = 0; i < nbPlayers; ++i) {
+     randomClubs.push(DB.getRandomModelAsync(DB.Model.Club));
   }
+  var gClubs;
+  return Q.all(randomClubs)
+          .then(function (clubs) {
+     gClubs = clubs;
+     var players = clubs.map(function (club) {
+        return new DB.Model.Player({
+            nickname: generateFakePseudo(),
+            name: generateFakeFirstName() + " " + generateFakeName(),
+            rank: "15/2",
+            club: {
+              id: club.id,
+              name: club.name
+            },
+            games: [],
+            type: "default"
+        });
+     });
+     return DB.saveAsync(players);
+   }).then(function (players) {
+      var anonymous = gClubs.map(function (club) {
+          return new DB.Model.Player({
+              nickname: generateFakePseudo(),
+              name: generateFakeFirstName() + " " + generateFakeName(),
+              rank: "15/2",
+              club: {
+                id: club.id,
+                name: club.name
+              },
+              games: [],
+              type: "owned"
+          });
+      });
+      return DB.saveAsync(anonymous);
+   });
 };
 
-var generateGames = function () {
+var generateGamesAsync = function () {
   // generating 20 games
-  /*
-   *   id: string, // checksum hexa
-   *   date_creation: string, // date iso 8601
-   *   date_start: string, // date iso 8601
-   *   date_end: string, // date iso 8601
-   *   owner: string, // checksum hexa
-   *   pos: { long: float, lat: float }, // index geospatial
-   *   country: string,
-   *   city: string,
-   *   type: string, // singles / doubles
-   *   sets: string, // ex: 6,2;6,3  (precomputed)
-   *   status: string, // ongoing, canceled, finished (precomputed)
-   *   teams: [
-   *     { id: null, players: [ { id: string }, ... ] },   // authentified player
-   *     { id: null, players: [ { name: string }, ... ] }  // anonymous
-   *   ],
-   *   stream: [
-   *       // FIXME: historique du match, action / date / heure / commentaire / video / photo etc
-   *       // FIXME: ip, comment "signalé", stats,
-   *       {
-   *          id: ...,      //
-   *          date: string, // date iso 8601
-   *          type: string, // "comment|picture|video|..."
-   *          owner: string, // checksum hexa
-   *          data: { } // depends of type 
-   *       },
-   *       {
-   *          id: checksum,
-   *          date: string,
-   *          type: "comment",
-   *          owner: id,
-   *          data: { text: "...." }
-   *        }
-   *   ]
-   * */
+  var deferred = Q.defer();
   
-  for (var i = 0; i < 20; ++i) {
-    var date_creation = generateFakeDateCreation();
-    var game = {
-      id: generateFakeId(),
-      date_creation: date_creation,
-      date_start: date_creation, // different ?
-      date_end: null,
-      owner: DB.players.random().id, // utilisateur ayant saisi le match.
-      pos: generateFakeLocation(),
-      country: "france",
-      city: generateFakeCity(),
-      type: "singles",
-      sets: "",
-      score: "",
-      sport: "tennis",
-      status: "unknown",
-      teams: [ ],
-      stream: [ ]
-    };
-
-    // random pick match status, finished ? or ongoing ?
-    game.status = ["ongoing", "finished"].random();
-    // 
-    if (game.status === "finished") {
-      // status finished
-      game.date_end = generateFakeDateEnd();
-      if (Math.random() > 0.5) {
-        game.sets = "6/"+Math.floor(Math.random() * 5)+";6/"+Math.floor(Math.random() * 5);
-        game.score = "2/0";
-      } else {
-        game.sets = Math.floor(Math.random() * 5)+"/6;"+Math.floor(Math.random() * 5)+"/6";
-        game.score = "0/2";
-      }
-    } else {
-      // status ongoing
-      if (Math.random() > 0.5) {
-        // 2 set
-        if (Math.random() > 0.5) {
-          game.sets = "6/"+Math.floor(Math.random() * 5)+";"+Math.floor(Math.random() * 5)+"/"+Math.floor(Math.random() * 5);
-          game.score = "1/0";
+  DB.Model.Player.find({type:"default"})
+                 .exec(function (err, players) {
+    if (err)
+      return deferred.reject();
+    DB.Model.Player.find({type:"owned"})
+                   .exec(function (err, owned) {
+      if (err)
+        return deferred.reject();
+      // Youpi.
+      var games = [];
+      var nbGames = 20;
+      
+      for (var i = 0; i < nbGames; ++i) {
+        var owner = players.random().id;
+        
+        var game = new DB.Model.Game({
+          owner: owner, // utilisateur ayant saisi le match.
+          pos: generateFakeLocation(),
+          country: "france",
+          city: generateFakeCity(),
+          type: "singles",
+          sets: "",
+          score: "",
+          sport: "tennis",
+          status: "ongoing",
+          teams: [ ],
+          stream: [ ]
+        });
+        
+        // random pick match status, finished ? or ongoing ?
+        game.status = ["ongoing", "finished"].random();
+        // 
+        if (game.status === "finished") {
+          // status finished
+          game.date_end = generateFakeDateEnd();
+          if (Math.random() > 0.5) {
+            game.sets = "6/"+Math.floor(Math.random() * 5)+";6/"+Math.floor(Math.random() * 5);
+            game.score = "2/0";
+          } else {
+            game.sets = Math.floor(Math.random() * 5)+"/6;"+Math.floor(Math.random() * 5)+"/6";
+            game.score = "0/2";
+          }
         } else {
-          game.sets = Math.floor(Math.random() * 5)+"/6;"+Math.floor(Math.random() * 5)+"/"+Math.floor(Math.random() * 5);
-          game.score = "0/1";
+          // status ongoing
+          if (Math.random() > 0.5) {
+            // 2 set
+            if (Math.random() > 0.5) {
+              game.sets = "6/"+Math.floor(Math.random() * 5)+";"+Math.floor(Math.random() * 5)+"/"+Math.floor(Math.random() * 5);
+              game.score = "1/0";
+            } else {
+              game.sets = Math.floor(Math.random() * 5)+"/6;"+Math.floor(Math.random() * 5)+"/"+Math.floor(Math.random() * 5);
+              game.score = "0/1";
+            }
+          } else {
+            // 1 set
+            game.sets = Math.floor(Math.random() * 5)+"/"+Math.floor(Math.random() * 5);
+            game.score = "0/0";
+          }
         }
-      } else {
-        // 1 set
-        game.sets = Math.floor(Math.random() * 5)+"/"+Math.floor(Math.random() * 5);
-        game.score = "0/0";
+        
+        // generating players
+        var player1 = players[i*2];
+        var player2 = players[i*2+1];
+        var ownedplayer1 = owned[i*2];
+        var ownedplayer2 = owned[i*2+1];
+        
+        // sometimes, players are "anonymous"
+        if (Math.random() < 0.2) {
+          if (Math.random() < 0.3) {
+            game.teams = [
+              { players: [ ownedplayer1.id ] },
+              { players: [ ownedplayer2.id ] } 
+            ];
+          } else {
+            if (Math.random() < 0.5) {
+              game.teams = [
+                { players: [ ownedplayer1.id ] },
+                { players: [ player2.id ] }
+              ];
+            } else {
+              game.teams = [
+                { players: [ player1.id ] },
+                { players: [ ownedplayer2.id ] }
+              ];
+            }
+          }
+        } else {
+          game.teams = [
+            { players: [ player1.id ] },
+            { players: [ player2.id ] }
+          ];
+        }
+        
+        // generating 0 to 10 comments
+        var nbComments = Math.floor(Math.random() * 11);
+        var delta = 0;
+        for (var j = 0; j < nbComments; ++j) {
+          // adding random (1 to 5) minutes
+          delta += 1000 * 60 * (1 + Math.floor(Math.random(5)));
+          var date = new Date(new Date(game.date_start).getTime() + delta);
+          var comment = {
+            type: "comment",
+            owner: players.random().id,
+            data: { text: generateFakeComment() }
+          }
+          game.stream.push(comment);
+        }
+        
+        games.push(game);
       }
-    }
-    
-    // generating players
-    var player1 = DB.players.random();
-    var player2 = DB.players.random();
-    while (player1 === player2) {
-      player2 = DB.players.random();
-    }
-    // sometimes, players are "anonymous"
-    if (Math.random() < 0.2) {
-      if (Math.random() < 0.3) {
-        game.teams = [ 
-          { id: null, players: [ { name: generateFakePseudo() } ] },
-          { id: null, players: [ { name: generateFakePseudo() } ] } 
-        ];
-      } else {
-         if (Math.random() < 0.5) {
-           game.teams = [
-             { id: null, players: [ { name: generateFakePseudo() } ] },
-             { id: null, players: [ { id : player2.id } ] }
-           ];
-           player2.games.push(game.id);
-         } else {
-           game.teams = [
-             { id: null, players: [ { id: player1.id } ] },
-             { id: null, players: [ { name: generateFakePseudo() } ] }
-           ];
-           player1.games.push(game.id);
-         }
-      }
-    } else {
-      game.teams = [
-        { id: null, players: [ { id: player1.id } ] },
-        { id: null, players: [ { id: player2.id } ] }
-      ];
-      // associating game to players
-      player1.games.push(game.id);
-      player2.games.push(game.id);
-    }
- 
-    // generating 0 to 10 comments
-    var nbComments = Math.floor(Math.random() * 11);
-    var delta = 0;
-    for (var j = 0; j < nbComments; ++j) {
-      // adding random (1 to 5) minutes
-      delta += 1000 * 60 * (1 + Math.floor(Math.random(5)));
-      var date = new Date(new Date(game.date_start).getTime() + delta);
-      var comment = {
-        id: generateFakeId(),
-        type: "comment",
-        date: date.toISO(),
-        owner: DB.players.random().id,
-        data: { text: generateFakeComment() }
-      }
-      game.stream.push(comment);
-    }
-    
-    DB.games.push(game);
-  }
+
+      DB.saveAsync(games).then(function (games) {
+        games.forEach(function (game, i) {
+          // adding games to players
+          if (players[i*2].id !== game.teams[0].players[0])
+            owned[i*2].owner = game.owner;
+          if (players[i*2+1].id !== game.teams[1].players[0])
+            owned[i*2+1].owner = game.owner;
+        });
+        
+        // saving players
+        DB.saveAsync(owned).then(function () {
+          deferred.resolve();
+        }, function (e) { deferred.reject(); } );
+      });
+    });
+  });
+  return deferred.promise;
 };
 
-// generating fake data at startup
-generateClubs();
-generatePlayers();
-generateGames();
+DB.dropCollection = function (collectionName) {
+  var deferred = Q.defer();
+  if (Conf.env === "DEV") {
+    if (DB.status === "connected") {
+      mongoose.connection.collections[collectionName].drop( function(err) {
+        if (err)
+          deferred.reject("error dropping collection");
+        deferred.resolve("collection dropped");
+      });
+    } else {
+      deferred.reject("not connected");
+    }
+  }
+  else {
+    deferred.reject("drop collection only allowed on dev environment");
+  }
+  return deferred.promise;
+};
+
+DB.reset = function () {
+  if (Conf.env === "DEV") {
+    return Q.allResolved([
+      DB.dropCollection("clubs"),
+      DB.dropCollection("players"),
+      DB.dropCollection("games")
+    ]);
+  }
+  // FIXME: warning, should never be here 
+  return Q.allResolved([]);
+};
+
+// generating fake data at startup (DEV ONLY)
+mongoose.connection.once("open", function () {
+  if (Conf.env === "DEV") {
+    DB.reset().then(function () {
+      DB.generateFakeData();
+    });
+  }
+});
+
+DB.generateFakeData = function () {
+  generateClubsAsync()
+   .then(generatePlayersAsync)
+   .then(generateGamesAsync)
+   .then(function () {
+     console.log('FAKE DATA GENERATED');
+   });
+};
 
 // undefined if nothing is found
 DB.searchById = function (collection, id) {
    return collection.filter(function (o) { return o.id === id }).pop();
-}
+};
 
-DB.isAuthenticated = function (query) {
-  var player = DB.searchById(DB.players, query.playerid);
-  return player && player.token === query.token;
+DB.isAuthenticatedAsync = function (query) {
+  var deferred = Q.defer();
+  if (query.playerid && query.token) {
+    DB.Model.Player.findOne({_id: query.playerid, token: query.token})
+                   .exec(function (err, player) {
+                      if (err)
+                        deferred.reject(err);
+                      else
+                        deferred.resolve(player);
+                   });
+  } else {
+    deferred.resolve(null); // no player.
+  }
+  return deferred.promise;
 };
 
 DB.generateFakeId = generateFakeId;
