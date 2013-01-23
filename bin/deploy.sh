@@ -40,4 +40,4 @@ fi
 
 # rsync
 echo "sending code to prod server"
-sudo rsync -rltov --del --ignore-errors --force -e 'ssh -p 42' ~/git/zescore/server root@188.165.247.143:/opt/web/zescore/server/
+sudo rsync -rltov --del --ignore-errors --force -e 'ssh -p 42' ~/git/zescore/server root@188.165.247.143:/opt/web/zescore/
