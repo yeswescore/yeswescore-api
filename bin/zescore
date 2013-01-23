@@ -8,11 +8,17 @@
 # 
 # /!\ depends on node supervisor.
 # npm install supervisor -g
+if [ "$USER" != "root" ]
+then
+  echo "You must be root"
+  echo "Usage: $0 {start|stop|status|logs}"
+  exit 1
+fi
 case "$1" in
 start)
 echo "Starting ZeScore Api."
-date > /tmp/supervisor.log
-/usr/bin/supervisor -w /opt/web/zescore/server/ /opt/web/zescore/server/server.js &>> /tmp/supervisor.log &
+su node -c 'date > /tmp/supervisor.log'
+su node -c '/usr/bin/supervisor -w /opt/web/zescore/server/ /opt/web/zescore/server/server.js &>> /tmp/supervisor.log &'
 ;;
 stop)
 echo "Stopping ZeScore Api."
