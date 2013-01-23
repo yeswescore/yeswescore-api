@@ -19,5 +19,6 @@ require('./api/clubs.js');
 require('./api/documents.js');
 require('./api/games.js');
 require('./api/players.js');
+require('./api/admin.js');
 
 app.listen(Conf.get('http.port'));
