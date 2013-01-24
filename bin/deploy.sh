@@ -3,7 +3,7 @@
 # verifying parameters
 if [ $# -ne 1 ]
 then
-  echo "usage : ./deploy-checkout.sh branch"
+  echo "usage : ./deploy.sh branch"
   exit 1
 fi
 
