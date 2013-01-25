@@ -166,6 +166,7 @@ DB.Definition.Team = {
 DB.Definition.StreamItem = {
   date_creation: { type: Date, default: Date.now },
   date_modification: Date,
+  fbid: String,
   type: { type: String, enum: [ "comment" ] },
   owner: { type: Schema.Types.ObjectId, ref: "Player" },
   data: Schema.Types.Mixed

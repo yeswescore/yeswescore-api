@@ -263,7 +263,8 @@ app.post('/v1/games/:id', express.bodyParser(), function(req, res){
  * 
  * Body {
  *     type: "comment",   (default="comment")
- *     owner: ObjectId    (must equal ?playerid)
+ *     owner: ObjectId,    (must equal ?playerid)
+ *     fbid: ...,
  *     data: { text: "..." }
  *   }
  * }
@@ -293,6 +294,8 @@ app.post('/v1/games/:id/stream/', express.bodyParser(), function(req, res){
       var streamItem = {};
       streamItem.type = "comment";
       streamItem.owner = req.query.playerid;
+      if (req.query.fbid)
+        streamItem.fbid = req.query.fbid;
       // adding text
       if (req.body.data && req.body.data.text)
         streamItem.data = { text: req.body.data.text };

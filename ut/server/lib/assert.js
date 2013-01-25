@@ -289,6 +289,7 @@ assert.isStreamObject = function (o, m) {
   assert.isId(o.owner, "isStreamObject: streamObject.owner must be an hexa string");
   assert.isDate(o.date_creation, "isStreamObject: streamObject.date_creation must be a date");
   assert.isUndefinedOrDate(o.date_modification, "isStreamObject: streamObject.date_modification must be a date");
+  assert.isUndefinedOrString(o.fbid, "isStreamObject: streamObject.fbid must be undefined or string");
   assert.isNotEmpty(o.type, "isStreamObject: streamObject.type cannot be empty");
   assert.isObject(o.data, "isStreamObject: streamObject.data must be an object");
 };
