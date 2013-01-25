@@ -23,6 +23,44 @@ app.get('/v1/clubs/:id', function(req, res){
   });
 });
 
+/**
+ * Read games of a club
+ * 
+ * Specific options:
+ *  /v1/clubs/:id/games/?status=ongoing
+ * 
+ * NON STANDARD URL, used by facebook app
+ * default behaviour is to include the stream
+ * 
+ * no params
+ */
+app.get('/v1/clubs/:id/games/', function(req, res){
+  var status = req.query.status || null;
+  var sort = req.query.sort || "-date_start";
+  var limit = req.query.limit || 10;
+  var offset = req.query.offset || 0;
+  if (status !== null && status !== "ongoing" && status !== "finished")
+    return app.defaultError(res)("status must be empty, ongoing or finished");
+  DB.Model.Club.findById(req.params.id, function (err, club) {
+    if (err)
+      return app.defaultError(res)(err);
+    if (club === null)
+      return app.defaultError(res)("no club found");
+    var query = DB.Model.Game.find({});
+    query.where('_searchablePlayersClubsIds', club);
+    if (status)
+      query.where('status', status);
+    query.sort(sort.replace(/,/g, " "))
+         .skip(offset)
+         .limit(limit)
+         .exec(function (err, games) {
+         if (err)
+            return app.defaultError(res)(err);
+         res.end(JSON.stringifyModels(games));
+       });
+    });
+});
+
 /*
 app.get('/v1/clubs/autocomplete/', function(req, res){
   var fields = req.query.fields || "sport,date_creation,name,city,address,fftid,ligue,zip,outdoor,indoor";
