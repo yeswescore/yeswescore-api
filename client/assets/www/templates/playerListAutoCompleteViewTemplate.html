@@ -14,11 +14,10 @@
         
        <fieldset data-role="controlgroup" data-type="horizontal">
        <input type="checkbox" name="team<%= select %>_choice" value="<% if (player!==undefined) print(player.id); %>" id="team<%= select %>_choice" class="custom" />
-       <label for="team<%= select %>_choice">
-        <% if (player!==undefined) print(player.name); %>&nbsp; 
-        <% if (player!==undefined) print(player.rank); %>&nbsp;
-        <% if (player!==undefined) if (player.club!==undefined) print(player.club.name); %> 
-       </label></fieldset>
+       <label for="team<%= select %>_name"><% if (player!==undefined) print(player.name); %></label>
+       <label for="team<%= select %>_rank"><% if (player!==undefined) print(player.rank); %></label>
+       <label for="team<%= select %>_club"><% if (player!==undefined) if (player.club!==undefined) print(player.club.name); %></label> 
+       </fieldset>
       
         </li>
     <%
