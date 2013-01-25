@@ -550,6 +550,9 @@ DB.Model.Game.createOwnedPlayersAsync = function (teams, owner) {
       var player = players[playerIndex];
       if (typeof player !== "string" &&
           typeof player.id !== "string") {
+        //
+        // [FIXME] refactor this with POST /v1/players/
+        //
         // creating owned anonymous player
         (function createOwnedAnonymousPlayer(teamIndex, playerIndex) {
           var p = new DB.Model.Player({
@@ -560,10 +563,28 @@ DB.Model.Game.createOwnedPlayersAsync = function (teams, owner) {
             type: "owned",
             owner: owner
           });
-          promises.push(DB.saveAsync(p)
-                          .then(function (p) {
-                            teams[teamIndex].players[playerIndex] = p.id;
-                          }));
+          // we need to handle the club
+          var deferred = Q.defer();
+          var ownedPlayerPromise = deferred.promise;
+          if (player.club && player.club.id) {
+            DB.Model.Club.findById(player.club.id, function (err, club) {
+              deferred.resolve(club); // never fail !
+            });
+          } else {
+            deferred.resolve(null);
+          }
+          promises.push(
+            ownedPlayerPromise.then(function (club) {
+              if (club) {
+                p.club.id = club.id;
+                p.club.name = club.name;
+              }
+              return DB.saveAsync(p)
+                       .then(function (p) {
+                          teams[teamIndex].players[playerIndex] = p.id;
+                     });
+            })
+          );
         })(teamIndex, playerIndex);
       }
     }
