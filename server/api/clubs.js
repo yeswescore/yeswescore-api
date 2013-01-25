@@ -50,7 +50,8 @@ app.get('/v1/clubs/:id/games/', function(req, res){
     query.where('_searchablePlayersClubsIds', club);
     if (status)
       query.where('status', status);
-    query.sort(sort.replace(/,/g, " "))
+    query.populate("teams.players")
+         .sort(sort.replace(/,/g, " "))
          .skip(offset)
          .limit(limit)
          .exec(function (err, games) {
