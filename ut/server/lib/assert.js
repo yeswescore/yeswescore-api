@@ -110,7 +110,8 @@ assert.isClub = function (club) {
   assert.isUndefinedOrString(club.name, "isClub: name");
   assert.isUndefinedOrString(club.city, "isClub: city");
   assert.isUndefinedOrDate(club.date_creation, "isClub: date_creation");
-  assert.allowedFields(club, ["id", "sport", "name", "city", "date_creation", "pos", "address"]);
+  assert.isUndefinedOrDate(club.date_update, "isClub: date_update");
+  assert.allowedFields(club, ["id", "sport", "name", "city", "date_creation", "date_update", "pos", "address"]);
 };
 
 /*
@@ -145,7 +146,7 @@ assert.isPlayerScheme = function (player, m) {
   assert.isUndefinedOrString(player.email, "isPlayerScheme: email");
   assert.isUndefinedOrString(player.idlicense, "isPlayerScheme: idlicense");
   assert.isUndefinedOrDate(player.date_creation, "isPlayerScheme: date_creation");
-  assert.isUndefinedOrDate(player.date_modification, "isPlayerScheme: date_modification");
+  assert.isUndefinedOrDate(player.date_update, "isPlayerScheme: date_update");
   assert.isUndefinedOrString(player.rank, "isPlayerScheme: rank");
   // owner
   if (player.owner)
@@ -164,7 +165,7 @@ assert.isPlayerScheme = function (player, m) {
     assert.isId(gameId, "isPlayerScheme: games[*] must be id");
   });
   //
-  assert.allowedFields(player, ["id", "nickname", "name", "date_creation", "date_modification", "email", "idlicense", "rank", "club", "games", "owner", "password", "token", "type"]);
+  assert.allowedFields(player, ["id", "nickname", "name", "date_creation", "date_update", "email", "idlicense", "rank", "club", "games", "owner", "password", "token", "type"]);
   // FIXME:
   // - rank format
   // - no password => allowed blank fields
@@ -208,6 +209,7 @@ assert.isGame = function (game) {
   assert.isId(game.owner, "isGame: owner must be an hexa string");
   assert.isDate(game.date_creation, "isGame: date_creation must be a date");
   assert.isDate(game.date_start, "isGame: date_start must be a date");
+  assert.isUndefinedOrDate(game.date_update, "isGame: date_update must be a date");
   assert.isUndefinedOrDate(game.date_end, "isGame: date_end must be a date");
   assert.isUndefinedOrPos(game.pos, "isGame: pos must be a pos");
   assert.isUndefinedOrArray(game.stream, "isGame: stream must be an array");
@@ -240,7 +242,7 @@ assert.isGame = function (game) {
   });
   
   // FIXME:
-  assert.allowedFields(game, ["id", "date_creation", "date_start", "date_end", "owner",
+  assert.allowedFields(game, ["id", "date_creation", "date_start", "date_update", "date_end", "owner",
                               "pos", "country", "city", "type", "sets", "score", "sport", "status",
                                "players", "stream", "teams"]);
 };
