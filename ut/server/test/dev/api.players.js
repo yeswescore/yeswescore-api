@@ -42,6 +42,8 @@ describe('dev:players', function(){
       var newPlayer = {
         nickname : "TU-"+Math.random(),
         name: "TU-"+Math.random(),
+        email: "marcd-"+Math.random()+"@zescore.com",
+        idlicense: "TU-"+Math.random(),
         rank: "15/2",
         password: null,
         club: null
@@ -51,6 +53,8 @@ describe('dev:players', function(){
         assert(newPlayer.nickname === player.nickname, "must have same nickname");
         assert(newPlayer.name === player.name, "must have same name");
         assert(newPlayer.rank === player.rank, "must have same rank");
+        assert(newPlayer.email === player.email, "must have same email");
+        assert(newPlayer.idlicense === player.idlicense, "must have same idlicense");
         
         // verify player exist in DB.
         var options = {
@@ -61,6 +65,48 @@ describe('dev:players', function(){
         http.getJSON(options, function (p) {
           assert.isPlayer(p, "must be a player");
           assert(p.id === player.id, "must be same player");
+          assert(p.nickname === player.nickname, "must have same nickname");
+          assert(p.name === player.name, "must have same name");
+          assert(p.rank === player.rank, "must have same rank");
+          assert(p.email === player.email, "must have same email");
+          assert(p.idlicense === player.idlicense, "must have same idlicense");
+          done();
+        });
+      });
+    });
+  });
+  
+  describe('create basic player default values, then read it.', function () {
+    it('should create the player (not empty & valid)', function (done) {
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["api.players"]
+      };
+      
+      var newPlayer = { };
+      http.post(options, newPlayer, function (player) {
+        assert.isPlayerWithToken(player);
+          assert(player.nickname === "", "nickname should be empty string");
+          assert(player.name === "", "name should be empty string");
+          assert(player.rank === "", "rank should be empty string");
+          assert(player.email === "", "email should be empty string");
+          assert(player.idlicense === "", "idlicense should be empty string");
+        
+        // verify player exist in DB.
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["api.players"]+player.id
+        };
+        http.getJSON(options, function (p) {
+          assert.isPlayer(p, "must be a player");
+          assert(p.id === player.id, "must be same player");
+          assert(p.nickname === "", "nickname should be empty string");
+          assert(p.name === "", "name should be empty string");
+          assert(p.rank === "", "rank should be empty string");
+          assert(p.email === "", "email should be empty string");
+          assert(p.idlicense === "", "idlicense should be empty string");
           done();
         });
       });
@@ -321,8 +367,9 @@ describe('dev:players', function(){
             assert(modifiedPlayer.name === player.name, "must have same name");
             assert(modifiedPlayer.nickname === player.nickname, "must have same nickname");
             assert(modifiedPlayer.rank === player.rank, "must have same rank");
-            assert(modifiedPlayer.password === player.password, "must have same password");
             assert(modifiedPlayer.club.id === player.club.id, "must have same club");
+            // the password shouldn't be the same !
+            assert(modifiedPlayer.password !== player.password, "must have different password");
             
             // read from DB
             var options = {
