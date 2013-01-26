@@ -120,7 +120,7 @@ var DB = {
 DB.Definition.Club = {
   sport: String,
   date_creation: { type: Date, default: Date.now },
-  date_update: Date,
+  date_update: { type: Date, default: Date.now },
   name: String,
   city: String,
   pos: {type: [Number], index: '2d'},
@@ -142,7 +142,7 @@ DB.Definition.Player = {
   nickname: String,
   name: String,
   date_creation: { type: Date, default: Date.now },
-  date_update: Date,
+  date_update: { type: Date, default: Date.now },
   email: String,
   idlicense: String,
   password: { type: String, default: null },
@@ -166,6 +166,7 @@ DB.Definition.Team = {
 };
 DB.Definition.StreamItem = {
   date_creation: { type: Date, default: Date.now },
+  date_update: { type: Date, default: Date.now },
   fbid: String,
   type: { type: String, enum: [ "comment" ] },
   owner: { type: Schema.Types.ObjectId, ref: "Player" },
@@ -177,7 +178,7 @@ DB.Schema.StreamItem = new Schema(DB.Definition.StreamItem);
 // 
 DB.Definition.Game = {
   date_creation: { type: Date, default: Date.now },
-  date_update: Date,
+  date_update: { type: Date, default: Date.now },
   date_start: { type: Date, default: Date.now },
   date_end: Date,
   owner: { type: Schema.Types.ObjectId, ref: "Player" },
@@ -208,7 +209,6 @@ DB.Schema.Game = new Schema(DB.Definition.Game);
 
 // AUTO-FIELDS
 DB.Schema.Club.pre('save', function (next) {
-  this.date_update = Date.now();
   // club._searchableName
   if (this.isModified('name'))
     this._searchableName = this.name.searchable();
@@ -222,7 +222,6 @@ DB.Schema.Club.pre('save', function (next) {
  *  - update searchableClubName
  */
 DB.Schema.Player.pre('save', function (next) {
-  this.date_update = Date.now();
   if (this.isModified("games") && this.games.length !== 0)
     throw "should not save games "+JSON.stringify(this);
   // infos for post save
@@ -340,7 +339,6 @@ DB.Schema.Player.post('save', function () {
  * 
  */
 DB.Schema.Game.pre('save', function (next) {
-  this.date_update = Date.now();
   // infos for post save
   this._wasModified = [];
   // game._searchableCity

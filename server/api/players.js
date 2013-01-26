@@ -210,6 +210,7 @@ app.post('/v1/players/:id', express.bodyParser(), function(req, res){
             if (typeof req.body[o] !== "undefined")
               player[o] = req.body[o];
           });
+          player.date_update = Date.now();
           // saving player
           DB.saveAsync(player)
             .then(function (player) {

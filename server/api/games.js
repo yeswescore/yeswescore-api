@@ -237,6 +237,7 @@ app.post('/v1/games/:id', express.bodyParser(), function(req, res){
             game[o] = req.body[o];
         }
       );
+      game.date_update = Date.now();
       //
       return DB.Model.Game.updateTeamsAsync(game, req.body.teams);
     }).then(function update(game) {
@@ -300,6 +301,7 @@ app.post('/v1/games/:id/stream/', express.bodyParser(), function(req, res){
       if (req.body.data && req.body.data.text)
         streamItem.data = { text: req.body.data.text };
       game.stream.push(streamItem);
+      game.date_update = Date.now();
       return DB.saveAsync(game);
     }).then(function sendGame(game) {
       if (game.stream.length === 0)
