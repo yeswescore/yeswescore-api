@@ -118,6 +118,8 @@ app.get('/v1/players/:id', function(req, res){
  *   nickname: String, (default="")
  *   name: String,     (default="")
  *   rank: String,     (default="")
+ *   email: String,    (default="")
+ *   idlicense: String (default="")
  *   club: { id:..., name:... }  (default=null, name: is ignored)
  *   type: String      (enum=default,owned default=default)
  * }
@@ -165,6 +167,8 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
  *   nickname: String, (default=undefined)
  *   name: String,     (default=undefined)
  *   rank: String,     (default=undefined)
+ *   email: String,    (default=undefined)
+ *   idlicense: String (default=undefined)
  *   club: { id:..., name:... }  (default=undefined, name: is ignored)
  *   password: String  (default=undefined)
  * }
@@ -202,7 +206,7 @@ app.post('/v1/players/:id', express.bodyParser(), function(req, res){
           if (inlinedClub) {
             player["club"] = inlinedClub;
           }
-          ["nickname", "name", "rank", "password", "idlicense", "email"].forEach(function (o) {
+          ["nickname", "name", "rank", "idlicense", "email"].forEach(function (o) {
             if (typeof req.body[o] !== "undefined")
               player[o] = req.body[o];
           });
