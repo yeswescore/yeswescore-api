@@ -1,7 +1,7 @@
 var assert = require("../../lib/assert.js")
   , http = require("../../lib/http.js")
   , Conf = require("../../../../server/conf.js");
-
+  
 if (Conf.env !== "DEV")
   process.exit(0);
 
@@ -284,7 +284,6 @@ describe('dev:players', function(){
           nickname : "TU-"+Math.random(),
           name: "TU-"+Math.random(),
           rank: "15/2",
-          password: null,
           club: null
         };
         http.post(options, newPlayer, function (player) {
@@ -346,6 +345,7 @@ describe('dev:players', function(){
           var rank = "rank"+now +rnd();
           var password = "password"+now +rnd();
           var clubid = randomClub._id;
+          var uncryptedPassword = "password"+now +rnd();
           
           var modifiedPlayer = {
             id: playerid,
@@ -353,6 +353,7 @@ describe('dev:players', function(){
             nickname: nickname,
             rank: rank,
             password: password,
+            uncryptedPassword: uncryptedPassword,
             club: { id: clubid }
           };
           // saving
@@ -370,6 +371,8 @@ describe('dev:players', function(){
             assert(modifiedPlayer.club.id === player.club.id, "must have same club");
             // the password shouldn't be the same !
             assert(modifiedPlayer.password !== player.password, "must have different password");
+            assert(typeof player.uncryptedPassword === "undefined", "can't have uncryptedPassword");
+            assert(player.password !== "", "must be a non empty string");
             
             // read from DB
             var options = {
@@ -383,6 +386,7 @@ describe('dev:players', function(){
               assert(modifiedPlayer.nickname === player.nickname, "must have same nickname");
               assert(modifiedPlayer.rank === player.rank, "must have same rank");
               assert(modifiedPlayer.club.id === player.club.id, "must have same club");
+              assert(typeof player.uncryptedPassword === "undefined", "can't have uncryptedPassword");
               
               done();
             });

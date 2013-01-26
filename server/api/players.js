@@ -152,6 +152,9 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
         club: inlinedClub, // will be undefined !
         type: req.body.type || "default"
     });
+    // password
+    if (req.body.uncryptedPassword)
+      player.uncryptedPassword = req.body.uncryptedPassword;
     return DB.saveAsync(player);
   }).then(function (player) {
     res.end(JSON.stringifyModels(player, { unhide: [ "token", "password"] }));
@@ -210,6 +213,9 @@ app.post('/v1/players/:id', express.bodyParser(), function(req, res){
             if (typeof req.body[o] !== "undefined")
               player[o] = req.body[o];
           });
+          // password
+          if (req.body.uncryptedPassword)
+            player.uncryptedPassword = req.body.uncryptedPassword;
           player.date_update = Date.now();
           // saving player
           DB.saveAsync(player)

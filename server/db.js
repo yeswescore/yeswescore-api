@@ -1,7 +1,8 @@
 var mongoose = require("mongoose")
   , Schema = mongoose.Schema
   , Conf = require("./conf.js")
-  , Q = require("q");
+  , Q = require("q")
+  , crypto = require("crypto");
 
 mongoose.connection.on('error', function () { DB.status = "disconnected" });
 mongoose.connection.on('connected', function () { DB.status = "connected" });
@@ -206,6 +207,13 @@ DB.Definition.Game = {
 DB.Schema.Club = new Schema(DB.Definition.Club);
 DB.Schema.Player = new Schema(DB.Definition.Player);
 DB.Schema.Game = new Schema(DB.Definition.Game);
+
+// password virtual setter
+DB.Schema.Player.virtual('uncryptedPassword').set(function (uncryptedPassword) {
+  var shasum = crypto.createHash('sha256');
+  shasum.update(uncryptedPassword+Conf.get("security.secret"));
+  this.password = shasum.digest('hex');
+});
 
 // AUTO-FIELDS
 DB.Schema.Club.pre('save', function (next) {
