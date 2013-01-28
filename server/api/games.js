@@ -46,7 +46,7 @@ app.get('/v1/games/', function(req, res){
   if (text) {
     text = new RegExp("("+text.searchable().pregQuote()+")");
     query.or([
-      { _citySearchable: text },
+      { _searchableCity: text },
       { _searchablePlayersNames: text },
       { _searchablePlayersNickNames: text },
       { _searchablePlayersClubsNames: text }
