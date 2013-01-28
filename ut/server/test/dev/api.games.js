@@ -224,6 +224,7 @@ describe('dev:games', function(){
           sets: "0/0",
           score: "0/0",
           status: "ongoing",
+          court: "C",
           teams: [ { id: null, players: [ { name : "toto" } ] },
                    { id: null, players: [ { name : "titi" } ] } ]
         };
@@ -235,6 +236,7 @@ describe('dev:games', function(){
           assert(game.city === newGame.city, "city should be the same");
           assert(game.sets === newGame.sets, "sets should be the same");
           assert(game.score === newGame.score, "score should be the same");
+          assert(game.court === newGame.court, "court should be the same");
           assert(game.status === newGame.status, "status should be the same");
           done();
         });

@@ -191,6 +191,7 @@ DB.Definition.Game = {
   status: { type: String, enum: [ "ongoing", "finished", "canceled" ], default: "ongoing" },
   sets: String,
   score: String,
+  court: { type: String, enum: ["1", "2", "3", "A", "B", "C", "" ] },
   teams: [ DB.Schema.Team ],
   stream: [ DB.Schema.StreamItem ],
   // private searchable fields
@@ -489,6 +490,9 @@ DB.Model.Game.checkFields = function (game, fields) {
     if (!ok)
       return "teams.players format";
   }
+  if (fields.indexOf("court") !== -1 && game.court &&
+      [ "", "1", "2", "3", "A", "B", "C" ].indexOf(game.court) === -1)
+    return "wrong court (1, 2, 3, A, B, C or empty)";
   return null;
 }
 

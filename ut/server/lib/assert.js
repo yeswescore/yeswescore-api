@@ -219,6 +219,7 @@ assert.isGame = function (game) {
   assert.isUndefinedOrString(game.type, "isGame: type");
   assert.isUndefinedOrString(game.sets, "isGame: sets");
   assert.isUndefinedOrString(game.score, "isGame: score");
+  assert.isUndefinedOrString(game.court, "isGame: court");
   assert.isString(game.sport, "isGame: sport");
   assert.isUndefinedOrString(game.status, "isGame: status");
   //
@@ -235,6 +236,12 @@ assert.isGame = function (game) {
     });
   }
   
+  if (typeof game.court === "string") {
+    assert(game.court === "1" || game.court === "2" || game.court === "3" ||
+           game.court === "A" || game.court === "B" || game.court === "C" ||
+           game.court === "", "isGame: game court : 1,2,3,A,B,C or empty string");
+  }
+  
   // teams
   assert.isArray(game.teams, "isGame: teams must be an array");
   assert(game.teams.length === 2, "isGame: game must have 2 teams");
@@ -244,8 +251,8 @@ assert.isGame = function (game) {
   
   // FIXME:
   assert.allowedFields(game, ["id", "date_creation", "date_start", "date_update", "date_end", "owner",
-                              "pos", "country", "city", "type", "sets", "score", "sport", "status",
-                               "players", "stream", "teams"]);
+                              "pos", "country", "city", "type", "sets", "score", "court", "sport",
+                              "status", "players", "stream", "teams"]);
 };
 
 /**
