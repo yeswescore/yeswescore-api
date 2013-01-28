@@ -298,6 +298,62 @@ describe('dev:games', function(){
     });
   });
   
+  describe('find a game, then cancel it', function () {
+    it('shouldnt be referenced again', function (done) {
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.games"]+"random"
+      };
+      http.getJSON(options, function (randomGame) {
+        assert.isObject(randomGame, "random game must exist");
+
+        // read owner
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["documents.players"]+randomGame.owner
+        };
+        http.getJSON(options, function (owner) {
+          assert.isObject(owner, "owner must be an object");
+        
+          // modification de la game
+          var options = {
+            host: Conf["http.host"],
+            port: Conf["http.port"],
+            path: Conf["api.games"]+randomGame._id+"/?playerid="+owner._id+"&token="+owner.token
+          };
+          //
+          http.post(options, { status: "canceled" }, function (game) {
+            assert.isObject(game, "game must be an object");
+            assert(game.status === "canceled", "game must be canceled");
+            
+            // searching the game (on ne doit pas la trouver)
+            var text = randomGame._searchableCity;
+            
+            var options = {
+              host: Conf["http.host"],
+              port: Conf["http.port"],
+              path: Conf["api.games"]+"?q="+encodeURIComponent(text)+"&limit=50"
+            };
+                
+            http.getJSON(options, function (randomGames) {
+              assert(Array.isArray(randomGames), "randomGames must be an array");
+              
+              var unreferenced = randomGames.every(function (game) {
+                return game.id !== randomGame._id;
+              });
+              if (unreferenced)
+                done();
+              else
+                throw randomGame._id+" shoudn't be referenced in "+options.path;
+            });
+          });
+        });
+      });
+    });
+  });
+  
   describe('write a comment on a stream', function () {
     it('should create a comment, size of stream +1 (not empty & valid)', function (done){
       // read a game

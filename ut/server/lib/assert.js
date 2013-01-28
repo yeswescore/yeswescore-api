@@ -225,7 +225,8 @@ assert.isGame = function (game) {
   assert(game.type === "singles", "isGame: game.type can only be singles");
   assert(game.sport === "tennis", "isGame: game.sport can only be tennis");
   assert(game.status === "finished" ||
-         game.status === "ongoing", "isGame: game.status can only be finished or ongoing");
+         game.status === "ongoing" ||
+         game.status === "canceled", "isGame: game.status can only be finished,ongoing or canceled");
   
   // only stream comment actually
   if (Array.isArray(game.stream)) {

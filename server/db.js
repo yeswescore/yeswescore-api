@@ -188,7 +188,7 @@ DB.Definition.Game = {
   city: String,
   sport: { type: String, enum: ["tennis"] },
   type: { type: String, enum: [ "singles", "doubles" ] },
-  status: { type: String, enum: [ "ongoing", "finished" ], default: "ongoing" },
+  status: { type: String, enum: [ "ongoing", "finished", "canceled" ], default: "ongoing" },
   sets: String,
   score: String,
   teams: [ DB.Schema.Team ],
@@ -472,7 +472,7 @@ DB.Model.Game.checkFields = function (game, fields) {
   if (fields.indexOf("singles") !== -1 && game.type && game.type !== "singles")
     return "wrong type (singles only)";
   // check status
-  if (fields.indexOf("status") !== -1 && game.status && game.status !== "ongoing" && game.status !== "finished")
+  if (fields.indexOf("status") !== -1 && game.status && game.status !== "ongoing" && game.status !== "finished" && game.status !== "canceled")
     return "wrong status (ongoing/finished)";
   // check teams
   if (fields.indexOf("teams") !== -1 && game.teams) {

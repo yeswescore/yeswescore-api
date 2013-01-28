@@ -20,6 +20,7 @@ var DB = require("../db.js")
  *  /v1/games/?q=text                (Mandatory)
  *  /v1/games/?club=:id
  *  /v1/games/?populate=teams.players (default=teams.players)
+ *  /v1/games/?status=finished        (default=ongoing,finished)
  * 
  * only query games with teams
  * auto-populate teams.players
@@ -33,6 +34,7 @@ app.get('/v1/games/', function(req, res){
   var club = req.query.club || null;
   var fields = req.query.fields || "date_creation,date_start,date_end,owner,pos,country,city,sport,type,status,sets,score,teams,teams.players.name,teams.players.nickname,teams.players.club,teams.players.rank";
   var sort = req.query.sort || "date_start";
+  var status = req.query.status || "ongoing,finished";
   // populate option
   var populate = "teams.players";
   if (typeof req.query.populate !== "undefined")
@@ -54,6 +56,8 @@ app.get('/v1/games/', function(req, res){
   }
   if (club)
     query.where('_searchablePlayersClubsIds', club);
+  if (status)
+    query.where('status').in(status.split(","));
   query.select(fields.select);
   if (populatePaths.indexOf("teams.players") !== -1) {
     query.populate("teams.players", fields["teams.players"]);

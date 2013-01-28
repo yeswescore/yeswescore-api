@@ -26,8 +26,13 @@ app.get('/v1/clubs/:id', function(req, res){
 /**
  * Read games of a club
  * 
+ * Generic options:
+ *  /v1/clubs/:id/games/?limit=5     (default=10)
+ *  /v1/clubs/:id/games/?offset=0    (default=0)
+ *  /v1/clubs/:id/games/?sort=nickname (default=-date_start)
+ * 
  * Specific options:
- *  /v1/clubs/:id/games/?status=ongoing
+ *  /v1/clubs/:id/games/?status=ongoing   (default=ongoing,finished)
  * 
  * NON STANDARD URL, used by facebook app
  * default behaviour is to include the stream
@@ -35,12 +40,10 @@ app.get('/v1/clubs/:id', function(req, res){
  * no params
  */
 app.get('/v1/clubs/:id/games/', function(req, res){
-  var status = req.query.status || null;
+  var status = req.query.status || "ongoing,finished";
   var sort = req.query.sort || "-date_start";
   var limit = req.query.limit || 10;
   var offset = req.query.offset || 0;
-  if (status !== null && status !== "ongoing" && status !== "finished")
-    return app.defaultError(res)("status must be empty, ongoing or finished");
   DB.Model.Club.findById(req.params.id, function (err, club) {
     if (err)
       return app.defaultError(res)(err);
@@ -49,7 +52,7 @@ app.get('/v1/clubs/:id/games/', function(req, res){
     var query = DB.Model.Game.find({});
     query.where('_searchablePlayersClubsIds', club);
     if (status)
-      query.where('status', status);
+      query.where('status').in(status.split(","));
     query.populate("teams.players")
          .sort(sort.replace(/,/g, " "))
          .skip(offset)
