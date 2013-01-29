@@ -1,0 +1,14 @@
+{
+    "name": "zeScore API",
+    "description": "zeScore API",
+    "version": "0.0.1",
+    "url": "http://api.zescore.com/",
+    "options": {
+        "linkNatives": "true",        
+        "attributesEmit": "true",
+        "selleck": "true",
+        "ignorePaths": [ "simpleyui" ],
+        "paths": "*/js",
+        "outdir": "../doc/server/"
+    }
+}
