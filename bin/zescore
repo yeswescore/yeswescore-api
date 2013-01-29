@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# ZeScore startup service script
+# zeScore startup service script
 # USAGE: start|stop|status|logs
 #
 # INSTALL: sudo cp zescore /etc/init.d/; sudo chmod +x /etc/init.d/zescore
@@ -12,18 +12,18 @@
 # [FIXME] restrict this script to root
 case "$1" in
 start)
-echo "Starting ZeScore Api."
+echo "Starting zeScore Api."
 sudo su node -c 'date > /tmp/supervisor.log'
 sudo su node -c 'export NODE_ENV="PROD"; /usr/bin/supervisor -w /opt/web/zescore/server/ /opt/web/zescore/server/server.js &>> /tmp/supervisor.log &'
 ;;
 stop)
-echo "Stopping ZeScore Api."
+echo "Stopping zeScore Api."
 sudo pkill -f '^node.*supervisor.*server.js'
 sleep 1
 sudo pkill -9 -f '^node.*supervisor.*server.js'
 ;;
 logs)
-echo "Zescore supervisor log."
+echo "zeScore supervisor log."
 sudo cat /tmp/supervisor.log
 ;;
 status)
