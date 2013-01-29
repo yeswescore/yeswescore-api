@@ -186,6 +186,7 @@ describe('dev:players', function(){
           name: "TU-"+Math.random(),
           rank: "15/2",
           password: null,
+          email: "marcd-"+Math.random()+"@zescore.com",
           club: { id: randomClub._id, name: randomClub.name }
         };
         http.post(options, newPlayer, function (player) {
@@ -193,9 +194,11 @@ describe('dev:players', function(){
           assert(newPlayer.nickname === player.nickname, "must have same nickname");
           assert(newPlayer.name === player.name, "must have same name");
           assert(newPlayer.rank === player.rank, "must have same rank");
+          assert(newPlayer.email === player.email, "must have same email");
           
           // modify the player
           player.name = "foobar";
+          player.email = "marcd-"+Math.random()+"@zescore.com";
           // saving
           var options = {
             host: Conf["http.host"],
@@ -206,12 +209,14 @@ describe('dev:players', function(){
             assert.isPlayerWithToken(modifiedPlayer, "must be a player");
             assert(modifiedPlayer.id === player.id, "must be same player");
             assert(modifiedPlayer.name === player.name, "must have the same modified name");
+            assert(modifiedPlayer.email === player.email, "must have the same modified email");
             
             // reading from DB authentified
             http.getJSON(options, function (p) {
               assert.isPlayerWithToken(p, "must be a player");
               assert(p.id === player.id, "must be same player");
               assert(p.name === player.name, "must have the same modified name");
+              assert(p.email === player.email, "must have the same modified email");
               
               var options = {
                 host: Conf["http.host"],
