@@ -3,6 +3,42 @@ var DB = require("../db.js")
   , app = require("../app.js");
 
 /**
+ * Autocomplete search in clubs
+ * 
+ * Generic options:
+ *  /v1/clubs/autocomplete/?limit=5     (default=5)
+ *  /v1/clubs/autocomplete/?fields=nickname,name  (default=nickname,name,type,club)
+ *  /v1/clubs/autocomplete/?sort=nickname (default=name)
+ *
+ * Specific options:
+ *  /v1/clubs/autocomplete/?q=Charlotte (searched text)
+ */
+app.get('/v1/clubs/autocomplete/', function(req, res){
+  var fields = req.query.fields || "name,city";
+  var limit = req.query.limit || 5;
+  var sort = req.query.sort || "name";
+  var text = req.query.q;
+  
+  if (text) {
+    // slow
+    text = new RegExp("("+text.searchable().pregQuote()+")");
+    // searching
+    DB.Model.Club
+      .find({_searchableName: text})
+      .select(fields.replace(/,/g, " "))
+      .sort(sort.replace(/,/g, " "))
+      .limit(limit)
+      .exec(function (err, clubs) {
+        if (err)
+          return app.defaultError(res)(err);
+        res.end(JSON.stringifyModels(clubs));
+      });
+  } else {
+    res.end(JSON.stringify([]));
+  }
+});
+  
+/**
  * Read a club
  * 
  * Generic options:
@@ -64,33 +100,6 @@ app.get('/v1/clubs/:id/games/', function(req, res){
        });
     });
 });
-
-/*
-app.get('/v1/clubs/autocomplete/', function(req, res){
-  var fields = req.query.fields || "sport,date_creation,name,city,address,fftid,ligue,zip,outdoor,indoor";
-  var limit = req.query.limit || 5;
-  var sort = req.query.sort || "name";
-  var text = req.query.q;
-  
-  if (text) {
-    // slow
-    text = new RegExp("("+text.searchable().pregQuote()+")");
-    // searching
-    DB.Model.Club
-      .find({_searchableName: text})
-      .select(fields.replace(/,/g, " "))
-      .sort(sort.replace(/,/g, " "))
-      .limit(limit)
-      .exec(function (err, clubs) {
-        if (err)
-          return app.defaultError(res)(err);
-        res.end(JSON.stringifyModels(clubs));
-      });
-  } else {
-    res.end(JSON.stringify([]));
-  }
-});
-*/
 
 /**
  * Create a new club
