@@ -13,7 +13,7 @@
   <div class="control-group">
     <label class="control-label" for="name">Name *</label>
     <div class="controls">
-      <input type="text" id="name" name="name" placeholder="Nom Complet" class='input-xlarge' value="<%= player.name %>"/>
+      <input type="text" id="name" name="name" placeholder="Nom Complet" class='input-xlarge' value="<%= Owner.name %>"/>
       <span class="name_error label label-info hide"></span>
     </div>
   </div>
@@ -21,7 +21,7 @@
   <div class="control-group">
     <label class="control-label" for="nickname">Nickname *</label>
     <div class="controls">
-      <input type="text" id="nickname" name="nickname" placeholder="Pseudo" class='input-xlarge' value="<%= player.nickname %>"/>
+      <input type="text" id="nickname" name="nickname" placeholder="Pseudo" class='input-xlarge' value="<%= Owner.nickname %>"/>
       <span class="nickname_error label label-info hide"></span>
     </div>
   </div>
@@ -29,7 +29,7 @@
   <div class="control-group">
     <label class="control-label" for="mail">Mail *</label>
     <div class="controls">
-      <input type="text" id="mail" name="mail" placeholder="Mail" class='input-xlarge' value=""/>
+      <input type="text" id="mail" name="mail" placeholder="Mail" class='input-xlarge' value="<%= Owner.email %>"/>
       <span class="mail_error label label-info hide"></span>
     </div>
   </div>
@@ -37,7 +37,7 @@
   <div class="control-group">
     <label class="control-label" for="rank">Rank</label>
     <div class="controls">
-      <input type="text" id="rank" name="rank" placeholder="Classement" class='input-xlarge' value="<%= player.rank %>"/>
+      <input type="text" id="rank" name="rank" placeholder="Classement" class='input-xlarge' value="<%= Owner.rank %>"/>
       <span class="rank_error label label-info hide"></span>
     </div>
   </div>
@@ -45,7 +45,7 @@
   <div class="control-group">
     <label class="control-label" for="password">Password</label>
     <div class="controls">
-      <input type="text" id="password" name="password" placeholder="Password" class='input-xlarge' value="<%= player.password %>"/>
+      <input type="text" id="password" name="password" placeholder="Password" class='input-xlarge' value="<%= Owner.password %>"/>
       <span class="password_error label label-info hide"></span>
     </div>
   </div>    
@@ -53,7 +53,7 @@
   <div class="control-group">
     <label class="control-label" for="licenceid">ID de la licence</label>
     <div class="controls">
-      <input type="text" id="licenceid" name="licenceid" placeholder="Identifiant de la licence" class='input-xlarge' value=""/>
+      <input type="text" id="licenceid" name="idlicense" placeholder="Identifiant de la licence" class='input-xlarge' value="<%= Owner.idlicense %>"/>
       <span class="licenceid_error label label-info hide"></span>
     </div>
   </div>    
