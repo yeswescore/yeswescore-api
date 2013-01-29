@@ -39,5 +39,7 @@ else
 fi
 
 # rsync
+echo "sending code to integration environment"
+sudo rsync -rltov --del --ignore-errors --force -e 'ssh -p 42' zescore/server /opt/web/zescore/
 echo "sending code to prod server"
 sudo rsync -rltov --del --ignore-errors --force -e 'ssh -p 42' zescore/server root@188.165.247.143:/opt/web/zescore/
