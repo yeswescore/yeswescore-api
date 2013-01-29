@@ -101,7 +101,7 @@ app.get('/v1/players/:id', function(req, res){
         if (player === null)
           return app.defaultError(res)("no player found");
         if (authentifiedPlayer)
-          res.end(JSON.stringifyModels(player, { unhide: [ "token", "password"] }));
+          res.end(JSON.stringifyModels(player, { unhide: [ "token" ] }));
         else
           res.end(JSON.stringifyModels(player));
       });
@@ -157,7 +157,7 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
       player.uncryptedPassword = req.body.uncryptedPassword;
     return DB.saveAsync(player);
   }).then(function (player) {
-    res.end(JSON.stringifyModels(player, { unhide: [ "token", "password"] }));
+    res.end(JSON.stringifyModels(player, { unhide: [ "token" ] }));
   }, app.defaultError(res));
 });
 
@@ -220,7 +220,7 @@ app.post('/v1/players/:id', express.bodyParser(), function(req, res){
           // saving player
           DB.saveAsync(player)
             .then(function (player) {
-              res.end(JSON.stringifyModels(player, { unhide: [ "token", "password"] }));
+              res.end(JSON.stringifyModels(player, { unhide: [ "token" ] }));
             },
           app.defaultError(res, "update error"));
         });

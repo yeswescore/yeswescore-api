@@ -29,6 +29,6 @@ app.post('/v1/auth/', express.bodyParser(), function(req, res){
   }, function (err, player) {
     if (err || !player)
       return app.defaultError(res)("authentication");
-    res.end(JSON.stringifyModels(player, { unhide: [ "token", "password"] }));
+    res.end(JSON.stringifyModels(player, { unhide: [ "token" ] }));
   });
 });
