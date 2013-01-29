@@ -6,8 +6,6 @@ var app = require("./app.js")
 // helpers
 require('./helpers.js');
 
-// static directory, will be used for tests.
-app.use("/static", express.static(__dirname + '/static'));
 // default Content-Type
 app.use(function (req, res, next) {
   res.type('application/json; charset=utf-8');
