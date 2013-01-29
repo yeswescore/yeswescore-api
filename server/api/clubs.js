@@ -3,6 +3,21 @@ var DB = require("../db.js")
   , app = require("../app.js");
 
 /**
+ * YUIDoc
+ @module    api
+ @submodule clubs
+*/
+/** 
+ * YUIDoc
+ @class     getAutocomplete
+ @type      Url
+ @param     limit  [limit=5]                        /v1/clubs/autocomplete/?limit=5
+ @param     fields [fields=nickname,name,type,club] /v1/clubs/autocomplete/?fields=nickname,name
+ @param     sort   [sort=nickname]                  /v1/clubs/autocomplete/?sort=nickname
+ 
+ @return array(clubs)
+ 
+ @example
  * Autocomplete search in clubs
  * 
  * Generic options:
@@ -12,7 +27,7 @@ var DB = require("../db.js")
  *
  * Specific options:
  *  /v1/clubs/autocomplete/?q=Charlotte (searched text)
- */
+**/
 app.get('/v1/clubs/autocomplete/', function(req, res){
   var fields = req.query.fields || "name,city";
   var limit = req.query.limit || 5;
