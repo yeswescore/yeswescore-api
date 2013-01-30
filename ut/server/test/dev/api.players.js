@@ -389,6 +389,7 @@ describe('dev:players', function(){
               assert(modifiedPlayer.nickname === player.nickname, "must have same nickname");
               assert(modifiedPlayer.rank === player.rank, "must have same rank");
               assert(modifiedPlayer.club.id === player.club.id, "must have same club");
+              assert(player.club.id === randomClub._id, "must have same club id");
               assert(typeof player.uncryptedPassword === "undefined", "can't have uncryptedPassword");
               
               done();
