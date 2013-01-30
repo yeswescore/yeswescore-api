@@ -45,7 +45,7 @@ describe('dev:players', function(){
         email: "marcd-"+Math.random()+"@zescore.com",
         idlicense: "TU-"+Math.random(),
         rank: "15/2",
-        password: null,
+        uncryptedPassword: "TU-"+Math.random(),
         club: null
       };
       http.post(options, newPlayer, function (player) {
@@ -55,6 +55,8 @@ describe('dev:players', function(){
         assert(newPlayer.rank === player.rank, "must have same rank");
         assert(newPlayer.email === player.email, "must have same email");
         assert(newPlayer.idlicense === player.idlicense, "must have same idlicense");
+        assert(typeof player.password === "undefined", "musn't have a password");
+        assert(typeof player.uncryptedPassword === "undefined", "musn't have an uncryptedPassword");
         
         // verify player exist in DB.
         var options = {
@@ -135,7 +137,6 @@ describe('dev:players', function(){
           nickname : "TU-"+Math.random(),
           name: "TU-"+Math.random(),
           rank: "15/2",
-          password: null,
           club: { id: randomClub._id, name: randomClub.name }
         };
         http.post(options, newPlayer, function (player) {
@@ -185,7 +186,6 @@ describe('dev:players', function(){
           nickname : "TU-"+Math.random(),
           name: "TU-"+Math.random(),
           rank: "15/2",
-          password: null,
           email: "marcd-"+Math.random()+"@zescore.com",
           club: { id: randomClub._id, name: randomClub.name }
         };
@@ -348,7 +348,6 @@ describe('dev:players', function(){
           var nickname = "nickname"+now +rnd();
           var name = "name"+now +rnd();
           var rank = "rank"+now +rnd();
-          var password = "password"+now +rnd();
           var clubid = randomClub._id;
           var uncryptedPassword = "password"+now +rnd();
           
@@ -357,7 +356,6 @@ describe('dev:players', function(){
             name: name,
             nickname: nickname,
             rank: rank,
-            password: password,
             uncryptedPassword: uncryptedPassword,
             club: { id: clubid }
           };
@@ -375,7 +373,7 @@ describe('dev:players', function(){
             assert(modifiedPlayer.rank === player.rank, "must have same rank");
             assert(modifiedPlayer.club.id === player.club.id, "must have same club");
             // the password shouldn't be the same !
-            assert(modifiedPlayer.password !== player.password, "must have different password");
+            assert(typeof player.password === "undefined", "must have no password");
             assert(typeof player.uncryptedPassword === "undefined", "can't have uncryptedPassword");
             assert(player.password !== "", "must be a non empty string");
             
