@@ -228,3 +228,59 @@ app.post('/v1/players/:id', express.bodyParser(), function(req, res){
       app.defaultError(res, "authentication error"));
   }, app.defaultError(res));
 });
+
+/**
+ * Read games of a player
+ * 
+ * Generic options:
+ *  /v1/players/:id/games/?limit=5     (default=10)
+ *  /v1/players/:id/games/?offset=0    (default=0)
+ *  /v1/players/:id/games/?sort=nickname (default=-date_start)
+ * 
+ * Specific options:
+ *  /v1/players/:id/games/?owned=true  (default=false)
+ *  /v1/players/:id/games/?status=ongoing   (default=ongoing,finished)
+ *  /v1/players/:id/games/?populate=teams.players (default=teams.players)
+ * 
+ * owned=true   games owned by the player
+ * owned=false  games where the player plays
+ * NON STANDARD URL
+ */
+app.get('/v1/players/:id/games/', function(req, res){
+  var status = req.query.status || "ongoing,finished";
+  var sort = req.query.sort || "-date_start";
+  var limit = req.query.limit || 10;
+  var offset = req.query.offset || 0;
+  var fields = req.query.fields || "date_creation,date_start,date_end,owner,pos,country,city,sport,type,status,sets,score,court,teams,teams.players.name,teams.players.nickname,teams.players.club,teams.players.rank";
+  var owned = (req.query.owned === "true");
+  // populate option
+  var populate = "teams.players";
+  if (typeof req.query.populate !== "undefined")
+    populate = req.query.populate;
+  var populatePaths = (typeof populate === "string") ? populate.split(",") : [];
+  // process fields
+  var fields = app.createPopulateFields(fields, populate);
+  DB.Model.Player.findById(req.params.id, function (err, club) {
+    if (err)
+      return app.defaultError(res)(err);
+    if (club === null)
+      return app.defaultError(res)("no player found");
+    var query;
+    if (owned)
+      query = DB.Model.Game.find({ owner : req.params.id});
+    else
+      query = DB.Model.Game.find({"teams.players" : req.params.id});
+    query.select(fields.select);
+    if (status)
+      query.where('status').in(status.split(","));
+    query.populate("teams.players", fields["teams.players"])
+         .sort(sort.replace(/,/g, " "))
+         .skip(offset)
+         .limit(limit)
+         .exec(function (err, games) {
+         if (err)
+            return app.defaultError(res)(err);
+         res.end(JSON.stringifyModels(games));
+       });
+    });
+});
