@@ -56,11 +56,39 @@
       <span class="city_error label label-info hide"></span>
     </div>
   </div>
+  
+  
+    <div class="control-group">
+		<label for="select-choice-0" class="select">Court</label>
+		<div class="controls">			
+		<select name="court" id="select-choice-0">
+			<option value="">Selection</option>	
+			<option value="1">Terrain 1</option>	
+			<option value="2">Terrain 2</option>	
+			<option value="3">Terrain 3</option>	
+			<option value="4">Terrain 4</option>
+			<option value="5">Terrain 5</option>	
+			<option value="6">Terrain 6</option>	
+			<option value="7">Terrain 7</option>	
+			<option value="8">Terrain 8</option>
+			<option value="9">Terrain 9</option>	
+			<option value="10">Terrain 10</option>	
+			<option value="11">Terrain 11</option>
+			<option value="">---</option>	
+			<option value="A">Terrain A</option>	
+			<option value="B">Terrain B</option>	
+			<option value="C">Terrain C</option>
+			<option value="D">Terrain D</option>	
+			<option value="E">Terrain E</option>	
+			<option value="F">Terrain F</option>																
+		</select>
+		</div>
+    </div>    
      
   <div class="control-group">
 	<label for="select-choice-1" class="select">Tour</label>
 	<div class="controls">
-	<select name="select-choice-1" id="select-choice-1">
+	<select name="tour" id="select-choice-1">
 		<option value="">Selection</option>
 		<option value="">Poule</option>
 		<option value="">Consolante</option>
@@ -96,39 +124,41 @@
 	</div>
   </div>   
   
-	<div data-role="fieldcontain">
+   <div class="control-group">
 		<label for="select-choice-2" class="select">Format</label>
-		<select name="select-choice-2" id="select-choice-2">
-			<option value="">Selection</option>			
-			<option value="">A - Normal</option>
-			<option value="">B - Traditionnel (3 sets à 6 jeux pt décisif)</option>
-			<option value="">C - 3 sets à 4 jeux - jeu décisif à 4/4</option>
-			<option value="">D - 3 sets à 4 jeux - jeu décisif à 4/4 pt décisif</option>
-			<option value="">E - 3 sets à 3 jeux - jeu décisif à 2/2</option>
-			<option value="">F - 3 sets à 3 jeux - jeu décisif à 2/2 pt décisif</option>
-			<option value="">G - 3 jeux décisifs</option> 
-			<option value="">H - 3 Sets à 4 jeux - jeu décisif à 3/3 pt décisif</option>
-			<option value="">I - 3 sets à 5 jeux - jeu décisif à 4/4 pt décisif</option>			
+		<div class="controls">	
+		<select name="type" id="select-choice-2">
+			<option value="A">A - Normal</option>
+			<option value="B">B - Traditionnel (3 sets à 6 jeux pt décisif)</option>
+			<option value="C">C - 3 sets à 4 jeux - jeu décisif à 4/4</option>
+			<option value="D">D - 3 sets à 4 jeux - jeu décisif à 4/4 pt décisif</option>
+			<option value="E">E - 3 sets à 3 jeux - jeu décisif à 2/2</option>
+			<option value="F">F - 3 sets à 3 jeux - jeu décisif à 2/2 pt décisif</option>
+			<option value="G">G - 3 jeux décisifs</option> 
+			<option value="H">H - 3 Sets à 4 jeux - jeu décisif à 3/3 pt décisif</option>
+			<option value="I">I - 3 sets à 5 jeux - jeu décisif à 4/4 pt décisif</option>			
 		</select>
-	</div>  
+		</div>
+	  </div>
 	
-	<div data-role="fieldcontain">
+    <div class="control-group">
 		<label for="select-choice-3" class="select">Format</label>
-		<select name="select-choice-3" id="select-choice-3">
+		<div class="controls">			
+		<select name="surface" id="select-choice-3">
 			<option value="">Selection</option>	
-			<option value="">Béton poreux (quick) - BP</option>	
-			<option value="">Enrobé poreux - EP</option>	
-			<option value="">Granulats caoutchouc - EPDM</option>	
-			<option value="">Gazon synthétique - GAS</option>	
-			<option value="">Gazon naturel - GAZ</option>	
-			<option value="">Moquette - MOQ</option>	
-			<option value="">Terre battue non gélive - NVTB</option>	
-			<option value="">Parquet (bois) - PAR</option>	
-			<option value="">Résine (greenset) - RES</option>	
-			<option value="">Terre-battue - TB</option>	
+			<option value="BP">Béton poreux (quick) - BP</option>	
+			<option value="EP">Enrobé poreux - EP</option>	
+			<option value="EPDM">Granulats caoutchouc - EPDM</option>	
+			<option value="GAS">Gazon synthétique - GAS</option>	
+			<option value="GAZ">Gazon naturel - GAZ</option>	
+			<option value="MOQ">Moquette - MOQ</option>	
+			<option value="NVTB">Terre battue non gélive - NVTB</option>	
+			<option value="PAR">Parquet (bois) - PAR</option>	
+			<option value="RES">Résine (greenset) - RES</option>	
+			<option value="TB">Terre-battue - TB</option>
+		</select>
+		</div>
     </div>   
-  
-
   
   	<input type="hidden" id="playerid" value="<%= playerid %>" class="input" />
 	<input type="hidden" id="token" value="<%= token %>" class="input" />
