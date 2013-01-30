@@ -10,7 +10,7 @@
 <a href="#players/follow" data-role="button" id="">Joueurs Suivis</a>
 <% 
 
-if(Owner.club === null) 
+if(Owner.club === undefined) 
 	print ('<a href="#" data-role="button" id="" class="ui-disabled">Mon Club</a>'); 
 else 
 	print ('<a href="#" data-role="button" id="">Mon Club</a>');
