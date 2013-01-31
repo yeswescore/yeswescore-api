@@ -38,7 +38,7 @@
   
   <div class="control-group">
     <div class="controls">
-      <button type="submit" value="Save" class="button">Save</button>
+      <button value="Save" class="button">Save</button>
     </div>
   </div>
   
@@ -70,10 +70,10 @@
  
   
   <div class="control-group">
-    <label class="control-label" for="licenceid">ID de la licence</label>
+    <label class="control-label" for="idlicense">ID de la licence</label>
     <div class="controls">
-      <input type="text" id="licenceid" name="idlicense" placeholder="Identifiant de la licence" class='input-xlarge' value="<%= idlicense %>"/>
-      <span class="licenceid_error label label-info hide"></span>
+      <input type="text" id="idlicense" name="idlicense" placeholder="Identifiant de la licence" class='input-xlarge' value="<%= idlicense %>"/>
+      <span class="idlicense_error label label-info hide"></span>
     </div>
   </div>    
   
@@ -81,7 +81,7 @@
   <div class="control-group">
     <label class="control-label" for="club">Club</label>
     <div class="controls">
-      <input type="text" id="club" name="club" placeholder="Nom du Club" class='input-xlarge' value=""/>
+      <input type="text" id="club" name="club" placeholder="Nom du Club" class='input-xlarge' value="<%= club %>"/>
       <ul id="suggestions" data-role="listview" data-inset="true"></ul>
       <span class="club_error label label-info hide"></span>
     </div>
@@ -90,7 +90,7 @@
   <div class="control-group">
     <label class="control-label" for="clubid">ID du Club</label>
     <div class="controls">
-      <input type="text" id="clubid" name="clubid" placeholder="Identifiant du Club" class='input-xlarge' value=""/>
+      <input type="text" id="clubid" name="clubid" placeholder="Identifiant du Club" class='input-xlarge' value="<%= idclub %>"/>
       <span class="clubid_error label label-info hide"></span>
     </div>
   </div>      
