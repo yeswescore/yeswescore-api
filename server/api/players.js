@@ -131,7 +131,7 @@ app.get('/v1/players/:id/games/', function(req, res){
   var sort = req.query.sort || "-date_start";
   var limit = req.query.limit || 10;
   var offset = req.query.offset || 0;
-  var fields = req.query.fields || "date_creation,date_start,date_end,owner,pos,country,city,sport,type,status,sets,score,court,teams,teams.players.name,teams.players.nickname,teams.players.club,teams.players.rank";
+  var fields = req.query.fields || "date_creation,date_start,date_end,owner,pos,country,city,sport,type,subtype,status,sets,score,court,surface,tour,teams,teams.players.name,teams.players.nickname,teams.players.club,teams.players.rank";
   var owned = (req.query.owned === "true");
   // populate option
   var populate = "teams.players";

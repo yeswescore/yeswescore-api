@@ -32,7 +32,7 @@ app.get('/v1/games/', function(req, res){
   var offset = req.query.offset || 0;
   var text = req.query.q;
   var club = req.query.club || null;
-  var fields = req.query.fields || "date_creation,date_start,date_end,owner,pos,country,city,sport,type,status,sets,score,court,teams,teams.players.name,teams.players.nickname,teams.players.club,teams.players.rank";
+  var fields = req.query.fields || "date_creation,date_start,date_end,owner,pos,country,city,sport,type,subtype,status,sets,score,court,surface,tour,teams,teams.players.name,teams.players.nickname,teams.players.club,teams.players.rank";
   var sort = req.query.sort || "date_start";
   var status = req.query.status || "ongoing,finished";
   // populate option
@@ -85,7 +85,7 @@ app.get('/v1/games/', function(req, res){
  *  /v1/games/:id/?stream=true
  */
 app.get('/v1/games/:id', function (req, res){
-  var fields = req.query.fields || "date_creation,date_start,date_end,owner,pos,country,city,sport,type,status,sets,score,court,teams,teams.players.name,teams.players.nickname,teams.players.club,teams.players.rank,teams.players.email";
+  var fields = req.query.fields || "date_creation,date_start,date_end,owner,pos,country,city,sport,type,subtype,status,sets,score,court,surface,tour,teams,teams.players.name,teams.players.nickname,teams.players.club,teams.players.rank,teams.players.email";
   if (req.query.stream === "true")
     fields += ",stream"
   // populate option
@@ -143,7 +143,8 @@ app.get('/v1/games/:id', function (req, res){
  * result is a redirect to /v1/games/:newid
  */
 app.post('/v1/games/', express.bodyParser(), function (req, res) {
-  var err = DB.Model.Game.checkFields(req.body, ["sport", "type", "status", "teams"]);
+  var err = DB.Model.Game.checkFields(req.body,
+    ["sport", "type", "status", "teams", "surface", "subtype"]);
   if (err)
     return app.defaultError(res)(err);
   DB.isAuthenticatedAsync(req.query)
@@ -160,10 +161,13 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
         city: req.body.city || "",
         sport: req.body.sport || "tennis",
         type: "singles",
+        subtype: req.body.subtype || "A",
         status: req.body.status || "ongoing",
         sets: req.body.sets || "",
         score: req.body.score || "",
         court: req.body.court || "",
+        surface: req.body.surface || "",
+        tour: req.body.tour || "",
         teams: [ // game has 2 teams (default)
           { points: "", players: [] },
           { points: "", players: [] }
@@ -214,7 +218,8 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
  * result is a redirect to /v1/games/:newid
  */
 app.post('/v1/games/:id', express.bodyParser(), function(req, res){
-  var err = DB.Model.Game.checkFields(req.body, ["sport", "type", "status", "teams"]);
+  var err = DB.Model.Game.checkFields(req.body,
+    ["sport", "type", "status", "teams", "surface", "subtype"]);
   if (err)
     return app.defaultError(res)(err);
   // check player is authenticated
@@ -238,7 +243,8 @@ app.post('/v1/games/:id', express.bodyParser(), function(req, res){
       return deferred.promise;
     }).then(function updateFields(game) {
       // updatable simple fields
-      [ "country", "city", "type", "status", "sets", "score", "court" ].forEach(
+      [ "country", "city", "type", "subtype", "status", "sets",
+        "score", "court", "surface", "tour" ].forEach(
         function (o) {
           if (typeof req.body[o] !== "undefined")
             game[o] = req.body[o];

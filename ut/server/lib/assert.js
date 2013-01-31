@@ -220,6 +220,10 @@ assert.isGame = function (game) {
   assert.isUndefinedOrString(game.sets, "isGame: sets");
   assert.isUndefinedOrString(game.score, "isGame: score");
   assert.isUndefinedOrString(game.court, "isGame: court");
+  assert.isUndefinedOrString(game.subtype, "isGame: subtype");
+  assert.isUndefinedOrString(game.surface, "isGame: surface");
+  assert.isUndefinedOrString(game.tour, "isGame: tour");
+  
   assert.isString(game.sport, "isGame: sport");
   assert.isUndefinedOrString(game.status, "isGame: status");
   //
@@ -236,11 +240,18 @@ assert.isGame = function (game) {
     });
   }
   
-  if (typeof game.court === "string") {
-    assert(game.court === "1" || game.court === "2" || game.court === "3" ||
-           game.court === "A" || game.court === "B" || game.court === "C" ||
-           game.court === "", "isGame: game court : 1,2,3,A,B,C or empty string");
+  if (typeof game.subtype === "string") {
+    assert([ "A", "B", "C", "D", "E", "F", "G", "H", "I" ].indexOf(game.subtype) !== -1, "isGame: unknown game.subtype");
   }
+  if (typeof game.court === "string") {
+    assert(["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11",
+            "A", "B", "C", "D", "E", "F", "" ].indexOf(game.court) !== -1, "isGame: unknwon game.court");
+  }
+  if (typeof game.surface === "string") {
+    assert(["BP", "EP", "EPDM", "GAS", "GAZ", "MOQ", 
+            "NVTB", "PAR", "RES", "TB", "" ].indexOf(game.surface) !== -1, "isGame: unknown game.surface");
+  }
+  
   
   // teams
   assert.isArray(game.teams, "isGame: teams must be an array");
@@ -251,8 +262,8 @@ assert.isGame = function (game) {
   
   // FIXME:
   assert.allowedFields(game, ["id", "date_creation", "date_start", "date_update", "date_end", "owner",
-                              "pos", "country", "city", "type", "sets", "score", "court", "sport",
-                              "status", "players", "stream", "teams"]);
+                              "pos", "country", "city", "type", "subtype", "sets", "score", "court",
+                              "sport", "surface", "tour", "status", "players", "stream", "teams"]);
 };
 
 /**

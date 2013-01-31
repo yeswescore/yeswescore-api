@@ -221,10 +221,13 @@ describe('dev:games', function(){
           country: "FRANCE",
           city: "marck",
           type: "singles",
+          subtype: "C",
           sets: "0/0",
           score: "0/0",
+          court: "10",
+          surface: "GAZ",
+          tour: "1er tour",
           status: "ongoing",
-          court: "C",
           teams: [ { id: null, players: [ { name : "toto" } ] },
                    { id: null, players: [ { name : "titi" } ] } ]
         };
@@ -237,6 +240,10 @@ describe('dev:games', function(){
           assert(game.sets === newGame.sets, "sets should be the same");
           assert(game.score === newGame.score, "score should be the same");
           assert(game.court === newGame.court, "court should be the same");
+          assert(game.status === newGame.status, "status should be the same");
+          assert(game.type === newGame.type, "type should be the same");
+          assert(game.subtype === newGame.subtype, "subtype should be the same");
+          assert(game.surface === newGame.surface, "surface should be the same");
           assert(game.status === newGame.status, "status should be the same");
           done();
         });
@@ -277,7 +284,13 @@ describe('dev:games', function(){
           };
           
           var newScore = "15/0";
+          var modifiedGame = game;
           game.score = newScore;
+          game.sets = "6/3";
+          game.subtype = "B";
+          game.court = "3";
+          game.surface = "NVTB";
+          game.tour = "2nd tour";
           
           http.post(options, game, function (game) {
             assert.isGame(game);
@@ -291,7 +304,12 @@ describe('dev:games', function(){
             };
             http.getJSON(options, function (g) {
               assert.isGame(g);
-              assert(g.score === newScore, "score should be updated in DB");
+              assert(g.score === modifiedGame.score, "score should be updated in DB");
+              assert(g.sets === modifiedGame.sets, "sets should be updated in DB");
+              assert(g.subtype === modifiedGame.subtype, "subtype should be updated in DB");
+              assert(g.court === modifiedGame.court, "court should be updated in DB");
+              assert(g.surface === modifiedGame.surface, "surface should be updated in DB");
+              assert(g.tour === modifiedGame.tour, "tour should be updated in DB");
               done();
             });
           });

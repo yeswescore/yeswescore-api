@@ -178,20 +178,31 @@ DB.Schema.Team = new Schema(DB.Definition.Team);
 DB.Schema.StreamItem = new Schema(DB.Definition.StreamItem);
 // 
 DB.Definition.Game = {
+  // dates
   date_creation: { type: Date, default: Date.now },
   date_update: { type: Date, default: Date.now },
   date_start: { type: Date, default: Date.now },
   date_end: Date,
+  // 
   owner: { type: Schema.Types.ObjectId, ref: "Player" },
+  // address / geolocalisation
   pos: {type: [Number], index: '2d'},
   country: String,
   city: String,
+  // 
   sport: { type: String, enum: ["tennis"] },
-  type: { type: String, enum: [ "singles", "doubles" ] },
   status: { type: String, enum: [ "ongoing", "finished", "canceled" ], default: "ongoing" },
+  // game options, different depending on sport
+  type: { type: String, enum: [ "singles", "doubles" ] },
+  subtype: { type: String, enum: [ "A", "B", "C", "D", "E", "F", "G", "H", "I" ] },
   sets: String,
   score: String,
-  court: { type: String, enum: ["1", "2", "3", "A", "B", "C", "" ] },
+  court: { type: String, enum: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11",
+                                "A", "B", "C", "D", "E", "F", "" ] },
+  surface: { type: String, enum: ["BP", "EP", "EPDM", "GAS", "GAZ", "MOQ", 
+                                  "NVTB", "PAR", "RES", "TB", "" ] },
+  tour: String,
+  //
   teams: [ DB.Schema.Team ],
   stream: [ DB.Schema.StreamItem ],
   // private searchable fields
@@ -491,8 +502,16 @@ DB.Model.Game.checkFields = function (game, fields) {
       return "teams.players format";
   }
   if (fields.indexOf("court") !== -1 && game.court &&
-      [ "", "1", "2", "3", "A", "B", "C" ].indexOf(game.court) === -1)
-    return "wrong court (1, 2, 3, A, B, C or empty)";
+      ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11",
+       "A", "B", "C", "D", "E", "F", "" ].indexOf(game.court) === -1)
+    return "wrong court (1-11, A-F or empty)";
+  if (fields.indexOf("subtype") !== -1 && game.subtype &&
+      [ "A", "B", "C", "D", "E", "F", "G", "H", "I" ].indexOf(game.subtype) === -1)
+    return "wrong subtype (A-F)";
+  if (fields.indexOf("surface") !== -1 && game.surface &&
+      ["BP", "EP", "EPDM", "GAS", "GAZ", "MOQ", 
+       "NVTB", "PAR", "RES", "TB", "" ].indexOf(game.surface) === -1)
+    return "wrong surface (BP,EP,EPDM,GAS,GAZ,MOQ,NVTB,PAR,RES,TB or empty";
   return null;
 }
 
@@ -843,6 +862,14 @@ var generateGamesAsync = function () {
           teams: [ ],
           stream: [ ]
         });
+        
+        //
+        game.subtype = [ "A", "B", "C", "D", "E", "F", "G", "H", "I" ].random();
+        game.court = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11",
+                      "A", "B", "C", "D", "E", "F", "" ].random();
+        game.surface = ["BP", "EP", "EPDM", "GAS", "GAZ", "MOQ", 
+                        "NVTB", "PAR", "RES", "TB", "" ].random();
+        game.tour = [ "Poule", "consolante", "1er tour", "2nd tour" ].random();
         
         // random pick match status, finished ? or ongoing ?
         game.status = ["ongoing", "finished"].random();
