@@ -22,14 +22,14 @@ var DB = require("../db.js")
  * 
  * Generic options:
  *  /v1/clubs/autocomplete/?limit=5     (default=5)
- *  /v1/clubs/autocomplete/?fields=nickname,name  (default=nickname,name,type,club)
+ *  /v1/clubs/autocomplete/?fields=nickname,name  (default=name,location.city)
  *  /v1/clubs/autocomplete/?sort=nickname (default=name)
  *
  * Specific options:
  *  /v1/clubs/autocomplete/?q=Charlotte (searched text)
 **/
 app.get('/v1/clubs/autocomplete/', function(req, res){
-  var fields = req.query.fields || "name,city";
+  var fields = req.query.fields || "name,location.city";
   var limit = req.query.limit || 5;
   var sort = req.query.sort || "name";
   var text = req.query.q;
@@ -80,7 +80,7 @@ app.get('/v1/clubs/:id', function(req, res){
  * Generic options:
  *  /v1/clubs/:id/games/?limit=5     (default=10)
  *  /v1/clubs/:id/games/?offset=0    (default=0)
- *  /v1/clubs/:id/games/?sort=nickname (default=-date_start)
+ *  /v1/clubs/:id/games/?sort=nickname (default=-dates.start)
  * 
  * Specific options:
  *  /v1/clubs/:id/games/?status=ongoing   (default=ongoing,finished)
@@ -92,7 +92,7 @@ app.get('/v1/clubs/:id', function(req, res){
  */
 app.get('/v1/clubs/:id/games/', function(req, res){
   var status = req.query.status || "ongoing,finished";
-  var sort = req.query.sort || "-date_start";
+  var sort = req.query.sort || "-dates.start";
   var limit = req.query.limit || 10;
   var offset = req.query.offset || 0;
   DB.Model.Club.findById(req.params.id, function (err, club) {
@@ -132,8 +132,8 @@ app.post('/v1/clubs/', express.bodyParser(), function(req, res){
     var club = new DB.Model.Club({
       sport: "tennis",
       name: req.body.name,
-      address: req.body.address || "",
-      city: req.body.city || ""
+      address: req.body.location.address || "",
+      city: req.body.location.city || ""
     });
     if (Array.isArray(req.body.pos) &&
         req.body.pos.length === 2) {

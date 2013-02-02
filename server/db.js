@@ -120,12 +120,16 @@ var DB = {
 // fftid,name,ligue,zip,city,outdoor,indoor,countPlayers,countPlayers1AN,countTeams,countTeams1AN,school
 DB.Definition.Club = {
   sport: String,
-  date_creation: { type: Date, default: Date.now },
-  date_update: { type: Date, default: Date.now },
   name: String,
-  city: String,
-  pos: {type: [Number], index: '2d'},
-  address: String,
+  dates : {
+    creation: { type: Date, default: Date.now },
+    update: { type: Date, default: Date.now }
+  },
+  location: {
+    city: String,
+    pos: {type: [Number], index: '2d'},
+    address: String
+  },
   fftid: String,
   ligue: String,
   zip: String,
@@ -142,8 +146,13 @@ DB.Definition.Club = {
 DB.Definition.Player = {
   nickname: String,
   name: String,
-  date_creation: { type: Date, default: Date.now },
-  date_update: { type: Date, default: Date.now },
+  location: {
+    currentPos: { type: [Number], index: '2d'}
+  },
+  dates : {
+    creation: { type: Date, default: Date.now },
+    update: { type: Date, default: Date.now }
+  },
   email: String,
   idlicense: String,
   password: { type: String, default: null },
@@ -166,8 +175,10 @@ DB.Definition.Team = {
   points: String
 };
 DB.Definition.StreamItem = {
-  date_creation: { type: Date, default: Date.now },
-  date_update: { type: Date, default: Date.now },
+  dates : {
+    creation: { type: Date, default: Date.now },
+    update: { type: Date, default: Date.now }
+  },
   fbid: String,
   type: { type: String, enum: [ "comment" ] },
   owner: { type: Schema.Types.ObjectId, ref: "Player" },
@@ -178,33 +189,33 @@ DB.Schema.Team = new Schema(DB.Definition.Team);
 DB.Schema.StreamItem = new Schema(DB.Definition.StreamItem);
 // 
 DB.Definition.Game = {
-  // dates
-  date_creation: { type: Date, default: Date.now },
-  date_update: { type: Date, default: Date.now },
-  date_start: { type: Date, default: Date.now },
-  date_end: Date,
-  // 
-  owner: { type: Schema.Types.ObjectId, ref: "Player" },
-  // address / geolocalisation
-  pos: {type: [Number], index: '2d'},
-  country: String,
-  city: String,
-  // 
   sport: { type: String, enum: ["tennis"] },
   status: { type: String, enum: [ "ongoing", "finished", "canceled" ], default: "ongoing" },
-  // game options, different depending on sport
-  type: { type: String, enum: [ "singles", "doubles" ] },
-  subtype: { type: String, enum: [ "A", "B", "C", "D", "E", "F", "G", "H", "I" ] },
-  sets: String,
-  score: String,
-  court: { type: String, enum: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11",
-                                "A", "B", "C", "D", "E", "F", "" ] },
-  surface: { type: String, enum: ["BP", "EP", "EPDM", "GAS", "GAZ", "MOQ", 
-                                  "NVTB", "PAR", "RES", "TB", "" ] },
-  tour: String,
-  //
+  owner: { type: Schema.Types.ObjectId, ref: "Player" },
+  dates : {
+    creation: { type: Date, default: Date.now },
+    update: { type: Date, default: Date.now },
+    start: { type: Date, default: Date.now },
+    end: Date
+  },
+  location : {
+    country: String,
+    city: String,
+    pos: {type: [Number], index: '2d'}
+  },
   teams: [ DB.Schema.Team ],
   stream: [ DB.Schema.StreamItem ],
+  options: {
+    type: { type: String, enum: [ "singles", "doubles" ] },
+    subtype: { type: String, enum: [ "A", "B", "C", "D", "E", "F", "G", "H", "I" ] },
+    sets: String,
+    score: String,
+    court: { type: String, enum: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11",
+                                  "A", "B", "C", "D", "E", "F", "" ] },
+    surface: { type: String, enum: ["BP", "EP", "EPDM", "GAS", "GAZ", "MOQ", 
+                                    "NVTB", "PAR", "RES", "TB", "" ] },
+    tour: String
+  },
   // private searchable fields
   _searchableCity: String,                                // AUTO-FIELD (Game pre save)
   _searchablePlayersNames: [ String ],                    // AUTO-FIELD (Player post save) ASYNC
@@ -475,19 +486,18 @@ DB.Model.Club = mongoose.model("Club", DB.Schema.Club);
 DB.Model.Player = mongoose.model("Player", DB.Schema.Player);
 DB.Model.Game = mongoose.model("Game", DB.Schema.Game);
 
-DB.Model.Game.checkFields = function (game, fields) {
+DB.Model.Game.checkFields = function (game) {
   // FIXME: can some tests be done with express ? or mongoose ?
-  fields = fields || [];
-  if (fields.indexOf("sport") !== -1 && game.sport && game.sport !== "tennis")
+  if (game.sport && game.sport !== "tennis")
     return "wrong sport (tennis only)";
   // check type
-  if (fields.indexOf("singles") !== -1 && game.type && game.type !== "singles")
+  if (game.type && game.type !== "singles")
     return "wrong type (singles only)";
   // check status
-  if (fields.indexOf("status") !== -1 && game.status && game.status !== "ongoing" && game.status !== "finished" && game.status !== "canceled")
+  if (game.status && game.status !== "ongoing" && game.status !== "finished" && game.status !== "canceled")
     return "wrong status (ongoing/finished)";
   // check teams
-  if (fields.indexOf("teams") !== -1 && game.teams) {
+  if (game.teams) {
     if (!Array.isArray(game.teams) || game.teams.length !== 2)
       return "teams format";
     // check teams.players
@@ -501,16 +511,16 @@ DB.Model.Game.checkFields = function (game, fields) {
     if (!ok)
       return "teams.players format";
   }
-  if (fields.indexOf("court") !== -1 && game.court &&
+  if (game.options && game.options.court &&
       ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11",
-       "A", "B", "C", "D", "E", "F", "" ].indexOf(game.court) === -1)
+       "A", "B", "C", "D", "E", "F", "" ].indexOf(game.options.court) === -1)
     return "wrong court (1-11, A-F or empty)";
-  if (fields.indexOf("subtype") !== -1 && game.subtype &&
-      [ "A", "B", "C", "D", "E", "F", "G", "H", "I" ].indexOf(game.subtype) === -1)
+  if (game.options && game.options.subtype &&
+      [ "A", "B", "C", "D", "E", "F", "G", "H", "I" ].indexOf(game.options.subtype) === -1)
     return "wrong subtype (A-F)";
-  if (fields.indexOf("surface") !== -1 && game.surface &&
+  if (game.options && game.options.surface &&
       ["BP", "EP", "EPDM", "GAS", "GAZ", "MOQ", 
-       "NVTB", "PAR", "RES", "TB", "" ].indexOf(game.surface) === -1)
+       "NVTB", "PAR", "RES", "TB", "" ].indexOf(game.options.surface) === -1)
     return "wrong surface (BP,EP,EPDM,GAS,GAZ,MOQ,NVTB,PAR,RES,TB or empty";
   return null;
 }
@@ -703,7 +713,7 @@ Lui c'est un vrai connaisseur  ",
 }
 var generateFakeLocation = function () {
   // trying to generate longitude / latitude inside france :)
-  return { long: 45 + Math.random() * 10, lat: Math.random() * 4 }
+  return [ 45 + Math.random() * 10, Math.random() * 4 ]
 }
 var generateFakeDateCreation = function () {
   // date entre il y a 2 et 3 h
@@ -716,72 +726,16 @@ var generateFakeDateEnd = function () {
   return new Date(new Date().getTime() - secAgo * 1000).toISO();
 }
 
-DB.clubs = [
-  /*
-   * document club :
-   * {
-   *   id: string, // checksum hexa
-   *   sport: string,
-   *   name: string,
-   *   city: string
-   *   FIXME (address, telephone, nb joueurs, ...)
-   * }
-   */
-];
-
-DB.players = [ 
-  /*
-   * document player :
-   * {
-   *   id: string, // checksum hexa
-   *   nickname: string,
-   *   name: string,
-   *   password: string, // checksum hexa
-   *   rank: string,
-   *   club: string, // id 
-   *   games: [
-   *      string, // id
-   *      string, // id
-   *      ...
-   *   ]
-   *   FIXME: (poid, taille, adresse, infos perso, ...)
-   */
-];
-
-DB.games = [
-  /*
-   * document game:
-   * {
-   *   id: string, // checksum hexa
-   *   date_creation: string, // date iso 8601
-   *   date_start: string, // date iso 8601
-   *   date_end: string, // date iso 8601
-   *   owner,
-   *   pos: { long: float, lat: float }, // index geospatial
-   *   country: string,
-   *   city: string,
-   *   type: string, // singles / doubles
-   *   sets: string, // ex: 6,2;6,3  (precomputed)
-   *   status: string, // ongoing, canceled, finished (precomputed)
-   *   teams: [
-   *     { id: null, players: [ { id: string }, ... ] },
-   *     { id: null, players: [ { name: string }, ... ] }
-   *   ],
-   *   stream: [
-   *       FIXME: historique du match, action / date / heure / commentaire / video / photo etc
-   *   ]
-   */
-];
-
-
-
 var generateClubsAsync = function () {
   var names = ["CAEN TC", "CAEN LA BUTTE", "LOUVIGNY TC", "MONDEVILLE USO", "CONDE SUR NOIREAU TC", "ARROMANCHE TENNIS PORT WILSON", "FLEURY TENNIS CLUB"];
   var clubs = names.map(function (clubName) {
     return new DB.Model.Club({
       sport: "tennis",
       name: clubName,
-      city: generateFakeCity()
+      location: {
+        city: generateFakeCity(),
+        pos: generateFakeLocation()
+      }
     });
   });
   return DB.saveAsync(clubs);
@@ -802,6 +756,9 @@ var generatePlayersAsync = function () {
         return new DB.Model.Player({
             nickname: generateFakePseudo(),
             name: generateFakeFirstName() + " " + generateFakeName(),
+            location: {
+              currentPos: generateFakeLocation()
+            },
             rank: "15/2",
             club: {
               id: club.id,
@@ -817,6 +774,10 @@ var generatePlayersAsync = function () {
           return new DB.Model.Player({
               nickname: generateFakePseudo(),
               name: generateFakeFirstName() + " " + generateFakeName(),
+              location: {
+                country: "",
+                pos: [],
+              },
               rank: "15/2",
               club: {
                 id: club.id,
@@ -850,55 +811,54 @@ var generateGamesAsync = function () {
         var owner = players.random().id;
         
         var game = new DB.Model.Game({
-          owner: owner, // utilisateur ayant saisi le match.
-          pos: generateFakeLocation(),
-          country: "france",
-          city: generateFakeCity(),
-          type: "singles",
-          sets: "",
-          score: "",
           sport: "tennis",
-          status: "ongoing",
+          status: ["ongoing", "finished"].random(),
+          owner: owner, // utilisateur ayant saisi le match.
+          location: {
+            country: "france",
+            city: generateFakeCity(),
+            pos: generateFakeLocation()
+          },
           teams: [ ],
-          stream: [ ]
+          stream: [ ],
+          options: {
+            type: "singles",
+            subtype: [ "A", "B", "C", "D", "E", "F", "G", "H", "I" ].random(),
+            sets: "",
+            score: "",
+            court: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11",
+                      "A", "B", "C", "D", "E", "F", "" ].random(),
+            surface: ["BP", "EP", "EPDM", "GAS", "GAZ", "MOQ", 
+                        "NVTB", "PAR", "RES", "TB", "" ].random(),
+            tour: [ "Poule", "consolante", "1er tour", "2nd tour" ].random()
+          }
         });
         
-        //
-        game.subtype = [ "A", "B", "C", "D", "E", "F", "G", "H", "I" ].random();
-        game.court = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11",
-                      "A", "B", "C", "D", "E", "F", "" ].random();
-        game.surface = ["BP", "EP", "EPDM", "GAS", "GAZ", "MOQ", 
-                        "NVTB", "PAR", "RES", "TB", "" ].random();
-        game.tour = [ "Poule", "consolante", "1er tour", "2nd tour" ].random();
-        
-        // random pick match status, finished ? or ongoing ?
-        game.status = ["ongoing", "finished"].random();
-        // 
         if (game.status === "finished") {
           // status finished
-          game.date_end = generateFakeDateEnd();
+          game.dates.end = generateFakeDateEnd();
           if (Math.random() > 0.5) {
-            game.sets = "6/"+Math.floor(Math.random() * 5)+";6/"+Math.floor(Math.random() * 5);
-            game.score = "2/0";
+            game.options.sets = "6/"+Math.floor(Math.random() * 5)+";6/"+Math.floor(Math.random() * 5);
+            game.options.score = "2/0";
           } else {
-            game.sets = Math.floor(Math.random() * 5)+"/6;"+Math.floor(Math.random() * 5)+"/6";
-            game.score = "0/2";
+            game.options.sets = Math.floor(Math.random() * 5)+"/6;"+Math.floor(Math.random() * 5)+"/6";
+            game.options.score = "0/2";
           }
         } else {
           // status ongoing
           if (Math.random() > 0.5) {
             // 2 set
             if (Math.random() > 0.5) {
-              game.sets = "6/"+Math.floor(Math.random() * 5)+";"+Math.floor(Math.random() * 5)+"/"+Math.floor(Math.random() * 5);
-              game.score = "1/0";
+              game.options.sets = "6/"+Math.floor(Math.random() * 5)+";"+Math.floor(Math.random() * 5)+"/"+Math.floor(Math.random() * 5);
+              game.options.score = "1/0";
             } else {
-              game.sets = Math.floor(Math.random() * 5)+"/6;"+Math.floor(Math.random() * 5)+"/"+Math.floor(Math.random() * 5);
-              game.score = "0/1";
+              game.options.sets = Math.floor(Math.random() * 5)+"/6;"+Math.floor(Math.random() * 5)+"/"+Math.floor(Math.random() * 5);
+              game.options.score = "0/1";
             }
           } else {
             // 1 set
-            game.sets = Math.floor(Math.random() * 5)+"/"+Math.floor(Math.random() * 5);
-            game.score = "0/0";
+            game.options.sets = Math.floor(Math.random() * 5)+"/"+Math.floor(Math.random() * 5);
+            game.options.score = "0/0";
           }
         }
         
@@ -941,7 +901,7 @@ var generateGamesAsync = function () {
         for (var j = 0; j < nbComments; ++j) {
           // adding random (1 to 5) minutes
           delta += 1000 * 60 * (1 + Math.floor(Math.random(5)));
-          var date = new Date(new Date(game.date_start).getTime() + delta);
+          var date = new Date(new Date(game.dates.start).getTime() + delta);
           var comment = {
             type: "comment",
             owner: players.random().id,

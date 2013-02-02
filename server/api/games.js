@@ -14,7 +14,7 @@ var DB = require("../db.js")
  *  /v1/games/?limit=10              (default=10)
  *  /v1/games/?offset=0              (default=0)
  *  /v1/games/?fields=nickname,name  (default=please check in the code)
- *  /v1/games/?sort=date_start      (default=date_start)
+ *  /v1/games/?sort=-dates.start      (default=-dates.start)
  *
  * Specific options:
  *  /v1/games/?q=text                (Mandatory)
@@ -32,8 +32,8 @@ app.get('/v1/games/', function(req, res){
   var offset = req.query.offset || 0;
   var text = req.query.q;
   var club = req.query.club || null;
-  var fields = req.query.fields || "date_creation,date_start,date_end,owner,pos,country,city,sport,type,subtype,status,sets,score,court,surface,tour,teams,teams.players.name,teams.players.nickname,teams.players.club,teams.players.rank";
-  var sort = req.query.sort || "date_start";
+  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,location.country,location.city,location.pos,teams,teams.players.name,teams.players.nickname,teams.players.club,teams.players.rank,options.type,options.subtype,options.sets,options.score,options.court,options.surface,options.tour";
+  var sort = req.query.sort || "-dates.start";
   var status = req.query.status || "ongoing,finished";
   // populate option
   var populate = "teams.players";
@@ -85,7 +85,7 @@ app.get('/v1/games/', function(req, res){
  *  /v1/games/:id/?stream=true
  */
 app.get('/v1/games/:id', function (req, res){
-  var fields = req.query.fields || "date_creation,date_start,date_end,owner,pos,country,city,sport,type,subtype,status,sets,score,court,surface,tour,teams,teams.players.name,teams.players.nickname,teams.players.club,teams.players.rank,teams.players.email";
+  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.end,location.country,location.city,location.pos,teams,teams.players.name,teams.players.nickname,teams.players.club,teams.players.rank,options.type,options.subtype,options.sets,options.score,options.court,options.surface,options.tour";
   if (req.query.stream === "true")
     fields += ",stream"
   // populate option
@@ -121,30 +121,36 @@ app.get('/v1/games/:id', function (req, res){
  * /!\ Default output will be have teams.players populated
  * 
  * Body {
- *   pos: String,         (default="")
- *   country: String,     (default=not exist)
- *   city: String,        (default="")
- *   sport: String,       (default="tennis")
+ *   sport: String        (default="tennis")
  *   status: String,      (default="ongoing")
- *   sets: String,        (default="")
- *   score: String,       (default="")
- *   court: String,       (default="")
+ *   location : {
+ *     country: String,         (default="")
+ *     city: String,            (default="")
+ *     pos: [ Number, Number ]  (default=[])
+ *   }
  *   teams: [
  *     {
- *       points: String,  (default="")
+ *       points: String,            (default="")
  *       players: [
- *         ObjectId,      (default=not exist)            teams.players can be id
- *         { name: "owned player" } (default=not exist)   or objects
+ *         ObjectId,                (default=not exist) teams.players can be id
+ *         { name: "owned player" } (default=not exist) or objects
  *       ]
  *     }
- *   ]
+ *   ],
+ *   options: {
+ *      subtype: String   (default="A")
+ *      sets: String,     (default="")
+ *      score: String,    (default="")
+ *      court: String,    (default="")
+ *      surface: String   (default="")
+ *      tour: String      (default="")
+ *   }
  * }
  * 
  * result is a redirect to /v1/games/:newid
  */
 app.post('/v1/games/', express.bodyParser(), function (req, res) {
-  var err = DB.Model.Game.checkFields(req.body,
-    ["sport", "type", "status", "teams", "surface", "subtype"]);
+  var err = DB.Model.Game.checkFields(req.body);
   if (err)
     return app.defaultError(res)(err);
   DB.isAuthenticatedAsync(req.query)
@@ -154,25 +160,31 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
       // players id exist
       // owned player are created
       // => creating game
+      req.body.location = (req.body.location) ? req.body.location : {};
+      req.body.options = (req.body.options) ? req.body.options : {};
       var game = new DB.Model.Game({
-        owner: authentifiedPlayer.id,
-        pos: req.body.pos || [],
-        country: req.body.country || "",
-        city: req.body.city || "",
         sport: req.body.sport || "tennis",
-        type: "singles",
-        subtype: req.body.subtype || "A",
+        owner: authentifiedPlayer.id,
         status: req.body.status || "ongoing",
-        sets: req.body.sets || "",
-        score: req.body.score || "",
-        court: req.body.court || "",
-        surface: req.body.surface || "",
-        tour: req.body.tour || "",
+        location : {
+          country: req.body.location.country || "",
+          city: req.body.location.city || "",
+          pos: req.body.location.pos || []
+        },
         teams: [ // game has 2 teams (default)
           { points: "", players: [] },
           { points: "", players: [] }
         ],
-        stream: []
+        stream: [],
+        options: {
+          type: "singles",
+          subtype: req.body.options.subtype || "A",
+          sets: req.body.options.sets || "",
+          score: req.body.options.score || "",
+          court: req.body.options.court || "",
+          surface: req.body.options.surface || "",
+          tour: req.body.options.tour || ""
+        }
       });
       return DB.Model.Game.updateTeamsAsync(game, req.body.teams);
     }).then(function saveAsync(game) {
@@ -197,10 +209,13 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
  * /!\ Default output will be have teams.players populated
  * 
  * Body {
- *   pos: String,         (default="")
- *   country: String,     (default=not exist)
- *   city: String,        (default="")
  *   status: String,      (default="ongoing")
+ *   location: {
+ *     country: String,        (default="")
+ *     city: String,           (default="")
+ *     pos: [ Number, Number]  (default=[])
+ *   }
+
  *   sets: String,        (default="")
  *   score: String,       (default="")
  *   court: String,       (default="")
@@ -218,8 +233,7 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
  * result is a redirect to /v1/games/:newid
  */
 app.post('/v1/games/:id', express.bodyParser(), function(req, res){
-  var err = DB.Model.Game.checkFields(req.body,
-    ["sport", "type", "status", "teams", "surface", "subtype"]);
+  var err = DB.Model.Game.checkFields(req.body);
   if (err)
     return app.defaultError(res)(err);
   // check player is authenticated
@@ -243,14 +257,31 @@ app.post('/v1/games/:id', express.bodyParser(), function(req, res){
       return deferred.promise;
     }).then(function updateFields(game) {
       // updatable simple fields
-      [ "country", "city", "type", "subtype", "status", "sets",
-        "score", "court", "surface", "tour" ].forEach(
-        function (o) {
-          if (typeof req.body[o] !== "undefined")
-            game[o] = req.body[o];
-        }
-      );
-      game.date_update = Date.now();
+      if (req.body.status !== "undefined")
+        game.status = req.body.status;
+      if (typeof req.body.location !== "undefined") {
+        if (typeof req.body.location.country === "string")
+          game.location.country = req.body.location.country;
+        if (typeof req.body.location.city === "string")
+          game.location.city = req.body.location.city;
+      } 
+      if (typeof req.body.options !== "undefined") {
+        if (typeof req.body.options.type === "string")
+          game.options.type = req.body.options.type;
+        if (typeof req.body.options.subtype === "string")
+          game.options.subtype = req.body.options.subtype;
+        if (typeof req.body.options.sets === "string")
+          game.options.sets = req.body.options.sets;
+        if (typeof req.body.options.score === "string")
+          game.options.score = req.body.options.score;
+        if (typeof req.body.options.court === "string")
+          game.options.court = req.body.options.court;
+        if (typeof req.body.options.surface === "string")
+          game.options.surface = req.body.options.surface;
+        if (typeof req.body.options.tour === "string")
+          game.options.tour = req.body.options.tour;
+      }
+      game.dates.update = Date.now();
       //
       return DB.Model.Game.updateTeamsAsync(game, req.body.teams);
     }).then(function update(game) {
@@ -314,7 +345,7 @@ app.post('/v1/games/:id/stream/', express.bodyParser(), function(req, res){
       if (req.body.data && req.body.data.text)
         streamItem.data = { text: req.body.data.text };
       game.stream.push(streamItem);
-      game.date_update = Date.now();
+      game.dates.update = Date.now();
       return DB.saveAsync(game);
     }).then(function sendGame(game) {
       if (game.stream.length === 0)

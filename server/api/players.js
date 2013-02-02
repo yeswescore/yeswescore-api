@@ -115,7 +115,7 @@ app.get('/v1/players/:id', function(req, res){
  * Generic options:
  *  /v1/players/:id/games/?limit=5     (default=10)
  *  /v1/players/:id/games/?offset=0    (default=0)
- *  /v1/players/:id/games/?sort=nickname (default=-date_start)
+ *  /v1/players/:id/games/?sort=nickname (default=-dates.start)
  * 
  * Specific options:
  *  /v1/players/:id/games/?owned=true  (default=false)
@@ -128,10 +128,10 @@ app.get('/v1/players/:id', function(req, res){
  */
 app.get('/v1/players/:id/games/', function(req, res){
   var status = req.query.status || "ongoing,finished";
-  var sort = req.query.sort || "-date_start";
+  var sort = req.query.sort || "-dates.start";
   var limit = req.query.limit || 10;
   var offset = req.query.offset || 0;
-  var fields = req.query.fields || "date_creation,date_start,date_end,owner,pos,country,city,sport,type,subtype,status,sets,score,court,surface,tour,teams,teams.players.name,teams.players.nickname,teams.players.club,teams.players.rank";
+  var fields = req.query.fields || "sport,owner,dates.creation,dates.start,dates.end,location.country,location.city,location.pos,teams,teams.players.name,teams.players.nickname,teams.players.club,teams.players.rank,options.type,options.subtype,options.status,options.sets,options.score,options.court,options.surface,options.tour";
   var owned = (req.query.owned === "true");
   // populate option
   var populate = "teams.players";
@@ -272,7 +272,7 @@ app.post('/v1/players/:id', express.bodyParser(), function(req, res){
           // password
           if (req.body.uncryptedPassword)
             player.uncryptedPassword = req.body.uncryptedPassword;
-          player.date_update = Date.now();
+          player.dates.update = Date.now();
           // saving player
           DB.saveAsync(player)
             .then(function (player) {

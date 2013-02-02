@@ -142,7 +142,7 @@ describe('dev:games', function(){
           assert.isId(game.teams[0].players[0].id, "first player should have an id");
           assert.isId(game.teams[1].players[0].id, "second player should have an id");
           assert(game.teams[0].players[0].nickname === newGame.teams[0].players[0].nickname, "nick");
-          assert(game.teams[0].players[0].email === newGame.teams[0].players[0].email, "email");
+          assert(typeof game.teams[0].players[0].email === "undefined", "should not display player personnal info as email");
           assert(game.teams[0].players[0].rank === newGame.teams[0].players[0].rank, "rank");
           
           done();
@@ -186,7 +186,7 @@ describe('dev:games', function(){
             assert.isId(game.teams[0].players[0].id, "first player should have an id");
             assert.isId(game.teams[1].players[0].id, "second player should have an id");
             assert(game.teams[0].players[0].nickname === newGame.teams[0].players[0].nickname, "nick");
-            assert(game.teams[0].players[0].email === newGame.teams[0].players[0].email, "email");
+            assert(typeof game.teams[0].players[0].email === "undefined", "email should be undefined");
             assert(game.teams[0].players[0].rank === newGame.teams[0].players[0].rank, "rank");
             // tests on clubs
             assert(game.teams[1].players[0].club.id === randomclub._id, "club id");
@@ -217,33 +217,37 @@ describe('dev:games', function(){
         };
         
         var newGame = {
-          pos: [ 42.4242, 43.4343 ],
-          country: "FRANCE",
-          city: "marck",
-          type: "singles",
-          subtype: "C",
-          sets: "0/0",
-          score: "0/0",
-          court: "10",
-          surface: "GAZ",
-          tour: "1er tour",
+          location : {
+            country: "FRANCE",
+            city: "marck",
+            pos: [ 42.4242, 43.4343 ],
+          },
+          options: {
+            type: "singles",
+            subtype: "C",
+            sets: "0/0",
+            score: "0/0",
+            court: "10",
+            surface: "GAZ",
+            tour: "1er tour"
+          },
           status: "ongoing",
           teams: [ { id: null, players: [ { name : "toto" } ] },
                    { id: null, players: [ { name : "titi" } ] } ]
         };
         http.post(options, newGame, function (game) {
           assert.isGame(game);
-          assert(game.pos[0] === newGame.pos[0], "long should be the same");
-          assert(game.pos[1] === newGame.pos[1], "lat should be the same");
-          assert(game.country === newGame.country, "country should be the same");
-          assert(game.city === newGame.city, "city should be the same");
-          assert(game.sets === newGame.sets, "sets should be the same");
-          assert(game.score === newGame.score, "score should be the same");
-          assert(game.court === newGame.court, "court should be the same");
-          assert(game.status === newGame.status, "status should be the same");
-          assert(game.type === newGame.type, "type should be the same");
-          assert(game.subtype === newGame.subtype, "subtype should be the same");
-          assert(game.surface === newGame.surface, "surface should be the same");
+          assert(game.location.country === newGame.location.country, "country should be the same");
+          assert(game.location.city === newGame.location.city, "city should be the same");
+          assert(game.location.pos[0] === newGame.location.pos[0], "long should be the same");
+          assert(game.location.pos[1] === newGame.location.pos[1], "lat should be the same");
+          assert(game.options.type === newGame.options.type, "type should be the same");
+          assert(game.options.subtype === newGame.options.subtype, "subtype should be the same");
+          assert(game.options.sets === newGame.options.sets, "sets should be the same");
+          assert(game.options.score === newGame.options.score, "score should be the same");
+          assert(game.options.court === newGame.options.court, "court should be the same");
+          assert(game.options.surface === newGame.options.surface, "surface should be the same");
+          
           assert(game.status === newGame.status, "status should be the same");
           done();
         });
@@ -269,13 +273,13 @@ describe('dev:games', function(){
         };
         
         var newGame = {
-          score: "0/0",
+          options: { score: "0/0" },
           teams: [ { id: null, players: [ { name : "toto" } ] },
                    { id: null, players: [ { name : "titi" } ] } ]
         };
         http.post(options, newGame, function (game) {
           assert.isGame(game);
-          assert(game.score === newGame.score, "score should be the same");
+          assert(game.options.score === newGame.options.score, "score should be the same");
 
           var options = {
             host: Conf["http.host"],
@@ -285,16 +289,16 @@ describe('dev:games', function(){
           
           var newScore = "15/0";
           var modifiedGame = game;
-          game.score = newScore;
-          game.sets = "6/3";
-          game.subtype = "B";
-          game.court = "3";
-          game.surface = "NVTB";
-          game.tour = "2nd tour";
+          game.options.subtype = "B";
+          game.options.sets = "6/3";
+          game.options.score = newScore;
+          game.options.court = "3";
+          game.options.surface = "NVTB";
+          game.options.tour = "2nd tour";
           
           http.post(options, game, function (game) {
             assert.isGame(game);
-            assert(game.score === newScore, "score should be updated");
+            assert(game.options.score === newScore, "score should be updated");
             
             // reading the game from DB to be sure !
             var options = {
@@ -304,12 +308,14 @@ describe('dev:games', function(){
             };
             http.getJSON(options, function (g) {
               assert.isGame(g);
-              assert(g.score === modifiedGame.score, "score should be updated in DB");
-              assert(g.sets === modifiedGame.sets, "sets should be updated in DB");
-              assert(g.subtype === modifiedGame.subtype, "subtype should be updated in DB");
-              assert(g.court === modifiedGame.court, "court should be updated in DB");
-              assert(g.surface === modifiedGame.surface, "surface should be updated in DB");
-              assert(g.tour === modifiedGame.tour, "tour should be updated in DB");
+              
+              assert(g.options.subtype === modifiedGame.options.subtype, "subtype should be updated in DB");
+              assert(g.options.sets === modifiedGame.options.sets, "sets should be updated in DB");
+              assert(g.options.score === modifiedGame.options.score, "score should be updated in DB");
+              assert(g.options.court === modifiedGame.options.court, "court should be updated in DB");
+              assert(g.options.surface === modifiedGame.options.surface, "surface should be updated in DB");
+              assert(g.options.tour === modifiedGame.options.tour, "tour should be updated in DB");
+              
               done();
             });
           });

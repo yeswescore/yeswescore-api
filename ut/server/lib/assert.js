@@ -90,86 +90,140 @@ assert.allowedFields = function (o, fields, m) {
   }
 };
 
-/*
- * accepted club object:
-  {
-    id: "dccc9614c8c15aa5c713a457",
-    sport: "tennis",
-    name: "LOUVIGNY TC",
-    city: "Lisieux"
-  }
-*/
+// assert that obj validate schema
+// /!\ ONLY HANDLING DOUBLE TYPE undefined|other
+assert.schema = function (schema, obj, msg) {
+  assert(typeof obj !== "undefined", msg+" obj can't be undefined");
+
+  var keys = Object.keys(schema);
+  keys.forEach(function (k) {
+    if (k[0] == "_")
+      return; // private schema option.
+    var value = schema[k];
+    // recursive validation
+    if (typeof value._type === "undefined" && typeof value === "object" && value)
+    {
+      // sub object, recursive analysis if mandatory & not undefined
+      if (typeof obj[k] === "undefined" && !value._mandatory) {
+        return; // not mandatory field => can be undefined.
+      }
+      assert(typeof obj[k] !== "undefined", msg + " field " + k + " should be Defined (mandatory!)");
+      return assert.schema(value, obj[k], msg + k + ".");
+    }
+    // malformed schema ?
+    if (typeof value._type !== "string")
+      assert(false, "malformed UT schema on key : " + k + " typeof key._type is " + typeof value._type + " but should be string ! (msg=" + msg + ")");
+
+    // CHECKING KEY: can be undefined ?
+    var types = value._type.split("|");
+    if (types.indexOf("undefined") === -1) {
+      assert(typeof obj[k] !== "undefined", msg+" "+k+" can't be undefined");
+    } else if (typeof obj[k] === "undefined") {
+      return; // undefined is allowed
+    }
+    
+    // removing undefined
+    var type = types.filter(function (t) { return t != "undefined" }).join();
+    
+    // CHECKING VALUE:
+    switch (type) {
+      case "id":
+        assert.isId(obj[k], msg + " field " + k + " should be an id");
+        break;
+      case "date":
+        assert.isDate(obj[k], msg + " field " + k + " should be an date");
+        break;
+      case "array":
+        assert.isArray(obj[k], msg + " field " + k + " should be an array");
+        break;
+      case "string":
+        assert.isString(obj[k], msg + " field " + k + " should be an string");
+        break;
+      case "enum":
+        assert(Array.isArray(value._enum), msg + " malformed schema : enum on field " + k);
+        assert(value._enum.indexOf(obj[k]) !== -1, msg + " field " + k + " value = " + obj[k] + " is not in enum");
+        break;
+      case "pos":
+        assert.isPos(obj[k], msg + " field " + k + " should be an pos");
+        break;
+      case "[schema]":
+        assert(typeof value._check === "function", msg + " malformed schema : [schema] on field " + k + " : _check should exist & be a function");
+        assert(Array.isArray(obj[k]), msg + " field " + k + " should be an array of subschemas");
+        obj[k].forEach(value._check);
+        break;
+      case "check":
+        assert(typeof value._check === "function", msg + " malformed schema : check on field " + k);
+        value._check(obj[k]);
+        break;
+      default:
+        assert(false, msg + " malformed schema : " +value._type + " is unknown on field " + k);
+        break;
+    }
+  });
+  // a l'inverse
+  var keys =  Object.keys(obj);
+  keys.forEach(function (k) {
+    if (typeof schema[k] === "undefined")
+      assert(false, msg + " unallowed field " + k + " in schema");
+  });
+}
+
+
 assert.isClub = function (club) {
-  assert.isObject(club, "isClub: club must be an object");
-  // mandatory
-  assert.isId(club.id, "isClub: id must be an hexa string");
-  // optionnals
-  assert.isUndefinedOrArray(club.pos, "isClub: pos");
-  assert.isUndefinedOrString(club.address, "isClub: address");
-  assert.isUndefinedOrString(club.sport, "isClub: sport");
-  assert.isUndefinedOrString(club.name, "isClub: name");
-  assert.isUndefinedOrString(club.city, "isClub: city");
-  assert.isUndefinedOrDate(club.date_creation, "isClub: date_creation");
-  assert.isUndefinedOrDate(club.date_update, "isClub: date_update");
-  assert.allowedFields(club, ["id", "sport", "name", "city", "date_creation", "date_update", "pos", "address"]);
+  assert.schema({
+    id: { _type: "id" },
+    sport: { _type: "enum", _enum: [ "tennis" ] },
+    dates: {
+      creation: { _type: "date" },
+      update: { _type: "date" }
+    },
+    name: { _type: "string|undefined" },
+    location : {
+      city: { _type: "string|undefined" },
+      address: { _type: "string|undefined" },
+      pos: { _type: "pos|undefined" }
+    },
+    fftid: { _type: "string|undefined" },
+    ligue: { _type: "string|undefined" },
+    zip: { _type: "string|undefined" },
+    outdoor: { _type: "string|undefined" },
+    indoor: { _type: "string|undefined" },
+    countPlayers: { _type: "string|undefined" },
+    countPlayers1AN: { _type: "string|undefined" },
+    countTeams: { _type: "string|undefined" }, 
+    countTeams1AN: { _type: "string|undefined" }, 
+    school: { _type: "string|undefined" }
+  }, club, "isClub: ");
 };
 
-/*
- * accepted player object:
-  {
-    id: "a5977c38a2955cd64b93d658",
-    nickname: "FenetrePVC",
-    name: "Clarisse Torrès",
-    rank: "15/2",
-    club: {
-      id: "8d0d2d0a3ae211e7b949f6c1",
-      name: "CAEN TC"
-    },
-    games: [
-      "dc25289a4d60ed79f3fdce30",
-      "426e0a588c98c010c9b8d17c"
-    ],
-    password: null,
-    token: "8871617"
-  }
-*/
 assert.isPlayerScheme = function (player, m) {
-  assert.isObject(player, "isPlayerScheme: player must be an object");
-  // mandatory
-  assert.isId(player.id, "isPlayerScheme: id must be an hexa string");
-  // token & password can be undefined
-  assert.isUndefinedOrString(player.token, "isPlayerScheme: token");
-  assert.isUndefinedOrNullableString(player.password, "isPlayerScheme: password");
-  // optionnals
-  assert.isUndefinedOrString(player.nickname, "isPlayerScheme: nickname");
-  assert.isUndefinedOrString(player.name, "isPlayerScheme: name");
-  assert.isUndefinedOrString(player.email, "isPlayerScheme: email");
-  assert.isUndefinedOrString(player.idlicense, "isPlayerScheme: idlicense");
-  assert.isUndefinedOrDate(player.date_creation, "isPlayerScheme: date_creation");
-  assert.isUndefinedOrDate(player.date_update, "isPlayerScheme: date_update");
-  assert.isUndefinedOrString(player.rank, "isPlayerScheme: rank");
-  // owner
-  if (player.owner)
-    assert.isId(player.owner, "isPlayerScheme: owner must be an id (or null)");
-  // club
-  assert(typeof player.club === "undefined" || 
-         (typeof player.club === "object" && player.club.id), "isPlayerScheme: club must be null or object");
-  // type
-  assert(typeof player.type === "undefined" ||
-         player.type === "default" ||
-         player.type === "owned", "isPlayerScheme: type must be undefined, default or owned");
-         
-  // games
-  assert.isUndefinedOrArray(player.games, "isPlayerScheme: games must be an array");
-  player.games.forEach(function (gameId) {
-    assert.isId(gameId, "isPlayerScheme: games[*] must be id");
-  });
-  //
-  assert.allowedFields(player, ["id", "nickname", "name", "date_creation", "date_update", "email", "idlicense", "rank", "club", "games", "owner", "password", "token", "type"]);
-  // FIXME:
-  // - rank format
-  // - no password => allowed blank fields
-  // - password => unallowed fields ?
+  assert.schema({
+    id: { _type: "id" },
+    nickname: { _type: "string|undefined" },
+    name: { _type: "string|undefined" },
+    location: {
+      currentPos: { _type: "array|undefined" }
+    },
+    dates: {
+      creation: { _type: "date" },
+      update: { _type: "date" }
+    },
+    email: { _type: "string|undefined" },
+    idlicense: { _type: "string|undefined" },
+    rank: { _type: "string|undefined" },
+    token: { _type: "string|undefined" },
+    owner: { _type: "id|undefined" },
+    club: { _type: "undefined|check", _check: function (value) {
+        assert(typeof value === "object", "isPlayerScheme: club must be null or object");
+        assert.isId(value.id, "isPlayerScheme: club.id must be an id");
+      }
+    },
+    type: { _type: "enum|undefined", _enum: [ "default", "owned" ] },
+    games: { _type: "[schema]", _check: function (gameid, i, games) {
+        assert.isId(gameid, "isPlayerScheme: games[*] must be id");
+      }
+    },
+  }, player, "isPlayerScheme: ");
 };
 
 assert.isPlayer = function (player) {
@@ -183,151 +237,81 @@ assert.isPlayerWithToken = function (player) {
   assert.isId(player.token, "isPlayerWithToken: token must be an hexa string");
 };
 
-/*
- * accepted game object:
-  {
-    id: "e476647a2814cc9bbbf057b5",
-    date_creation: "2012-12-28T07:59:05Z",
-    date_start: "2012-12-28T07:59:05Z",
-    date_end: "2012-12-28T09:27:35Z",
-    pos: POS
-    country: "france",
-    city: "Falaise",
-    type: "singles",
-    sets: "3/6;2/6",
-    score: "",
-    sport: "tennis",
-    status: "finished",
-    stream: [ STREAM_OBJECT, STREAM_OBJECT, ... ],
-    teams: [ GAMETEAM, GAMETEAM ]
-  }
-*/
 assert.isGame = function (game) {
-  assert.isObject(game, "isGame: game must be an object");
-  // mandatory
-  assert.isId(game.id, "isGame: id must be an hexa string");
-  assert.isId(game.owner, "isGame: owner must be an hexa string");
-  assert.isDate(game.date_creation, "isGame: date_creation must be a date");
-  assert.isDate(game.date_start, "isGame: date_start must be a date");
-  assert.isUndefinedOrDate(game.date_update, "isGame: date_update must be a date");
-  assert.isUndefinedOrDate(game.date_end, "isGame: date_end must be a date");
-  assert.isUndefinedOrPos(game.pos, "isGame: pos must be a pos");
-  assert.isUndefinedOrArray(game.stream, "isGame: stream must be an array");
-  // 
-  assert.isUndefinedOrString(game.country, "isGame: country");
-  assert.isUndefinedOrString(game.city, "isGame: city");
-  assert.isUndefinedOrString(game.type, "isGame: type");
-  assert.isUndefinedOrString(game.sets, "isGame: sets");
-  assert.isUndefinedOrString(game.score, "isGame: score");
-  assert.isUndefinedOrString(game.court, "isGame: court");
-  assert.isUndefinedOrString(game.subtype, "isGame: subtype");
-  assert.isUndefinedOrString(game.surface, "isGame: surface");
-  assert.isUndefinedOrString(game.tour, "isGame: tour");
-  
-  assert.isString(game.sport, "isGame: sport");
-  assert.isUndefinedOrString(game.status, "isGame: status");
-  //
-  assert(game.type === "singles", "isGame: game.type can only be singles");
-  assert(game.sport === "tennis", "isGame: game.sport can only be tennis");
-  assert(game.status === "finished" ||
-         game.status === "ongoing" ||
-         game.status === "canceled", "isGame: game.status can only be finished,ongoing or canceled");
-  
-  // only stream comment actually
-  if (Array.isArray(game.stream)) {
-    game.stream.forEach(function (streamObject) {
-      assert.isStreamComment(streamObject, "isGame: game can only contain stream comments");
-    });
-  }
-  
-  if (typeof game.subtype === "string") {
-    assert([ "A", "B", "C", "D", "E", "F", "G", "H", "I" ].indexOf(game.subtype) !== -1, "isGame: unknown game.subtype");
-  }
-  if (typeof game.court === "string") {
-    assert(["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11",
-            "A", "B", "C", "D", "E", "F", "" ].indexOf(game.court) !== -1, "isGame: unknwon game.court");
-  }
-  if (typeof game.surface === "string") {
-    assert(["BP", "EP", "EPDM", "GAS", "GAZ", "MOQ", 
-            "NVTB", "PAR", "RES", "TB", "" ].indexOf(game.surface) !== -1, "isGame: unknown game.surface");
-  }
-  
-  
-  // teams
-  assert.isArray(game.teams, "isGame: teams must be an array");
-  assert(game.teams.length === 2, "isGame: game must have 2 teams");
-  game.teams.forEach(function (team) {
-    assert.isGameTeam(team, "isGame: team[*] must be a gameteam");
-  });
-  
-  // FIXME:
-  assert.allowedFields(game, ["id", "date_creation", "date_start", "date_update", "date_end", "owner",
-                              "pos", "country", "city", "type", "subtype", "sets", "score", "court",
-                              "sport", "surface", "tour", "status", "players", "stream", "teams"]);
+  assert.schema({
+    id : { _type: "id" },
+    sport: { _type: "enum", _enum: [ "tennis" ] },
+    owner: { _type: "id" },
+    status: { _type : "enum|undefined", _enum: ["ongoing", "finished", "canceled" ] },
+    dates: {
+      creation: { _type: "date" },
+      update:  { _type: "date|undefined" },
+      start: { _type: "date|undefined" },
+      end: { _type: "date|undefined" }
+    },
+    location: {
+      country : { _type : "string|undefined" },
+      city: { _type: "string|undefined" },
+      pos: { _type: "pos" }
+    },
+    options: {
+      type: { _type: "enum", _enum: ["singles"] },
+      subtype: { _type: "undefined|enum", _enum: [ "A", "B", "C", "D", "E", "F", "G", "H", "I" ] },
+      sets: { _type: "undefined|string" },
+      score: { _type: "undefined|string" },
+      court: { _type: "undefined|enum", _enum: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11",
+                                                "A", "B", "C", "D", "E", "F", "" ] },
+      surface: { _type: "undefined|enum", _enum: ["BP", "EP", "EPDM", "GAS", "GAZ", "MOQ", 
+                                                  "NVTB", "PAR", "RES", "TB", "" ] },
+      tour: { _type: "undefined|string" }
+    },
+    teams: { _type: "[schema]", _check: function (team, i, teams) {
+        assert(teams.length === 2, "isGame: game must have 2 teams");
+        assert.isGameTeam(team)
+      } 
+    },
+    stream: { _type: "undefined|[schema]", _check: function (streamItem, i, stream) {
+        assert.isStreamComment(streamItem);
+      }
+    },
+  }, game, "isGame: ");
 };
 
-/**
- * accepted gameteam object
-  {
-    id: null,
-    players: [ id, id, ... ]
-  }
-*/
 assert.isGameTeam = function (o, m) {
-  assert.isObject(o, "isGameTeam: must be an object");
-  assert.isArray(o.players, "isGameTeam: players must be an array");
-  assert(o.players.length === 1, "isGameTeam: only singles are handle yet");
-  o.players.forEach(function (player) {
-    // player can be a simple ObjectId
-    // or an object depending if populate=teams.players was activated
-    if (isId(player) ||
-        (isObject(player) && isId(player.id))) {
-      // ok
-    } else {
-      assert(false, "isGameTeam: team.players[*] mut be player ids");
+  assert.schema({
+    id: { _type: "id|undefined" },
+    points: { _type: "string|undefined" },
+    players: { _type: "[schema]", _check: function (player, i, players) {
+        assert(players.length === 1, "isGameTeam: only singles are handle yet");
+        // player can be a simple ObjectId
+        // or an object depending if populate=teams.players was activated
+        if (isId(player) || (isObject(player) && isId(player.id))) {
+          // ok
+        } else {
+          assert(false, "isGameTeam: team.players[*] mut be player ids");
+        }
+      }
     }
-  });
+  }, o, "isGameTeam: ");
 };
 
-/**
- * accepted stream object
-  {
-    id: "f76f0dfbbbabfce6612f5393",
-    type: "*",
-    date: "2012-12-28T08:02:05Z",
-    owner: "439b3a9cb3ae996b68e0ebf2",
-    data: { }
-  }
-*/
 assert.isStreamObject = function (o, m) {
-  assert.isObject(o, "isStreamObject: o must be an object");
-  assert(typeof o.id !== "undefined", "isStreamObject: streamObject.id cannot be undefined");
-  assert(typeof o.type !== "undefined", "isStreamObject: streamObject.type cannot be undefined");
-  assert(typeof o.date_creation !== "undefined", "isStreamObject: streamObject.date_creation cannot be undefined");
-  assert(typeof o.owner !== "undefined", "isStreamObject: streamObject.owner cannot be undefined");
-  assert(typeof o.data !== "undefined", "isStreamObject: streamObject.data cannot be undefined \n\n"+JSON.stringify(o));
-  assert.isId(o.id, "isStreamObject: streamObject.id must be an hexa string");
-  assert.isId(o.owner, "isStreamObject: streamObject.owner must be an hexa string");
-  assert.isDate(o.date_creation, "isStreamObject: streamObject.date_creation must be a date");
-  assert.isUndefinedOrDate(o.date_modification, "isStreamObject: streamObject.date_modification must be a date");
-  assert.isUndefinedOrString(o.fbid, "isStreamObject: streamObject.fbid must be undefined or string");
-  assert.isNotEmpty(o.type, "isStreamObject: streamObject.type cannot be empty");
-  assert.isObject(o.data, "isStreamObject: streamObject.data must be an object");
+  assert.schema({
+    id: { _type: "id" },
+    type: { _type: "enum", _enum: [ "comment" ] },
+    fbid: { _type: "string|undefined" },
+    dates: {
+      creation: { _type: "date" },
+      update: { _type: "date" }
+    },
+    owner: { _type: "id" },
+    data: { _type: "check", _check: function (data) {
+        assert.isObject(data, "isStreamObject: streamObject.data must be an object");
+      }
+    },
+  }, o, "isStreamObject ");
 };
 
-
-/**
- * accepted stream comment
-  {
-    id: "f76f0dfbbbabfce6612f5393",
-    type: "comment",
-    date: "2012-12-28T08:02:05Z",
-    owner: "439b3a9cb3ae996b68e0ebf2",
-    data: {
-      text: "C'est EXACTEMENT ça, Franchement pour dire ça faut vraiment être d'une mauvaise foi incomparable ou n'y rien connaître au tennis. On peut ne pas aimer Federer mais ne pas reconnaître qu'il fait le show..."
-    }
-  }
-*/
 assert.isStreamComment = function (comment) {
   assert.isStreamObject(comment, "must be a stream object");
   assert(comment.type === "comment", "isStreamComment: streamObject.type must === comment");
