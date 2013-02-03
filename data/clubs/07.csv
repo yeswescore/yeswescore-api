@@ -1,4 +1,4 @@
-fftid,name,ligue,zip,city,outdoor,indoor,countPlayers,countPlayers1AN,countTeams,countTeams1AN,school
+fedid,name,ligue,zip,city,outdoor,indoor,countPlayers,countPlayers1AN,countTeams,countTeams1AN,school
 01670005,AS CHEMINOTS DE STRASBOURG,BAS RHIN,67000,STRASBOURG,3,1,58,66,3,6,Oui
 01670012,TENNIS CLUB EUROPE,BAS RHIN,67000,STRASBOURG,4,0,47,138,0,1,Oui
 01670008,ILL T.C. STRASBOURG,BAS RHIN,67000,STRASBOURG ROBERTSAU,4,5,638,679,11,28,Oui

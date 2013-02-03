@@ -195,7 +195,7 @@ assert.isClub = function (club) {
       address: { _type: "string|undefined" },
       pos: { _type: "pos|undefined" }
     },
-    fftid: { _type: "string|undefined" },
+    fedid: { _type: "string|undefined" },
     ligue: { _type: "string|undefined" },
     zip: { _type: "string|undefined" },
     outdoor: { _type: "number|undefined" },

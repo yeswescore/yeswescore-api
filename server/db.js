@@ -118,7 +118,7 @@ var DB = {
 
 // ClubID,Name,Ligue,Zip,City,Outdoor,Indoor,Players,Players-1AN,Teams,Teams-1AN,School?
 // =>
-// fftid,name,ligue,zip,city,outdoor,indoor,countPlayers,countPlayers1AN,countTeams,countTeams1AN,school
+// fedid,name,ligue,zip,city,outdoor,indoor,countPlayers,countPlayers1AN,countTeams,countTeams1AN,school
 DB.Definition.Club = {
   sport: String,
   name: String,
@@ -131,7 +131,7 @@ DB.Definition.Club = {
     pos: {type: [Number], index: '2d'},
     address: String
   },
-  fftid: String,
+  fedid: String,
   ligue: String,
   zip: String,
   outdoor: Number,

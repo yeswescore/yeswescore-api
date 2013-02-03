@@ -134,7 +134,7 @@ app.get('/v1/clubs/:id/games/', function(req, res){
  *     pos: {type: [Number], index: '2d'},
  *     address: String
  *   },
- *   fftid: String,
+ *   fedid: String,
  *   ligue: String,
  *   zip: String,
  *   outdoor: Number,
@@ -160,7 +160,7 @@ app.post('/v1/clubs/', express.bodyParser(), function(req, res){
         address: req.body.location.address || "",
         city: req.body.location.city || ""
       },
-      fftid: req.body.fftid || "",
+      fedid: req.body.fedid || "",
       ligue: req.body.ligue || "",
       zip: req.body.zip || ""
     });

@@ -60,7 +60,7 @@ describe('dev:clubs', function(){
           city: "Lyon",
           pos: [ 42, 43 ]
         },
-        fftid: String(Math.random()),
+        fedid: String(Math.random()),
         ligue: "ligue"+Math.random(),
         zip: "zip"+Math.random(),
         outdoor: Math.round(Math.random() * 10),
@@ -79,7 +79,7 @@ describe('dev:clubs', function(){
         assert(club.location.pos[0] == newClub.location.pos[0]);
         assert(club.location.pos[1] == newClub.location.pos[1]);
         
-        assert(club.fftid === newClub.fftid, "should have same fftid");
+        assert(club.fedid === newClub.fedid, "should have same fedid");
         assert(club.ligue === newClub.ligue, "should have same ligue");
         assert(club.zip === newClub.zip, "should have same zip");
         assert(club.outdoor === newClub.outdoor, "should have same outdoor");
