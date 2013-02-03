@@ -78,7 +78,7 @@ var logs = {
     }
   }
 };
-if (Conf.get("env") === "DEV" || true) {
+if (Conf.get("env") === "DEV") {
   // IN DEV ENVIRONMENT => CONSOLE LOGS !
   logs.access["console"] = {
     level: 'info',
