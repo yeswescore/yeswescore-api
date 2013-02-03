@@ -14,7 +14,10 @@ var DB = require("../db.js")
  *  /v1/games/?limit=10              (default=10)
  *  /v1/games/?offset=0              (default=0)
  *  /v1/games/?fields=nickname,name  (default=please check in the code)
- *  /v1/games/?sort=-dates.start      (default=-dates.start)
+ *  /v1/games/?sort=-dates.start     (default=-dates.start)
+ *  /v1/games/?longitude=40.234      (default=undefined)
+ *  /v1/games/?latitude=40.456       (default=undefined)
+ *  /v1/games/?distance=20           (default=undefined)
  *
  * Specific options:
  *  /v1/games/?q=text                (Mandatory)
@@ -35,12 +38,15 @@ app.get('/v1/games/', function(req, res){
   var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,location.country,location.city,location.pos,teams,teams.players.name,teams.players.nickname,teams.players.club,teams.players.rank,options.type,options.subtype,options.sets,options.score,options.court,options.surface,options.tour";
   var sort = req.query.sort || "-dates.start";
   var status = req.query.status || "ongoing,finished";
+  var longitude = req.query.longitude;
+  var latitude = req.query.latitude;
+  var distance = req.query.distance;
+  
   // populate option
   var populate = "teams.players";
   if (typeof req.query.populate !== "undefined")
     populate = req.query.populate;
   var populatePaths = (typeof populate === "string") ? populate.split(",") : [];
-
   // process fields
   var fields = app.createPopulateFields(fields, populate);
   // heavy...
@@ -58,6 +64,8 @@ app.get('/v1/games/', function(req, res){
     query.where('_searchablePlayersClubsIds', club);
   if (status)
     query.where('status').in(status.split(","));
+  if (longitude && latitude && distance)
+    query.where('location.pos').within.centerSphere({ center: [ parseFloat(longitude), parseFloat(latitude) ], radius: parseFloat(distance) / 6378.137 });
   query.select(fields.select);
   if (populatePaths.indexOf("teams.players") !== -1) {
     query.populate("teams.players", fields["teams.players"]);

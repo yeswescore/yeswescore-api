@@ -3,6 +3,11 @@ var assert = require("assert");
 var isObject = function (s) { return typeof s === "object" && s !== null };
 var isString = function (s) { return typeof s === "string" };
 var isHexa = function(s) { return s.match(/^[0-9a-f]+$/) };
+var isNumber = function(s) { 
+  if (!String(s).match(/^[0-9\-\.]+$/))
+    return false;
+  return parseInt(s, 10) !== NaN;
+};
 var isNotNull = function (s) { return s !== null };
 var isNotEmpty = function (s) {
   if (typeof s === "string" && s.length === 0)
@@ -28,6 +33,10 @@ assert.isString = function (s, m) {
 
 assert.isArray = function (s, m) {
   assert(isArray(s), m);
+};
+
+assert.isNumber = function (s, m) {
+  assert(isNumber(s), m+" > isNumber: s must be a number (s="+s+")");
 };
 
 assert.isHexa = function (s, m) {
@@ -139,6 +148,9 @@ assert.schema = function (schema, obj, msg) {
       case "string":
         assert.isString(obj[k], msg + " field " + k + " should be an string");
         break;
+      case "number":
+        assert.isNumber(obj[k], msg + " field " + k + " should be an number");
+        break;
       case "enum":
         assert(Array.isArray(value._enum), msg + " malformed schema : enum on field " + k);
         assert(value._enum.indexOf(obj[k]) !== -1, msg + " field " + k + " value = " + obj[k] + " is not in enum");
@@ -186,12 +198,12 @@ assert.isClub = function (club) {
     fftid: { _type: "string|undefined" },
     ligue: { _type: "string|undefined" },
     zip: { _type: "string|undefined" },
-    outdoor: { _type: "string|undefined" },
-    indoor: { _type: "string|undefined" },
-    countPlayers: { _type: "string|undefined" },
-    countPlayers1AN: { _type: "string|undefined" },
-    countTeams: { _type: "string|undefined" }, 
-    countTeams1AN: { _type: "string|undefined" }, 
+    outdoor: { _type: "number|undefined" },
+    indoor: { _type: "number|undefined" },
+    countPlayers: { _type: "number|undefined" },
+    countPlayers1AN: { _type: "number|undefined" },
+    countTeams: { _type: "number|undefined" }, 
+    countTeams1AN: { _type: "number|undefined" }, 
     school: { _type: "string|undefined" }
   }, club, "isClub: ");
 };

@@ -714,7 +714,7 @@ Lui c'est un vrai connaisseur  ",
 }
 var generateFakeLocation = function () {
   // trying to generate longitude / latitude inside france :)
-  return [ 45 + Math.random() * 10, Math.random() * 4 ]
+  return [ Math.random() * 4, 45 + Math.random() * 10 ]
 }
 var generateFakeDateCreation = function () {
   // date entre il y a 2 et 3 h
@@ -734,9 +734,19 @@ var generateClubsAsync = function () {
       sport: "tennis",
       name: clubName,
       location: {
+        address: "random adress " + Math.random(),
         city: generateFakeCity(),
         pos: generateFakeLocation()
-      }
+      },
+      ligue: "ligue"+Math.random(),
+      zip: "zip"+Math.random(),
+      outdoor: Math.round(Math.random() * 10),
+      indoor: Math.round(Math.random() * 10),
+      countPlayers: Math.round(Math.random() * 100),
+      countPlayers1AN: Math.round(Math.random() * 100),
+      countTeams: Math.round(Math.random() * 10),
+      countTeams1AN: Math.round(Math.random() * 10),
+      school: "school"+Math.random(),
     });
   });
   return DB.saveAsync(clubs);

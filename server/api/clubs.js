@@ -21,9 +21,12 @@ var DB = require("../db.js")
  * Autocomplete search in clubs
  * 
  * Generic options:
- *  /v1/clubs/autocomplete/?limit=5     (default=5)
+ *  /v1/clubs/autocomplete/?limit=5               (default=5)
  *  /v1/clubs/autocomplete/?fields=nickname,name  (default=name,location.city)
- *  /v1/clubs/autocomplete/?sort=nickname (default=name)
+ *  /v1/clubs/autocomplete/?sort=nickname         (default=name)
+ *  /v1/clubs/autocomplete/?longitude=40.234      (default=undefined)
+ *  /v1/clubs/autocomplete/?latitude=40.456       (default=undefined)
+ *  /v1/clubs/autocomplete/?distance=20           (default=undefined)
  *
  * Specific options:
  *  /v1/clubs/autocomplete/?q=Charlotte (searched text)
@@ -33,15 +36,20 @@ app.get('/v1/clubs/autocomplete/', function(req, res){
   var limit = req.query.limit || 5;
   var sort = req.query.sort || "name";
   var text = req.query.q;
+  var longitude = req.query.longitude;
+  var latitude = req.query.latitude;
+  var distance = req.query.distance;
   
   if (text) {
     // slow
     text = new RegExp("("+text.searchable().pregQuote()+")");
     // searching
-    DB.Model.Club
+    var query = DB.Model.Club
       .find({_searchableName: text})
-      .select(fields.replace(/,/g, " "))
-      .sort(sort.replace(/,/g, " "))
+      .select(fields.replace(/,/g, " "));
+    if (longitude && latitude && distance)
+      query.where('location.pos').within.centerSphere({ center: [ parseFloat(longitude), parseFloat(latitude) ], radius: parseFloat(distance) / 6378.137 });
+    query.sort(sort.replace(/,/g, " "))
       .limit(limit)
       .exec(function (err, clubs) {
         if (err)
@@ -120,8 +128,22 @@ app.get('/v1/clubs/:id/games/', function(req, res){
  * Create a new club
  * 
  * Body {
- *   name: String,     (MANDATORY)
- *   city: String,     (default="")
+ *   name: String,
+ *   location: {
+ *     city: String,
+ *     pos: {type: [Number], index: '2d'},
+ *     address: String
+ *   },
+ *   fftid: String,
+ *   ligue: String,
+ *   zip: String,
+ *   outdoor: Number,
+ *   indoor: Number,
+ *   countPlayers: Number,
+ *   countPlayers1AN: Number,
+ *   countTeams: Number,
+ *   countTeams1AN: Number,
+ *   school: String
  * }
  * 
  * FIXME: who can create a club? owner?
@@ -129,16 +151,34 @@ app.get('/v1/clubs/:id/games/', function(req, res){
 app.post('/v1/clubs/', express.bodyParser(), function(req, res){
   if (req.body.name) {
     // creating a new club (no owner)
+    req.body.location = (req.body.location) ? req.body.location : {};
     var club = new DB.Model.Club({
       sport: "tennis",
       name: req.body.name,
-      address: req.body.location.address || "",
-      city: req.body.location.city || ""
+      location : {
+        pos: req.body.location.pos || [],
+        address: req.body.location.address || "",
+        city: req.body.location.city || ""
+      },
+      fftid: req.body.fftid || "",
+      ligue: req.body.ligue || "",
+      zip: req.body.zip || ""
     });
-    if (Array.isArray(req.body.pos) &&
-        req.body.pos.length === 2) {
-      club.pos = req.body.pos;
-    }
+    // might be undefined
+    if (typeof req.body.outdoor !== "undefined")
+      club.outdoor = parseInt(req.body.outdoor, 10);
+    if (typeof req.body.indoor !== "undefined")
+      club.indoor = parseInt(req.body.indoor, 10);
+    if (typeof req.body.countPlayers !== "undefined")
+      club.countPlayers = parseInt(req.body.countPlayers, 10);
+    if (typeof req.body.countPlayers1AN !== "undefined")
+      club.countPlayers1AN = parseInt(req.body.countPlayers1AN, 10);
+    if (typeof req.body.countTeams !== "undefined")
+      club.countTeams = parseInt(req.body.countTeams, 10);
+    if (typeof req.body.countTeams1AN !== "undefined")
+      club.countTeams1AN = parseInt(req.body.countTeams1AN, 10);
+    if (typeof req.body.school !== "undefined")
+      club.school = req.body.school;
     DB.saveAsync(club)
       .then(
         function (club) { res.end(JSON.stringifyModels(club)) },

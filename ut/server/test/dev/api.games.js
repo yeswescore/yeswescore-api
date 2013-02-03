@@ -430,4 +430,67 @@ describe('dev:games', function(){
       });
     });
   });
+  
+  describe('create a single game located in bora bora, then search it from tupai within 50km & search it from 10km', function () {
+    it('should find the game first then not find it', function (done){
+      // read a player
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.players"]+"random"
+      };
+      
+      var positions = {
+        borabora : [ -151.741305, -16.500436 ],
+        tupai : [ -151.816893, -16.249431 ]
+      };
+      
+      http.getJSON(options, function (randomPlayer) {
+        assert.isObject(randomPlayer, "random player must exist");
+      
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["api.games"]+"?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+        };
+        
+        var nameFilter = "toto"+Math.random();
+        
+        var newGame = {
+          location: {
+            pos: positions.borabora
+          },
+          teams: [ { id: null, players: [ { name : nameFilter, email: "foo@zescore.com", rank: "15/2" } ] },
+                   { id: null, players: [ { name : "titi" } ] } ]
+        };
+        http.post(options, newGame, function (game) {
+          assert.isGame(game, "game was correctly created");
+          
+          // search the game
+          var options = {
+            host: Conf["http.host"],
+            port: Conf["http.port"],
+            path: Conf["api.games"]+"?longitude="+positions.tupai[0]+"&latitude="+positions.tupai[1]+"&distance=50&q="+nameFilter
+          };
+          
+          http.getJSON(options, function (games) {
+            assert.isArray(games, 'games should be an array');
+            assert(games.length === 1, 'must have found at least one game !');
+            assert(games[0].id == game.id, 'must have same id :' + game.id + ' vs ' + games[0].id);
+
+            var options = {
+              host: Conf["http.host"],
+              port: Conf["http.port"],
+              path: Conf["api.games"]+"?longitude="+positions.tupai[0]+"&latitude="+positions.tupai[1]+"&distance=10&q="+nameFilter
+            };
+            http.getJSON(options, function (games) {
+              assert.isArray(games, 'games should be an array');
+              assert(games.length === 0, 'cannot find the game (too far away)');
+              done();
+            });
+          });
+        });
+      });
+    });
+  });
 });

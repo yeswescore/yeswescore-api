@@ -7,9 +7,12 @@ var DB = require("../db.js")
  * Read All Players
  * 
  * Generic options:
- *  /v1/players/?limit=0
- *  /v1/players/?offset=0
- *  /v1/players/?fields=nickname,name
+ *  /v1/players/?limit=10              (default=10)
+ *  /v1/players/?offset=0              (default=0)
+ *  /v1/players/?fields=nickname,name  (default=undefined)
+ *  /v1/players/?longitude=40.234      (default=undefined)
+ *  /v1/players/?latitude=40.456       (default=undefined)
+ *  /v1/players/?distance=20           (default=undefined)
  *
  * Specific options:
  *  /v1/players/?club=:id   (filter with a club)
@@ -19,12 +22,23 @@ app.get('/v1/players/', function(req, res){
   var offset = req.query.offset || 0;
   var club = req.query.club;
   var fields = req.query.fields;
+  var longitude = req.query.longitude;
+  var latitude = req.query.latitude;
+  var distance = req.query.distance;
+  var text = req.query.q;
 
-  var query = DB.Model.Player.find({type:"default"});
+  var query = DB.Model.Player.find()
   if (fields)
     query.select(fields.replace(/,/g, " "))
+  if (longitude && latitude && distance)
+    query.where('location.currentPos').within.centerSphere({ center: [ parseFloat(longitude), parseFloat(latitude) ], radius: parseFloat(distance) / 6378.137 });
   if (club)
     query.where("club.id", club);
+  if (text) {
+    text = new RegExp("("+text.searchable().pregQuote()+")");
+    query.or([ {_searchableNickname: text}, {_searchableName: text} ]);
+  }
+  query.where("type", "default");  
   query.skip(offset)
        .limit(limit)
        .exec(function (err, players) {
@@ -38,9 +52,12 @@ app.get('/v1/players/', function(req, res){
  * Autocomplete search in players
  * 
  * Generic options:
- *  /v1/players/autocomplete/?limit=5     (default=5)
+ *  /v1/players/autocomplete/?limit=5               (default=5)
  *  /v1/players/autocomplete/?fields=nickname,name  (default=nickname,name,type,club)
- *  /v1/players/autocomplete/?sort=nickname (default=name)
+ *  /v1/players/autocomplete/?sort=nickname         (default=name)
+ *  /v1/players/autocomplete/?longitude=40.234      (default=undefined)
+ *  /v1/players/autocomplete/?latitude=40.456       (default=undefined)
+ *  /v1/players/autocomplete/?distance=20           (default=undefined)
  *
  * Specific options:
  *  /v1/players/autocomplete/?q=Charlotte (searched text)
@@ -52,19 +69,24 @@ app.get('/v1/players/autocomplete/', function(req, res){
   var owner = req.query.owner;
   var sort = req.query.sort || "name";
   var text = req.query.q;
+  var longitude = req.query.longitude;
+  var latitude = req.query.latitude;
+  var distance = req.query.distance;
   
   if (text) {
     // slow
     text = new RegExp("("+text.searchable().pregQuote()+")");
     // searching
-    DB.Model.Player
+    var query = DB.Model.Player
       .find({
         $and: [
           { $or: [ {_searchableNickname: text}, {_searchableName: text} ] },
           { $or: [ {type: "default"}, {type: "owned", owner: owner} ] }
         ]
-      })
-      .select(fields.replace(/,/g, " "))
+      });
+    if (longitude && latitude && distance)
+      query.where('location.currentPos').within.centerSphere({ center: [ parseFloat(longitude), parseFloat(latitude) ], radius: parseFloat(distance) / 6378.137 });
+    query.select(fields.replace(/,/g, " "))
       .sort(sort.replace(/,/g, " "))
       .limit(limit)
       .exec(function (err, players) {
@@ -131,7 +153,7 @@ app.get('/v1/players/:id/games/', function(req, res){
   var sort = req.query.sort || "-dates.start";
   var limit = req.query.limit || 10;
   var offset = req.query.offset || 0;
-  var fields = req.query.fields || "sport,owner,dates.creation,dates.start,dates.end,location.country,location.city,location.pos,teams,teams.players.name,teams.players.nickname,teams.players.club,teams.players.rank,options.type,options.subtype,options.status,options.sets,options.score,options.court,options.surface,options.tour";
+  var fields = req.query.fields || "sport,owner,dates.creation,dates.start,dates.end,location.country,location.city,location.currentPos,teams,teams.players.name,teams.players.nickname,teams.players.club,teams.players.rank,options.type,options.subtype,options.status,options.sets,options.score,options.court,options.surface,options.tour";
   var owned = (req.query.owned === "true");
   // populate option
   var populate = "teams.players";
@@ -197,11 +219,13 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
     deferred.resolve(null);
   }
   deferred.promise.then(function (club) {
+    req.body.location = (req.body.location) ? req.body.location : {};
     // creating a new player
     var inlinedClub = (club) ? { id: club.id, name: club.name } : null;
     var player = new DB.Model.Player({
         nickname: req.body.nickname || "",
         name: req.body.name || "",
+        location : { currentPos: req.body.location.currentPos || [] },
         rank: req.body.rank || "",
         email: req.body.email || "",
         idlicense: req.body.idlicense || "",
@@ -269,6 +293,9 @@ app.post('/v1/players/:id', express.bodyParser(), function(req, res){
             if (typeof req.body[o] !== "undefined")
               player[o] = req.body[o];
           });
+          // position
+          if (req.body.location && req.body.location.currentPos)
+            player.location = { currentPos : req.body.location.currentPos };
           // password
           if (req.body.uncryptedPassword)
             player.uncryptedPassword = req.body.uncryptedPassword;

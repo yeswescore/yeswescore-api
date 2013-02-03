@@ -400,6 +400,59 @@ describe('dev:players', function(){
     });
   });
   
+  describe('create basic player, located in bora bora, then search it from tupai within 50km & search it from 10km', function () {
+    it('should find the player first (50km) and not find him (10km)', function (done) {
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["api.players"]
+      };
+      
+      var positions = {
+        borabora : [ -151.741305, -16.500436 ],
+        tupai : [ -151.816893, -16.249431 ]
+      };
+      
+      var nameFilter = "toto"+Math.random();
+      
+      var newPlayer = { 
+        location: {
+          currentPos: positions.borabora
+        },
+        name: nameFilter
+      };
+      
+      http.post(options, newPlayer, function (player) {
+        assert.isPlayerWithToken(player);
+        
+        // verify player exist in DB.
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["api.players"]+"?longitude="+positions.tupai[0]+"&latitude="+positions.tupai[1]+"&distance=50&q="+nameFilter
+        };
+        http.getJSON(options, function (players) {
+          assert.isArray(players, 'players should be an array');
+          assert(players.length === 1, 'must have found at least one player !');
+          assert(players[0].id == player.id, 'must have same id :' + player.id + ' vs ' + players[0].id);
+          
+          var options = {
+            host: Conf["http.host"],
+            port: Conf["http.port"],
+            path: Conf["api.players"]+"?longitude="+positions.tupai[0]+"&latitude="+positions.tupai[1]+"&distance=10&q="+nameFilter
+          };
+          
+          http.getJSON(options, function (players) {
+            assert.isArray(players, 'players should be an array');
+            assert(players.length === 0, 'shouldnt find a player');
+            
+            done();
+          });
+        });
+      });
+    });
+  });
+  
   describe('FIXME: read players filtering by club', function() {
     it('should read player checking params: security, pregQuote, ...', function (done) {
       done(/* FIXME */);
