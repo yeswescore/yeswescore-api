@@ -2,6 +2,7 @@ var mongoose = require("mongoose")
   , Schema = mongoose.Schema
   , Conf = require("./conf.js")
   , Q = require("q")
+  , app = require("./app.js")
   , crypto = require("crypto");
 
 mongoose.connection.on('error', function () { DB.status = "disconnected" });
@@ -977,7 +978,7 @@ DB.generateFakeData = function () {
    .then(generatePlayersAsync)
    .then(generateGamesAsync)
    .then(function () {
-     console.log('FAKE DATA GENERATED');
+     app.log('FAKE DATA GENERATED');
    });
 };
 

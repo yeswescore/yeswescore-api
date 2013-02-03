@@ -1,5 +1,7 @@
 var express = require("express")
-  , app = express();
+  , app = express()
+  , Conf = require("./conf.js")
+  , winston = require("winston");
 
 var routes = { /* "/v1/games/:id" : function (req, res) { ... } */ };
 app.get = (function (oldGet) {
@@ -17,7 +19,10 @@ app.internalRedirect = function (route) {
 };
   
 app.defaultError = function (res, msg) { 
-  return function (err) { res.end(JSON.stringify({error:err, message:msg})); };
+  return function (err) {
+    app.log('message: ' +  msg + ' error: ' + err, 'error');
+    res.end(JSON.stringify({error:err, message:msg}));
+  };
 };
 
 // @return { 'select' : fields, 'populate1': fields, ... }
@@ -48,5 +53,71 @@ app.createPopulateFields = function (fields, populate) {
   });
   return result;
 };
+
+var logsPath = Conf.get("logs.path");
+// definition of access, default & stats loggers.
+var logs = {
+  access : {
+    file: {
+      filename: logsPath+'access.log',
+      json: false,
+      maxsize: 104857600 // = 100 Mo
+    }
+  },
+  info: {
+    file: {
+      filename: logsPath+'info.log',
+      maxsize: 104857600, // = 100 Mo
+      timestamp: true
+    }
+  },
+  stats: {
+    file: {
+      filename: logsPath+'stats.log',
+      maxsize: 104857600, // = 100 Mo
+      timestamp: true
+    }
+  }
+};
+if (Conf.get("env") === "DEV" || true) {
+  // IN DEV ENVIRONMENT => CONSOLE LOGS !
+  logs.access["console"] = {
+    level: 'info',
+    colorize: true,
+  };
+  logs.info["console"] = {
+    level: 'info',
+    colorize: 'true',
+    timestamp: true
+  };
+  logs.stats["console"] = {
+    level: 'info',
+    colorize: 'true',
+    timestamp: true
+  };
+}
+
+// creating logs !
+Object.keys(logs).forEach(function (category) {
+  winston.loggers.add(category, logs[category]);
+});
+
+// HIGH LEVEL LOGGING FUNCTION
+var defaultLogger = winston.loggers.get('default');
+app.log = function (msg, level) {
+  if (level === "error")
+    defaultLogger.error(msg);
+  else
+    defaultLogger.info(msg);
+};
+
+// AUTO LOG ACCESS
+var accessLogger = winston.loggers.get('access');
+var winstonStream = {
+    write: function(message, encoding){
+        accessLogger.info(message);
+    }
+};
+app.use(express.logger({stream:winstonStream}));
 
 module.exports = app;
