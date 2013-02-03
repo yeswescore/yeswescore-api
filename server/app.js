@@ -60,7 +60,6 @@ var logs = {
   access : {
     file: {
       filename: logsPath+'access.log',
-      json: false,
       maxsize: 104857600 // = 100 Mo
     }
   },
