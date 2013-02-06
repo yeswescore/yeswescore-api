@@ -613,9 +613,6 @@ DB.Model.Game.createOwnedPlayersAsync = function (teams, owner) {
             type: "owned",
             owner: owner
           });
-          // email
-          if (player.email && player.email.address)
-            p.email.address = player.email.address;
           // we need to handle the club
           var deferred = Q.defer();
           var ownedPlayerPromise = deferred.promise;
