@@ -42,7 +42,7 @@ describe('dev:players', function(){
       var newPlayer = {
         nickname : "TU-"+Math.random(),
         name: "TU-"+Math.random(),
-        email: "marcd-"+Math.random()+"@zescore.com",
+        email: { address: "marcd-"+Math.random()+"@zescore.com" },
         idlicense: "TU-"+Math.random(),
         rank: "15/2",
         uncryptedPassword: "TU-"+Math.random(),
@@ -53,7 +53,7 @@ describe('dev:players', function(){
         assert(newPlayer.nickname === player.nickname, "must have same nickname");
         assert(newPlayer.name === player.name, "must have same name");
         assert(newPlayer.rank === player.rank, "must have same rank");
-        assert(newPlayer.email === player.email, "must have same email");
+        assert(newPlayer.email.address === player.email.address, "must have same email");
         assert(newPlayer.idlicense === player.idlicense, "must have same idlicense");
         assert(typeof player.password === "undefined", "musn't have a password");
         assert(typeof player.uncryptedPassword === "undefined", "musn't have an uncryptedPassword");
@@ -70,7 +70,7 @@ describe('dev:players', function(){
           assert(p.nickname === player.nickname, "must have same nickname");
           assert(p.name === player.name, "must have same name");
           assert(p.rank === player.rank, "must have same rank");
-          assert(p.email === player.email, "must have same email");
+          assert(p.email.address === player.email.address, "must have same email");
           assert(p.idlicense === player.idlicense, "must have same idlicense");
           done();
         });
@@ -92,7 +92,7 @@ describe('dev:players', function(){
           assert(player.nickname === "", "nickname should be empty string");
           assert(player.name === "", "name should be empty string");
           assert(player.rank === "", "rank should be empty string");
-          assert(player.email === "", "email should be empty string");
+          assert(typeof player.email === "undefined", "email should be undefined");
           assert(player.idlicense === "", "idlicense should be empty string");
         
         // verify player exist in DB.
@@ -107,7 +107,7 @@ describe('dev:players', function(){
           assert(p.nickname === "", "nickname should be empty string");
           assert(p.name === "", "name should be empty string");
           assert(p.rank === "", "rank should be empty string");
-          assert(p.email === "", "email should be empty string");
+          assert(typeof p.email === "undefined", "email should be undefined");
           assert(p.idlicense === "", "idlicense should be empty string");
           done();
         });
@@ -186,7 +186,7 @@ describe('dev:players', function(){
           nickname : "TU-"+Math.random(),
           name: "TU-"+Math.random(),
           rank: "15/2",
-          email: "marcd-"+Math.random()+"@zescore.com",
+          email: { address: "marcd-"+Math.random()+"@zescore.com" },
           club: { id: randomClub._id, name: randomClub.name }
         };
         http.post(options, newPlayer, function (player) {
@@ -194,11 +194,11 @@ describe('dev:players', function(){
           assert(newPlayer.nickname === player.nickname, "must have same nickname");
           assert(newPlayer.name === player.name, "must have same name");
           assert(newPlayer.rank === player.rank, "must have same rank");
-          assert(newPlayer.email === player.email, "must have same email");
+          assert(newPlayer.email.address === player.email.address, "must have same email");
           
           // modify the player
           player.name = "foobar";
-          player.email = "marcd-"+Math.random()+"@zescore.com";
+          player.email.address = "marcd-"+Math.random()+"@zescore.com";
           // saving
           var options = {
             host: Conf["http.host"],
@@ -209,14 +209,14 @@ describe('dev:players', function(){
             assert.isPlayerWithToken(modifiedPlayer, "must be a player");
             assert(modifiedPlayer.id === player.id, "must be same player");
             assert(modifiedPlayer.name === player.name, "must have the same modified name");
-            assert(modifiedPlayer.email === player.email, "must have the same modified email");
+            assert(modifiedPlayer.email.address === player.email.address, "must have the same modified email");
             
             // reading from DB authentified
             http.getJSON(options, function (p) {
               assert.isPlayerWithToken(p, "must be a player");
               assert(p.id === player.id, "must be same player");
               assert(p.name === player.name, "must have the same modified name");
-              assert(p.email === player.email, "must have the same modified email");
+              assert(p.email.address === player.email.address, "must have the same modified email");
               
               var options = {
                 host: Conf["http.host"],

@@ -220,7 +220,9 @@ assert.isPlayerScheme = function (player, m) {
       creation: { _type: "date" },
       update: { _type: "date" }
     },
-    email: { _type: "string|undefined" },
+    email: {
+      address: { _type: "string|undefined" }
+    },
     idlicense: { _type: "string|undefined" },
     rank: { _type: "string|undefined" },
     token: { _type: "string|undefined" },

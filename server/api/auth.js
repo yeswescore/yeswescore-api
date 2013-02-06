@@ -24,7 +24,9 @@ app.post('/v1/auth/', express.bodyParser(), function(req, res){
   p.uncryptedPassword = req.body.uncryptedPassword;
   //
   DB.Model.Player.findOne({
-    email: req.body.email,
+    email: {
+      address: req.body.email
+    },
     password: p.password
   }, function (err, player) {
     if (err || !player)

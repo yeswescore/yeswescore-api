@@ -196,7 +196,9 @@ app.get('/v1/players/:id/games/', function(req, res){
  *   nickname: String, (default="")
  *   name: String,     (default="")
  *   rank: String,     (default="")
- *   email: String,    (default="")
+ *   email: { 
+ *     address: String,    (default="")
+ *   },
  *   idlicense: String (default="")
  *   club: { id:..., name:... }  (default=null, name: is ignored)
  *   type: String      (enum=default,owned default=default)
@@ -219,7 +221,9 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
     deferred.resolve(null);
   }
   deferred.promise.then(function (club) {
+    // fixme: should be typeof object ?
     req.body.location = (req.body.location) ? req.body.location : {};
+    req.body.email = (req.body.email) ? req.body.email : {};
     // creating a new player
     var inlinedClub = (club) ? { id: club.id, name: club.name } : null;
     var player = new DB.Model.Player({
@@ -227,11 +231,12 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
         name: req.body.name || "",
         location : { currentPos: req.body.location.currentPos || [] },
         rank: req.body.rank || "",
-        email: req.body.email || "",
         idlicense: req.body.idlicense || "",
         club: inlinedClub, // will be undefined !
         type: req.body.type || "default"
     });
+    if (req.body.email && req.body.email.address)
+      player.email.address = req.body.email.address;
     // password
     if (req.body.uncryptedPassword)
       player.uncryptedPassword = req.body.uncryptedPassword;
@@ -250,8 +255,10 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
  *   nickname: String, (default=undefined)
  *   name: String,     (default=undefined)
  *   rank: String,     (default=undefined)
- *   email: String,    (default=undefined)
- *   idlicense: String (default=undefined)
+ *   email: {
+ *     address: String,  (default=undefined)
+ *   },
+ *   idlicense: String   (default=undefined)
  *   club: { id:..., name:... }  (default=undefined, name: is ignored)
  *   password: String  (default=undefined)
  * }
@@ -289,7 +296,7 @@ app.post('/v1/players/:id', express.bodyParser(), function(req, res){
           if (inlinedClub) {
             player["club"] = inlinedClub;
           }
-          ["nickname", "name", "rank", "idlicense", "email"].forEach(function (o) {
+          ["nickname", "name", "rank", "idlicense"].forEach(function (o) {
             if (typeof req.body[o] !== "undefined")
               player[o] = req.body[o];
           });
@@ -299,6 +306,10 @@ app.post('/v1/players/:id', express.bodyParser(), function(req, res){
           // password
           if (req.body.uncryptedPassword)
             player.uncryptedPassword = req.body.uncryptedPassword;
+          // email
+          if (req.body.email && req.body.email.address)
+            player.email.address = req.body.email.address;
+          //
           player.dates.update = Date.now();
           // saving player
           DB.saveAsync(player)

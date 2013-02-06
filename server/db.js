@@ -131,7 +131,7 @@ DB.Definition.Club = {
     pos: {type: [Number], index: '2d'},
     address: String
   },
-  fedid: String,
+  fedid: { type: String },
   ligue: String,
   zip: String,
   outdoor: Number,
@@ -154,7 +154,14 @@ DB.Definition.Player = {
     creation: { type: Date, default: Date.now },
     update: { type: Date, default: Date.now }
   },
-  email: String,
+  email: {
+    address: { type: String, unique: true, sparse: true },
+    status: { type: String, enum: ["saved", "confirmed"] },
+    dates: {
+      saved: { type: Date },
+      confirmed: { type: Date }
+    }
+  },
   idlicense: String,
   password: { type: String, default: null },
   token: { type: String, default: DB.generateToken },
@@ -602,11 +609,13 @@ DB.Model.Game.createOwnedPlayersAsync = function (teams, owner) {
           var p = new DB.Model.Player({
             name: player.name || "",
             nickname: player.nickname || "",
-            email: player.email || "",
             rank: player.rank || "",
             type: "owned",
             owner: owner
           });
+          // email
+          if (player.email && player.email.address)
+            p.email.address = player.email.address;
           // we need to handle the club
           var deferred = Q.defer();
           var ownedPlayerPromise = deferred.promise;
@@ -760,6 +769,7 @@ var generatePlayersAsync = function () {
      randomClubs.push(DB.getRandomModelAsync(DB.Model.Club));
   }
   var gClubs;
+
   return Q.all(randomClubs)
           .then(function (clubs) {
      gClubs = clubs;
@@ -978,18 +988,21 @@ DB.reset = function () {
 mongoose.connection.once("open", function () {
   if (Conf.env === "DEV") {
     DB.reset().then(function () {
-      DB.generateFakeData();
+      DB.generateFakeDataAsync();
     });
   }
 });
 
-DB.generateFakeData = function () {
+DB.generateFakeDataAsync = function () {
   generateClubsAsync()
    .then(generatePlayersAsync)
    .then(generateGamesAsync)
-   .then(function () {
+   .done(function () {
      app.log('FAKE DATA GENERATED');
-   });
+   }, function (e) {
+     app.log('error generating data : ' + e, 'error');
+   }
+  );
 };
 
 // undefined if nothing is found

@@ -17,7 +17,7 @@ describe('dev:auth', function(){
       var newPlayer = {
         nickname : "TU-"+Math.random(),
         name: "TU-"+Math.random(),
-        email: "marcd-"+Math.random()+"@zescore.com",
+        email: { address: "marcd-"+Math.random()+"@zescore.com" },
         idlicense: "TU-"+Math.random(),
         rank: "15/2",
         uncryptedPassword: String(Math.random()),
@@ -32,7 +32,7 @@ describe('dev:auth', function(){
         };
         
         var body = {
-          email: newPlayer.email,
+          email: newPlayer.email.address,
           uncryptedPassword: newPlayer.uncryptedPassword
         };
         
@@ -42,7 +42,7 @@ describe('dev:auth', function(){
           assert(newPlayer.name === player.name, "must have same name");
           assert(newPlayer.nickname === player.nickname, "must have same nickname");
           assert(newPlayer.rank === player.rank, "must have same rank");
-          assert(newPlayer.email === player.email, "must have same email");
+          assert(newPlayer.email.address === player.email.address, "must have same email");
           
           done();
         });
