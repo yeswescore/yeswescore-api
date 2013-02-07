@@ -1,5 +1,18 @@
 var assert = require("assert");
 
+// bad dependency...
+var Conf = require("../../../server/conf.js");
+if (!Conf || Conf.get("email.send.confirmation"))
+{
+  console.log("\n== WARNING WARNING WARNING WARNING WARNING WARNING ==\n");
+  console.log('Conf.get("email.send.confirmation") is set to true');
+  console.log('  => UNIT TESTS DESACTIVATED ');
+  console.log('  please set this option to false. ');
+  console.log("\n== WARNING WARNING WARNING WARNING WARNING WARNING ==\n\n");
+  process.exit(0);
+}
+
+
 var isObject = function (s) { return typeof s === "object" && s !== null };
 var isString = function (s) { return typeof s === "string" };
 var isHexa = function(s) { return s.match(/^[0-9a-f]+$/) };
