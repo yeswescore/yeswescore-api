@@ -55,6 +55,7 @@ if (Conf.env === "DEV") {
   app.get('/v1/email/sendConfirmation/', function (req, res) {
     if (typeof req.query.email !== "string" || !req.query.email)
       return app.defaultError(res)("missing email");
+    var language = req.query.language || "fr";
     DB.Model.Player.findOne(
       { "email.address" : req.query.email },
       function (err, player) {
@@ -66,7 +67,7 @@ if (Conf.env === "DEV") {
           return app.defaultError(res)("wrong status ? already send ?");
         if (typeof player.email._token === "undefined")
           return app.defaultError(res)("no token found");
-        var url = Email.sendEmailConfirmation(player.email.address, player.email._token);
+        var url = Email.sendEmailConfirmation(player.email.address, player.email._token, language);
         res.end('email send, callback url='+url);
       });
   });

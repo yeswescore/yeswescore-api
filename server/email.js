@@ -2,6 +2,7 @@ var https = require("https")
   , Conf = require("./conf.js")
   , DB = require("./db.js")
   , app = require("./app.js")
+  , Resources = require("./strings/resources.js")
   , winston = require("winston");
 
 var emailLogger = winston.loggers.get('email');
@@ -38,6 +39,11 @@ var Email = {
       }
     };
     
+    if (Conf.env === "DEV" && !Conf.get("email.send.confirmation")) {
+      app.log('EMAIL: simulating sending email to ' + to);
+      return;
+    }
+    
     // dedicated loggers
     emailLogger.info(data);
     emailLogger.info(postOptions);
@@ -58,25 +64,22 @@ var Email = {
     req.end();
   },
   
-  sendEmailConfirmation: function (email, token) {
-    app.log("EMAIL: sendEmailConfirmation to "+email+" (token="+token+")");
-    var url = null;
-    if (typeof email === "string" && email &&
-        typeof token === "string" && token) {
-      // FIXME: email encoding, escape ?
-      url = Conf.getAbsoluteUrl(Conf.get("api.email")+"confirm/?token="+token);
-      app.log("EMAIL: sendEmailConfirmation callback url: "+url);
-      // FIXME: locals.
-      if (Conf.env === "DEV" && !Conf.get("email.send.confirmation")) {
-        app.log('EMAIL: simulating sending email to ' + email);
-        return url;
-      }
-      this.send(
-        email,
-        'Confirmation de votre email',
-        'Veuillez cliquer sur ce lien pour confirmer votre email: <a href="' + url + '">' + url + '</a>'
-      );
-    }
+  sendEmailConfirmation: function (email, token, language) {
+    app.log("EMAIL: sendEmailConfirmation to "+email+" (token="+token+", language="+language+")");
+
+    language = language || Conf.get("default.language");
+    if (typeof email !== "string" || !email ||
+        typeof token !== "string" || !token)
+      return null;
+    // FIXME: email encoding, escape ?
+    var url = Conf.getAbsoluteUrl(Conf.get("api.email")+"confirm/?token="+token);
+    app.log("EMAIL: sendEmailConfirmation callback url: "+url);
+
+    this.send(
+      email,
+      Resources.getString(language, "email.confirmation.subject"),
+      Resources.getString(language, "email.confirmation.content").replace(/%URL%/g, url)
+    );
     return url;
   }
 };

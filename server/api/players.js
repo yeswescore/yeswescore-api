@@ -259,7 +259,7 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
   }).then(function (player) {
     // everything went ok => sending email confirmation
     if (emailConfirmationRequired)
-      Email.sendEmailConfirmation(player.email.address, player.email._token);
+      Email.sendEmailConfirmation(player.email.address, player.email._token, player.language);
     res.end(JSON.stringifyModels(player, { unhide: [ "token" ] }));
   }, app.defaultError(res));
 });
@@ -361,7 +361,7 @@ app.post('/v1/players/:id', express.bodyParser(), function(req, res){
     return DB.saveAsync(player);
   }).then(function (player) {
     if (emailConfirmationRequired)
-      Email.sendEmailConfirmation(player.email.address, player.email._token);
+      Email.sendEmailConfirmation(player.email.address, player.email._token, player.language);
     res.end(JSON.stringifyModels(player, { unhide: [ "token" ] }));
   }, app.defaultError(res));
 });
