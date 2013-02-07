@@ -274,8 +274,7 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
  * }
  */
 app.post('/v1/players/:id', express.bodyParser(), function(req, res){
-  if (req.params.id !== req.body.id ||
-      req.params.id !== req.query.playerid) {
+  if (req.params.id !== req.query.playerid) {
     return app.defaultError(res)("id differs");
   }
 

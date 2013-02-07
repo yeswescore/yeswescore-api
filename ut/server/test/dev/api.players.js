@@ -282,9 +282,10 @@ describe('dev:players', function(){
         path: Conf["api.players"]
       };
       
+      var oldMail = "marcd-"+Math.random()+"@zescore.com";
       var newPlayer = {
         name: "TU-"+Math.random(),
-        email: { address: "marcd-"+Math.random()+"@zescore.com" },
+        email: { address: oldMail },
       };
       http.post(options, newPlayer, function (player) {
         assert.isPlayerWithToken(player);
@@ -292,7 +293,30 @@ describe('dev:players', function(){
         assert(newPlayer.email.address === player.email.address, "must have same email");
         assert(player.email.status === "pending-confirmation", "email status must be pending");
         
-        done();
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["api.players"]+player.id+"/?playerid="+player.id+"&token="+player.token
+        };
+        var newMail =  "marcd-"+Math.random()+"@zescore.com";
+        var modifiedPlayer = {
+          email: { address: newMail }
+        };
+          
+        http.post(options, modifiedPlayer, function (player) {
+          assert.isPlayerWithToken(player);
+          assert(player.email.address == newMail, "must have same new mail ("+newMail+" Vs "+player.email.address+" Vs "+oldMail);
+          assert(player.email.status === "pending-confirmation", "new mail status must be pending");
+        
+          // now we "unregister our email"
+          var modifiedPlayer = { email: { address: "" } };
+          http.post(options, modifiedPlayer, function (player) {
+            assert.isPlayerWithToken(player);
+            assert(typeof player.email === "undefined", "must have email removed");
+          
+            done();
+          });
+        });
       });
     });
   });
