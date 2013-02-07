@@ -102,7 +102,7 @@ Object.keys(logs).forEach(function (category) {
 });
 
 // HIGH LEVEL LOGGING FUNCTION
-var defaultLogger = winston.loggers.get('default');
+var defaultLogger = winston.loggers.get('info');
 app.log = function (msg, level) {
   if (level === "error")
     defaultLogger.error(msg);
