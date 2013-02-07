@@ -16,6 +16,7 @@ require('./api/auth.js');
 require('./api/bootstrap.js');
 require('./api/clubs.js');
 require('./api/documents.js');
+require('./api/email.js');
 require('./api/games.js');
 require('./api/players.js');
 require('./api/admin.js');

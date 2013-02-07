@@ -70,6 +70,13 @@ var logs = {
       timestamp: true
     }
   },
+  email: {
+    file: {
+      filename: logsPath+'email.log',
+      maxsize: 104857600, // = 100 Mo
+      timestamp: true
+    }
+  },
   stats: {
     file: {
       filename: logsPath+'stats.log',
@@ -85,6 +92,11 @@ if (Conf.get("env") === "DEV") {
     colorize: true,
   };
   logs.info["console"] = {
+    level: 'info',
+    colorize: 'true',
+    timestamp: true
+  };
+  logs.email["console"] = {
     level: 'info',
     colorize: 'true',
     timestamp: true
@@ -109,6 +121,7 @@ app.log = function (msg, level) {
   else
     defaultLogger.info(msg);
 };
+
 
 // AUTO LOG ACCESS
 var accessLogger = winston.loggers.get('access');
