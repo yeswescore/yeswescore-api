@@ -1,6 +1,7 @@
 var DB = require("../db.js")
   , express = require("express")
   , app = require("../app.js")
+  , Email = require("../email.js")
   , Q = require("q");
 
 /**
@@ -213,6 +214,8 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
   req.body.location = (req.body.location) ? req.body.location : {};
   req.body.email = (req.body.email) ? req.body.email : {};
   
+  var emailConfirmationRequired = false;
+  
   Q.fcall(function () {
     if (req.body.email && req.body.email.address)
       return DB.Model.Player.isEmailRegisteredAsync(req.body.email.address);
@@ -245,13 +248,16 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
       player.email._token = DB.Model.Player.createEmailToken();
       player.email._dates._created = Date.now();
       // sending token by email.
-      app.log('FIXME: send token [' + player.email._token + '] by email');
+      emailConfirmationRequired = true;
     }
     // password
     if (req.body.uncryptedPassword)
       player.uncryptedPassword = req.body.uncryptedPassword;
     return DB.saveAsync(player);
   }).then(function (player) {
+    // everything went ok => sending email confirmation
+    if (emailConfirmationRequired)
+      Email.sendEmailConfirmation(player.email.address, player.email._token);
     res.end(JSON.stringifyModels(player, { unhide: [ "token" ] }));
   }, app.defaultError(res));
 });
@@ -277,6 +283,8 @@ app.post('/v1/players/:id', express.bodyParser(), function(req, res){
   if (req.params.id !== req.query.playerid) {
     return app.defaultError(res)("id differs");
   }
+  
+  var emailConfirmationRequired = false;
 
   var club = req.body.club;
   Q.all(
@@ -343,12 +351,15 @@ app.post('/v1/players/:id', express.bodyParser(), function(req, res){
           player.email._token = DB.Model.Player.createEmailToken();
           player.email._dates._created = Date.now();
           player.email._dates._confirmed = undefined;
+          emailConfirmationRequired = true;
         }
       }
     }
     // saving player
     return DB.saveAsync(player);
   }).then(function (player) {
+    if (emailConfirmationRequired)
+      Email.sendEmailConfirmation(player.email.address, player.email._token);
     res.end(JSON.stringifyModels(player, { unhide: [ "token" ] }));
   }, app.defaultError(res));
 });
