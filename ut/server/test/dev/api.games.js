@@ -14,8 +14,6 @@ describe('dev:games', function(){
         path: Conf["documents.games"]+"random"
       };
       
-      console.log(options);
-      
       http.getJSON(options, function (randomgame) {
         assert.isObject(randomgame, "random game must exist");
         
