@@ -201,6 +201,7 @@ app.get('/v1/players/:id/games/', function(req, res){
  *   email: { 
  *     address: String,    (default="")
  *   },
+ *   language: String  (default=cf configuration)
  *   idlicense: String (default="")
  *   club: { id:..., name:... }  (default=null, name: is ignored)
  *   type: String      (enum=default,owned default=default)
@@ -276,6 +277,7 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
  *   email: {
  *     address: String,  (default=undefined)
  *   },
+ *   language: String    (default=undefined)
  *   idlicense: String   (default=undefined)
  *   club: { id:..., name:... }  (default=undefined, name: is ignored)
  *   password: String  (default=undefined)
