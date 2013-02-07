@@ -213,10 +213,11 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
   req.body.location = (req.body.location) ? req.body.location : {};
   req.body.email = (req.body.email) ? req.body.email : {};
   
-  Q.if(
-    req.body.email && req.body.email.address,
-    DB.Model.Player.isEmailRegisteredAsync(req.body.email.address)
-  ).then(function (emailRegistered) {
+  Q.fcall(function () {
+    if (req.body.email && req.body.email.address)
+      return DB.Model.Player.isEmailRegisteredAsync(req.body.email.address);
+    return null;
+  }).then(function (emailRegistered) {
     if (emailRegistered)
       throw "email already registered";
   }).then(function () {
@@ -277,58 +278,57 @@ app.post('/v1/players/:id', express.bodyParser(), function(req, res){
       req.params.id !== req.query.playerid) {
     return app.defaultError(res)("id differs");
   }
-  var deferred = Q.defer();
+
   var club = req.body.club;
-  if (club && club.id) {
-    DB.Model.Club.findById(club.id, function (err, club) {
-      if (err)
-        return deferred.reject(err);
-      deferred.resolve(club);
-    });
-  } else {
-    deferred.resolve(null);
-  }
-  deferred.promise.then(function (club) {
-    DB.isAuthenticatedAsync(req.query)
-      .then(function (authentifiedPlayer) {
+  Q.all(
+    [
+      // doing in parallel 2 things
+      // 1-st : find the club
+      Q.fcall(function () {
+        if (club && club.id)
+          return DB.Model.findByIdAsync(DB.Model.Club, club.id);
+        return null;
+      }),
+      // 2nd : authentify & find the player
+      DB.isAuthenticatedAsync(req.query)
+        .then(function (authentifiedPlayer) {
         if (!authentifiedPlayer)
-          return app.defaultError(res)("player not authenticated");
-        // FIXME: use http://mongoosejs.com/docs/api.html#model_Model-findByIdAndUpdate
-        DB.Model.Player.findOne({_id:req.params.id})
-                      .exec(function (err, player) {
-          if (err)
-            return app.defaultError(res)(err);
-          if (player === null)
-            return app.defaultError(res)("no player found");
-          // updating player
-          var inlinedClub = (club) ? { id: club.id, name: club.name } : null;
-          if (inlinedClub) {
-            player["club"] = inlinedClub;
-          }
-          ["nickname", "name", "rank", "idlicense"].forEach(function (o) {
-            if (typeof req.body[o] !== "undefined")
-              player[o] = req.body[o];
-          });
-          // position
-          if (req.body.location && req.body.location.currentPos)
-            player.location = { currentPos : req.body.location.currentPos };
-          // password
-          if (req.body.uncryptedPassword)
-            player.uncryptedPassword = req.body.uncryptedPassword;
-          // email
-          if (req.body.email && req.body.email.address)
-            player.email.address = req.body.email.address;
-          //
-          player.dates.update = Date.now();
-          // saving player
-          DB.saveAsync(player)
-            .then(function (player) {
-              res.end(JSON.stringifyModels(player, { unhide: [ "token" ] }));
-            },
-          app.defaultError(res, "update error"));
-        });
-      },
-      app.defaultError(res, "authentication error"));
+          throw "player not authenticated";
+      }).then(function () {
+        return DB.Model.findByIdAsync(DB.Model.Player, req.params.id);
+      }).then(function (player) {
+        if (!player)
+          throw "no player found";
+        return player;
+      })
+    ]
+  ).then(function (qall) {
+    var club = qall[0];
+    var player = qall[1];
+    // updating player
+    var inlinedClub = (club) ? { id: club.id, name: club.name } : null;
+    if (inlinedClub) {
+      player["club"] = inlinedClub;
+    }
+    ["nickname", "name", "rank", "idlicense"].forEach(function (o) {
+      if (typeof req.body[o] !== "undefined")
+        player[o] = req.body[o];
+    });
+    // position
+    if (req.body.location && req.body.location.currentPos)
+      player.location = { currentPos : req.body.location.currentPos };
+    // password
+    if (req.body.uncryptedPassword)
+      player.uncryptedPassword = req.body.uncryptedPassword;
+    // email
+    if (req.body.email && req.body.email.address)
+      player.email.address = req.body.email.address;
+    //
+    player.dates.update = Date.now();
+    // saving player
+    return DB.saveAsync(player);
+  }).then(function (player) {
+    res.end(JSON.stringifyModels(player, { unhide: [ "token" ] }));
   }, app.defaultError(res));
 });
 

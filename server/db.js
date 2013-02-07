@@ -674,6 +674,10 @@ DB.Model.Game.createOwnedPlayersAsync = function (teams, owner) {
   return Q.all(promises);
 };
 
+DB.Model.findByIdAsync = function (model, id) {
+  return Q.nfcall(model.findById.bind(model), id);
+};
+
 // custom JSON api
 JSON.stringifyModels = function (m, options) {
   options = options || {};

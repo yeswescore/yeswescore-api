@@ -5,7 +5,6 @@ var app = require("./app.js")
   
 // helpers
 require('./helpers.js');
-require('./q.js');
 
 // default Content-Type
 app.use(function (req, res, next) {
