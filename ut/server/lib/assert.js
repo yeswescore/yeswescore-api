@@ -221,7 +221,8 @@ assert.isPlayerScheme = function (player, m) {
       update: { _type: "date" }
     },
     email: {
-      address: { _type: "string|undefined" }
+      address: { _type: "string|undefined" },
+      status: { _type: "enum|undefined", _enum: [ "pending-confirmation", "confirmed" ] }
     },
     idlicense: { _type: "string|undefined" },
     rank: { _type: "string|undefined" },

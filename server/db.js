@@ -158,7 +158,8 @@ DB.Definition.Player = {
     address: { type: String, unique: true, sparse: true },
     // internal features of the email. 
     // should be refactored withe mailer worker + redis stack.
-    _status: { type: String, enum: ["pending-confirmation", "confirmed"] },
+    status: { type: String, enum: ["pending-confirmation", "confirmed"] },
+    _backup: { type: String },
     _token: { type: String },
     _dates: {
       _created: { type: Date },
@@ -510,9 +511,9 @@ DB.Model.Player.isEmailRegisteredAsync = function (email) {
     {
       "email.address": email,
       $or: [
-        { "email._status": "confirmed" },
+        { "email.status": "confirmed" },
         {
-          "email._status": "pending-confirmation",
+          "email.status": "pending-confirmation",
           "email._dates._created": { $gt: Date.now() - 3600 * 1000 }
         }
       ]

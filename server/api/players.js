@@ -241,7 +241,7 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
       // registering email.
       // might be race condition between check & set. but will be catch by the index.
       player.email.address = req.body.email.address;
-      player.email._status = "pending-confirmation";
+      player.email.status = "pending-confirmation";
       player.email._token = DB.Model.Player.createEmailToken();
       player.email._dates._created = Date.now();
       // sending token by email.
@@ -320,11 +320,33 @@ app.post('/v1/players/:id', express.bodyParser(), function(req, res){
     // password
     if (req.body.uncryptedPassword)
       player.uncryptedPassword = req.body.uncryptedPassword;
-    // email
-    if (req.body.email && req.body.email.address)
-      player.email.address = req.body.email.address;
-    //
     player.dates.update = Date.now();
+    // email
+    if (req.body.email && typeof req.body.email.address === "string")
+    {
+      // user want to "unregister"
+      if (req.body.email.address == "") {
+        if (player.email) {
+          player.email = undefined;
+        }
+      } else {
+        // update ?
+        if (!player.email ||
+             player.email.address !== req.body.email.address) {
+          // we need to update
+          // first: backup old address if confirmed
+          if (player.email && player.email.address &&
+              player.email.status === "confirmed")
+            player.email._backup = player.email.address;
+          // second: update db to use new address.
+          player.email.address = req.body.email.address;
+          player.email.status = "pending-confirmation";
+          player.email._token = DB.Model.Player.createEmailToken();
+          player.email._dates._created = Date.now();
+          player.email._dates._confirmed = undefined;
+        }
+      }
+    }
     // saving player
     return DB.saveAsync(player);
   }).then(function (player) {

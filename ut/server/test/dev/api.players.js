@@ -274,6 +274,29 @@ describe('dev:players', function(){
     });
   });
   
+  describe('create player, then modify its email.', function () {
+    it('should modify the email but not backup it, status should be "pending-confirmation"', function (done) {
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["api.players"]
+      };
+      
+      var newPlayer = {
+        name: "TU-"+Math.random(),
+        email: { address: "marcd-"+Math.random()+"@zescore.com" },
+      };
+      http.post(options, newPlayer, function (player) {
+        assert.isPlayerWithToken(player);
+        assert(newPlayer.name === player.name, "must have same name");
+        assert(newPlayer.email.address === player.email.address, "must have same email");
+        assert(player.email.status === "pending-confirmation", "email status must be pending");
+        
+        done();
+      });
+    });
+  });
+  
   describe('try to modify player without token', function () {
     it('should generate an unauthrorized error', function (done) {
       var options = {
