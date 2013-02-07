@@ -67,6 +67,10 @@ var Email = {
       url = Conf.getAbsoluteUrl(Conf.get("api.email")+"confirm/?token="+token);
       app.log("EMAIL: sendEmailConfirmation callback url: "+url);
       // FIXME: locals.
+      if (Conf.env === "DEV" && !Conf.get("email.send.confirmation")) {
+        app.log('EMAIL: simulating sending email to ' + email);
+        return url;
+      }
       this.send(
         email,
         'Confirmation de votre email',
