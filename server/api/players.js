@@ -2,6 +2,7 @@ var DB = require("../db.js")
   , express = require("express")
   , app = require("../app.js")
   , Email = require("../email.js")
+  , Conf = require("../conf.js")
   , Q = require("q");
 
 /**
@@ -234,6 +235,7 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
     var player = new DB.Model.Player({
         nickname: req.body.nickname || "",
         name: req.body.name || "",
+        language: req.body.language || Conf.get("default.language"),
         location : { currentPos: req.body.location.currentPos || [] },
         rank: req.body.rank || "",
         idlicense: req.body.idlicense || "",
@@ -317,7 +319,7 @@ app.post('/v1/players/:id', express.bodyParser(), function(req, res){
     if (inlinedClub) {
       player["club"] = inlinedClub;
     }
-    ["nickname", "name", "rank", "idlicense"].forEach(function (o) {
+    ["nickname", "name", "rank", "idlicense", "language"].forEach(function (o) {
       if (typeof req.body[o] !== "undefined")
         player[o] = req.body[o];
     });

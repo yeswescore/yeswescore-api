@@ -237,6 +237,7 @@ assert.isPlayerScheme = function (player, m) {
       address: { _type: "string|undefined" },
       status: { _type: "enum|undefined", _enum: [ "pending-confirmation", "confirmed" ] }
     },
+    language: { _type: "enum|undefined", _enum: [ "fr", "en"] },
     idlicense: { _type: "string|undefined" },
     rank: { _type: "string|undefined" },
     token: { _type: "string|undefined" },

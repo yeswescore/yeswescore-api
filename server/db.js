@@ -163,9 +163,11 @@ DB.Definition.Player = {
     _token: { type: String },
     _dates: {
       _created: { type: Date },
+      _sended: { type: Date },
       _confirmed: { type: Date }
     }
   },
+  language: { type: String, enum: [ "fr", "en"] },
   idlicense: String,
   password: { type: String, default: null },
   token: { type: String, default: DB.generateToken },
