@@ -78,6 +78,43 @@ describe('dev:players', function(){
     });
   });
   
+  describe('create two player with the same email', function () {
+    it('should be an error on the second player', function (done) {
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["api.players"]
+      };
+      
+      var email = "marcd-"+Math.random()+"@zescore.com";
+      var newPlayer = {
+        name: "TU-"+Math.random(),
+        email: { address: email }
+      };
+      http.post(options, newPlayer, function (player) {
+        assert.isPlayerWithToken(player);
+        assert(newPlayer.name === player.name, "must have same name");
+        assert(newPlayer.email.address === player.email.address, "must have same email");
+        
+        // verify player exist in DB.
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["api.players"]
+        };
+        newPlayer = {
+          name: "TU-"+Math.random(),
+          email: { address: email } // same email
+        };
+        http.post(options, newPlayer, function (player) {
+          assert.isError(player);
+          assert(player.error == "email already registered", "error should be email already registered");
+          done();
+        });
+      });
+    });
+  });
+  
   describe('create basic player default values, then read it.', function () {
     it('should create the player (not empty & valid)', function (done) {
       var options = {

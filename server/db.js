@@ -156,10 +156,13 @@ DB.Definition.Player = {
   },
   email: {
     address: { type: String, unique: true, sparse: true },
-    status: { type: String, enum: ["saved", "confirmed"] },
-    dates: {
-      saved: { type: Date },
-      confirmed: { type: Date }
+    // internal features of the email. 
+    // should be refactored withe mailer worker + redis stack.
+    _status: { type: String, enum: ["pending-confirmation", "confirmed"] },
+    _token: { type: String },
+    _dates: {
+      _created: { type: Date },
+      _confirmed: { type: Date }
     }
   },
   idlicense: String,
@@ -466,6 +469,13 @@ DB.Schema.Game.post('save', function () {
 
 // Hidden fields
 var hiddenFields = ["password", "token"];
+var deletePrivatesRec = function (o) {
+  Object.keys(o).forEach(function (key) {
+    if (key[0] === "_") delete o[key];
+    if (typeof o[key] === "object" && o[key])
+      deletePrivatesRec(o[key]);
+  });
+};
 for (var schemaName in DB.Schema) {
   (function (schema) {
     // Adding transform default func
@@ -477,9 +487,8 @@ for (var schemaName in DB.Schema) {
           options.unhide.forEach(function (field) { hide.remove(field) });
         }
         // removing private fields
-        Object.keys(ret).forEach(function (key) {
-          if (key[0] === "_") delete ret[key];
-        });
+        //    /!\ performance hit :( !!
+        deletePrivatesRec(ret);
         // removing hidden fields
         hide.forEach(function (prop) { delete ret[prop] });
       }
@@ -493,6 +502,29 @@ for (var schemaName in DB.Schema) {
 DB.Model.Club = mongoose.model("Club", DB.Schema.Club);
 DB.Model.Player = mongoose.model("Player", DB.Schema.Player);
 DB.Model.Game = mongoose.model("Game", DB.Schema.Game);
+
+
+DB.Model.Player.isEmailRegisteredAsync = function (email) {
+  return Q.nfcall(
+    DB.Model.Player.findOne.bind(DB.Model.Player),
+    {
+      "email.address": email,
+      $or: [
+        { "email._status": "confirmed" },
+        {
+          "email._status": "pending-confirmation",
+          "email._dates._created": { $gt: Date.now() - 3600 * 1000 }
+        }
+      ]
+    }
+  );
+};
+
+DB.Model.Player.createEmailToken = function () {
+  var shasum = crypto.createHash('sha256');
+  shasum.update(Math.random()+' w00t '+Math.random());
+  return shasum.digest('hex');
+};
 
 DB.Model.Game.checkFields = function (game) {
   // FIXME: can some tests be done with express ? or mongoose ?

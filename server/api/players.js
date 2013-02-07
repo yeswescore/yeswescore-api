@@ -208,22 +208,23 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
   if (req.body.type &&
       DB.Definition.Player.type.enum.indexOf(req.body.type) === -1)
     return app.defaultError(res)("unknown type");
-  // club ? => reading club to get the name
-  var deferred = Q.defer();
-  var club = req.body.club;
-  if (club && club.id) {
-    DB.Model.Club.findById(club.id, function (err, club) {
-      if (err)
-        return deferred.reject(err);
-      deferred.resolve(club);
-    });
-  } else {
-    deferred.resolve(null);
-  }
-  deferred.promise.then(function (club) {
-    // fixme: should be typeof object ?
-    req.body.location = (req.body.location) ? req.body.location : {};
-    req.body.email = (req.body.email) ? req.body.email : {};
+
+  // preprocessing req.body.
+  req.body.location = (req.body.location) ? req.body.location : {};
+  req.body.email = (req.body.email) ? req.body.email : {};
+  
+  Q.if(
+    req.body.email && req.body.email.address,
+    DB.Model.Player.isEmailRegisteredAsync(req.body.email.address)
+  ).then(function (emailRegistered) {
+    if (emailRegistered)
+      throw "email already registered";
+  }).then(function () {
+    var club = req.body.club;
+    if (club && club.id)
+      return Q.nfcall(DB.Model.Club.findById.bind(DB.Model.Club), club.id);
+    return null;
+  }).then(function (club) {
     // creating a new player
     var inlinedClub = (club) ? { id: club.id, name: club.name } : null;
     var player = new DB.Model.Player({
@@ -235,8 +236,16 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
         club: inlinedClub, // will be undefined !
         type: req.body.type || "default"
     });
-    if (req.body.email && req.body.email.address)
+    if (req.body.email && req.body.email.address) {
+      // registering email.
+      // might be race condition between check & set. but will be catch by the index.
       player.email.address = req.body.email.address;
+      player.email._status = "pending-confirmation";
+      player.email._token = DB.Model.Player.createEmailToken();
+      player.email._dates._created = Date.now();
+      // sending token by email.
+      app.log('FIXME: send token [' + player.email._token + '] by email');
+    }
     // password
     if (req.body.uncryptedPassword)
       player.uncryptedPassword = req.body.uncryptedPassword;

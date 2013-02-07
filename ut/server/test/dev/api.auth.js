@@ -32,7 +32,7 @@ describe('dev:auth', function(){
         };
         
         var body = {
-          email: newPlayer.email.address,
+          email: { address: newPlayer.email.address },
           uncryptedPassword: newPlayer.uncryptedPassword
         };
         
