@@ -544,6 +544,87 @@ describe('dev:players', function(){
     });
   });
   
+  describe('create a player, confirm its password, reset the password', function () {
+    it('should be ok', function (done) {
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["api.players"]
+      };
+      
+      var email = "marcd-"+Math.random()+"@zescore.com";
+      var newPlayer = {
+        name: "TU-"+Math.random(),
+        email: { address: email }
+      };
+      http.post(options, newPlayer, function (player) {
+        assert.isPlayerWithToken(player);
+        assert(newPlayer.name === player.name, "must have same name");
+        assert(newPlayer.email.address === player.email.address, "must have same email");
+        
+        // now confirm the password (using the token)
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["documents.players"]+player.id
+        };
+        http.getJSON(options, function (docPlayer) {
+          assert.isObject(docPlayer);
+          assert(docPlayer._id == player.id, "doc & player should have the same id");
+          assert(typeof docPlayer.email._token === "string", "docPlayer should have email token");
+          
+          var emailToken = docPlayer.email._token;
+          var options = {
+            host: Conf["http.host"],
+            port: Conf["http.port"],
+            path: Conf["api.email"]+"confirm/?token="+emailToken
+          };
+          http.getJSON(options, function (result) {
+            assert(typeof result.error === "undefined", "should'nt be an error");
+            
+            // read the player again (should be confirmed)
+            var options = {
+              host: Conf["http.host"],
+              port: Conf["http.port"],
+              path: Conf["documents.players"]+player.id
+            };
+            
+            http.getJSON(options, function (docPlayer) {
+              assert(docPlayer.email.status === "confirmed", "status should be confirmed");
+              
+              var oldEncryptedPassword = docPlayer.password;
+              
+              // now the status is confirmed, we can try reset the password !
+              var options = {
+                host: Conf["http.host"],
+                port: Conf["http.port"],
+                path: Conf["api.auth"]+"passwordReset/"
+              };
+              
+              http.post(options, { email: { address: email } }, function (result) {
+                assert(typeof result === "object", "result must be an object");
+                assert(typeof result.error === "undefined", "result shouldn't be an error");
+                
+                // now we check if encrypted password has realy changed !
+                // FIXME: one day, we should really check email results...
+                
+                var options = {
+                  host: Conf["http.host"],
+                  port: Conf["http.port"],
+                  path: Conf["documents.players"]+player.id
+                };
+                http.getJSON(options, function (docPlayer) {
+                  assert(docPlayer.password !== oldEncryptedPassword, "password should have changed");
+                  done();
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+  });
+  
   describe('FIXME: read players filtering by club', function() {
     it('should read player checking params: security, pregQuote, ...', function (done) {
       done(/* FIXME */);
