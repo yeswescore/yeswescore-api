@@ -265,7 +265,7 @@ app.post('/v1/games/:id', express.bodyParser(), function(req, res){
       return deferred.promise;
     }).then(function updateFields(game) {
       // updatable simple fields
-      if (req.body.status !== "undefined")
+      if (typeof req.body.status !== "undefined")
         game.status = req.body.status;
       if (typeof req.body.location !== "undefined") {
         if (typeof req.body.location.country === "string")
