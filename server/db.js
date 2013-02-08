@@ -387,8 +387,8 @@ DB.Schema.Game.pre('save', function (next) {
   // infos for post save
   this._wasModified = [];
   // game._searchableCity
-  if (this.isModified('city'))
-    this._searchableCity = this.city.searchable();
+  if (this.isModified('location.city'))
+    this._searchableCity = this.location.city.searchable();
   // game._teams
   if (this.isModified('teams')) {
     this._wasModified.push('teams');

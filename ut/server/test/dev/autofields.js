@@ -18,6 +18,60 @@ describe('FIXME: autofields:club', function(){
 });
 
 describe('autofields:player', function(){
+  describe('update game city', function () {
+    it('should update game._searchableCity', function (done) {
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.games"]+"random"
+      };
+      
+      http.getJSON(options, function (randomGame) {
+        assert.isObject(randomGame, "should be an object");
+        assert.isId(randomGame._id, "should be an id");
+        
+        // read game owner
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["documents.players"]+randomGame.owner
+        };
+        http.getJSON(options, function (owner) {
+          assert.isObject(owner);
+          assert.isId(owner._id);
+          
+          // update the game
+          var options = {
+            host: Conf["http.host"],
+            port: Conf["http.port"],
+            path: Conf["api.games"]+randomGame._id+"/?playerid="+owner._id+"&token="+owner.token
+          };
+          
+          var cityName = "city"+Math.round(Math.random()*10000);
+          http.post(options, { location: { city: cityName } }, function (game) {
+            assert.isObject(game);
+            assert.isId(game.id, "game shoud have an id");
+            assert(game.location.city === cityName, "city should have been updated");
+            
+            // searching 
+            var options = {
+              host: Conf["http.host"],
+              port: Conf["http.port"],
+              path: Conf["api.games"]+"?q="+cityName
+            };
+            http.getJSON(options, function (games) {
+              assert(Array.isArray(games), "games should be an array");
+              assert(games.length === 1, "should have found the game !");
+              
+              done();
+            });
+          });
+        });
+      });
+    });
+  });
+  
+  
   describe('update player nickname, name', function () {
     it('should update player._searchableNickame, _searchableName', function (done) {
       var options = {
