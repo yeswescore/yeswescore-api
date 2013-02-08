@@ -598,7 +598,7 @@ describe('dev:players', function(){
               var options = {
                 host: Conf["http.host"],
                 port: Conf["http.port"],
-                path: Conf["api.auth"]+"passwordReset/"
+                path: Conf["api.auth"]+"resetPassword/"
               };
               
               http.post(options, { email: { address: email } }, function (result) {

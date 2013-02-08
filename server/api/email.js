@@ -62,7 +62,7 @@ if (Conf.env === "DEV") {
         if (err)
           return app.defaultError(res)(err);
         if (!player)
-          return app.defaultError(res)("no player found");
+          return app.defaultError(res)("no player found ("+req.query.email+")");
         if (player.email.status !== "pending-confirmation")
           return app.defaultError(res)("wrong status ? already send ?");
         if (typeof player.email._token === "undefined")
@@ -70,5 +70,40 @@ if (Conf.env === "DEV") {
         var url = Email.sendEmailConfirmation(player.email.address, player.email._token, language);
         res.end('email send, callback url='+url);
       });
+  });
+  
+  // hand unit test :)
+  app.get('/v1/email/sendPassword/', function (req, res) {
+    if (typeof req.query.email !== "string" || !req.query.email)
+      return app.defaultError(res)("missing email");
+    var language = req.query.language || "fr";
+    
+    var data = JSON.stringify({ email: { address: req.query.email } });
+    var postOptions = {
+      host: Conf["http.host"],
+      port: Conf["http.port"],
+      path: Conf["api.auth"]+"resetPassword/",
+      method : "POST",
+      headers : {
+        'Content-Type': 'application/json',
+        'Content-Length': data.length
+      }
+    };
+    
+    // posting to ourself
+    var http = require("http");
+    var r = http.request(postOptions, function(re) {
+      var answer = "";
+      re.on("data", function (chunk) { answer += chunk })
+        .on("end", function () {
+          // forwarding result
+          res.end(answer);
+        });
+    });
+    r.on("error", function (e) {
+      app.defaultError(res)(err);
+    });
+    r.write(data);
+    r.end();
   });
 }

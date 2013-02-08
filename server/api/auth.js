@@ -2,6 +2,7 @@ var DB = require("../db.js")
   , express = require("express")
   , app = require("../app.js")
   , Q = require("q")
+  , Email = require("../email.js")
   , crypto = require("crypto");
   
 /**
@@ -42,7 +43,7 @@ app.post('/v1/auth/', express.bodyParser(), function(req, res){
  *   email: { address: ... },    MANDATORY
  * }
  */
-app.post('/v1/auth/passwordReset/', express.bodyParser(), function(req, res){
+app.post('/v1/auth/resetPassword/', express.bodyParser(), function(req, res){
   var fields = req.query.fields;
   
   if (typeof req.body.email !== "object" || !req.body.email ||
@@ -66,7 +67,9 @@ app.post('/v1/auth/passwordReset/', express.bodyParser(), function(req, res){
     player.save(function (err) {
       if (err)
         return app.defaultError(res)("internal error");
-      app.log('sending new password '+newUncryptedPassword+' to '+req.body.email.address);
+      // everything went ok => sending email
+      app.log('sending new password to '+req.body.email.address);
+      Email.sendPasswordReset(player.email.address, newUncryptedPassword, player.language);
       res.end(JSON.stringify({ message: "email send"}));
     });
   });

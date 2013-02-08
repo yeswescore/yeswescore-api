@@ -81,6 +81,21 @@ var Email = {
       Resources.getString(language, "email.confirmation.content").replace(/%URL%/g, url)
     );
     return url;
+  },
+  
+  sendPasswordReset: function (email, password, language) {
+    app.log("EMAIL: sendPasswordReset to "+email+" (uncryptedPassword="+password+", language="+language+")");
+    
+    language = language || Conf.get("default.language");
+    if (typeof email !== "string" || !email ||
+        typeof password !== "string" || !password)
+      return null;
+    
+    this.send(
+      email,
+      Resources.getString(language, "email.password.subject"),
+      Resources.getString(language, "email.password.content").replace(/%PASSWORD%/g, password)
+    );
   }
 };
 
