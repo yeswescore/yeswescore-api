@@ -53,7 +53,12 @@ var GameView = Backbone.View.extend({
 
     	//this.clubs.create(new ClubModel({name:'bob'}));
     	
-    	
+        this.gamesfollow = new GamesCollection('follow');
+		result = this.gamesfollow.storage.find({id:this.id});
+		if (result===null) 
+			this.follow = 'false';
+		else	
+			this.follow = 'true';    	
     	
 
         
@@ -89,9 +94,9 @@ var GameView = Backbone.View.extend({
         'vclick #setMinusSetButton': 'setMinusSet',
         'vclick #setPointWinButton': 'setPointWin',   
         'vclick #setPointErrorButton': 'setPointError',           
-        'vclick #endButton': 'end',   
-        'vclick #followButton': 'follow',   
-        'vclick #cancelButton': 'cancel',
+        'vclick #endButton': 'endGame',   
+        'vclick #followButton': 'followGame',   
+        'vclick #cancelButton': 'cancelGame',
         'submit #frmAttachment': 'submitAttachment',
         "keypress #messageText"  : "updateOnEnter",
         'vclick #team1_set1_div': 'setTeam1Set1',
@@ -407,7 +412,7 @@ var GameView = Backbone.View.extend({
         */
         
         // if we have comments
-        console.log('this.game.toJSON().stream ',this.scoreboard.toJSON().stream );
+        //console.log('this.game.toJSON().stream ',this.scoreboard.toJSON().stream );
         
         if (this.scoreboard.toJSON().stream !== undefined )        
         	$(this.incomingComment).html(_.template(this.gameViewCommentListTemplate({streams:this.scoreboard.toJSON().stream.reverse(),query:' '}))); 
@@ -427,7 +432,8 @@ var GameView = Backbone.View.extend({
       //FIXME: refresh only input and id
     	
       this.$el.html(_.template(this.gameViewTemplate({
-                                    game:this.scoreboard.toJSON(),Owner:Owner
+                                    game:this.scoreboard.toJSON(),Owner:Owner,
+                                    follow:this.follow
                                     })));                                        
 
 	  $.mobile.hidePageLoadingMsg();
@@ -441,16 +447,17 @@ var GameView = Backbone.View.extend({
         // do something
     },
     
-    end : function() {
+    endGame : function() {
     	
         window.location.href= '#games/end/'+this.id;
     	
     },
 
-    follow : function() {
+    followGame : function() {
     	
        //this.gamesfollow = new GamesCollection('follow');
        //this.gamesfollow.create(this.scoreboard);
+       //console.log('followGame')
        
     	if (this.follow==='true') 
     	{
@@ -486,7 +493,7 @@ var GameView = Backbone.View.extend({
 
     },
     
-    cancel : function() {
+    cancelGame : function() {
     	
     	console.log('On retire la derniere action');
       	
