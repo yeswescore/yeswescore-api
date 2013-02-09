@@ -5,16 +5,7 @@
 
 <div data-role="content">
 
-<%
-if (follow === 'true') 
-{
-%>
-<span class="success label label-info" style="color:red">Vous suivez ce joueur</span>	
-<%
-}
-%>
-
-  <span class="success label label-info hide" style="color:red"></span>	
+<span class="success label label-info hide" style="color:red"></span>	
 
 <h3><%= player.name %> alias <%= player.nickname %></h3>
 
@@ -25,7 +16,7 @@ Classement : <%= player.rank %><br/>
 if (follow === 'true') 
 {
 %>
-<a data-role="button" id="nofollowPlayerButton">Ne plus suivre ce joueur</a>
+<a data-role="button" id="followPlayerButton">Ne plus suivre ce joueur</a>
 <%
 }
 else {
