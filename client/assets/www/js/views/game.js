@@ -9,6 +9,7 @@ var GameView = Backbone.View.extend({
 
     initialize:function() {
     	
+    	//FIXME : temps de rafrichissement selon batterie et selon forfait
 
         this.gameViewTemplate = _.template(tpl.get('gameViewTemplate'));
         this.gameViewScoreBoardTemplate = _.template(tpl.get('gameViewScoreBoardTemplate')); 
