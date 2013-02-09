@@ -449,9 +449,40 @@ var GameView = Backbone.View.extend({
 
     follow : function() {
     	
-       this.gamesfollow = new GamesCollection('follow');
-
-       this.gamesfollow.create(this.scoreboard);
+       //this.gamesfollow = new GamesCollection('follow');
+       //this.gamesfollow.create(this.scoreboard);
+       
+    	if (this.follow==='true') 
+    	{
+	       this.gamesfollow = new GamesCollection('follow');
+	       
+	       console.log('On ne suit plus nofollow '+this.id);
+	       
+	       this.gamesfollow.storage.remove(this.scoreboard);
+	    	       
+	       $('span.success').html('Vous ne suivez plus ce match').show();
+	       //$('#followPlayerButton').html('Suivre ce joueur');
+       	   $("#followButton .ui-btn-text").text("Suivre");	       
+	       
+	       this.follow = 'false';
+       
+		}
+		else 
+		{
+		
+       		this.gamesfollow = new GamesCollection('follow');
+       		
+       		this.gamesfollow.create(this.scoreboard);
+    	       
+       		$('span.success').html('Vous suivez ce joueur').show();	
+       		//$('#followPlayerButton').html('Ne plus suivre ce joueur');	
+       		$("#followButton .ui-btn-text").text("Ne plus suivre");
+       		
+	        this.follow = 'true';       		
+       		
+		}
+		
+		this.$el.trigger('pagecreate');       
 
     },
     
