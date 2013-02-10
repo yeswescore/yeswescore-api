@@ -21,9 +21,10 @@ var GameView = Backbone.View.extend({
 
 		cache = this.games.storage.find({id:this.id});
 		this.scoreboard = new GameModel(cache);
-		this.scoreboard.on( 'all', this.render, this );	
+		//this.scoreboard.on( 'all', this.render, this );	
 		console.log('this.scoreboard',this.scoreboard.toJSON());
 		this.render();
+		this.renderRefresh();
 		
 		//TODO
 		//créer la cache pour Player et CLub selectionné
@@ -71,14 +72,15 @@ var GameView = Backbone.View.extend({
         
 
 		//FIXME: SI ONLINE
+		
     	this.score = new GameModel(cache);
-    	//console.log('sid est '+cache.sid);
     	this.score.id = cache.sid;
     	poller = Backbone.Poller.get(this.score, options)
     	poller.start();
         poller.on('success', this.renderRefresh, this);    
           	
-        //  	
+          	
+        // NO USE 	
     	//first poll
 		//poller.on('complete', this.render, this);
 		//next poll
@@ -502,11 +504,12 @@ var GameView = Backbone.View.extend({
     onClose: function(){
       //Clean
       this.undelegateEvents();
-      this.scoreboard.off("all",this.render,this); 
+      //this.scoreboard.off("all",this.render,this); 
       
       //FIXME:remettre
       poller.stop();
       poller.off('success', this.renderRefresh, this);
+      
 
       //FIXME:
       //poller.off('complete', this.render, this);
