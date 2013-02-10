@@ -15,7 +15,10 @@ var GameView = Backbone.View.extend({
         this.gameViewScoreBoardTemplate = _.template(tpl.get('gameViewScoreBoardTemplate')); 
         this.gameViewCommentListTemplate = _.template(tpl.get('gameViewCommentListTemplate'));        
     	
-    	Owner = JSON.parse(window.localStorage.getItem("Owner"));
+    	
+    	//Owner = JSON.parse(window.localStorage.getItem("Owner"));
+		this.Owner = new PlayersCollection("me");
+		 
 
     	this.games = new GamesCollection();
 

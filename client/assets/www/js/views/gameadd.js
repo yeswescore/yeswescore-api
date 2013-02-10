@@ -12,7 +12,13 @@ var GameAddView = Backbone.View.extend({
     	this.gameAddTemplate = _.template(tpl.get('gameAddTemplate'));
     	
 
-	   	Owner = JSON.parse(window.localStorage.getItem("Owner"));
+	   	//Owner = JSON.parse(window.localStorage.getItem("Owner"));
+	   	this.players = new PlayersCollection('me');
+	   	
+	   	console.log('Owner',this.players.storage.findAll({local:true}));
+	   	
+		this.Owner = new PlayerModel(this.players.storage.findAll({local:true}));
+	   	
 
     	this.render();
         $.mobile.hidePageLoadingMsg(); 
@@ -126,7 +132,7 @@ var GameAddView = Backbone.View.extend({
 	    if ( $('#myself').attr('checked') === undefined) {
 	      var q = $("#team1").val();
 	       
-	      this.playersTeam1 = new Players();
+	      this.playersTeam1 = new PlayersCollection();
 	      this.playersTeam1.setMode('search',q);
 	      if (q.length>2) {
 	      	this.playersTeam1.fetch();
@@ -147,7 +153,7 @@ var GameAddView = Backbone.View.extend({
       
     updateListTeam2: function (event) { 
       var q = $("#team2").val();       
-      this.playersTeam2 = new Players();
+      this.playersTeam2 = new PlayersCollection();
       this.playersTeam2.setMode('search',q);
       if (q.length>2) {
       	this.playersTeam2.fetch();
@@ -215,8 +221,8 @@ var GameAddView = Backbone.View.extend({
         //FIXME:si player existe pas on le cree à la volée
         
         
-        //if (id === '') {
-          var game = new Game({
+		/*
+          var game = {
           	team1:team1,
           	team2:team2,
             team1_id:team1_id,
@@ -228,42 +234,52 @@ var GameAddView = Backbone.View.extend({
             subtype: subtype,
             tour: tour,
             token: token
-          });
-       // } 
+          };
+   		*/
        
-       console.log('gameadd',game.toJSON());
+       var game = {     
+			sport:"tennis",
+			status:"ongoing",
+			location:{country:"",city:city,pos:[]},
+			teams:[{points:"",players:[{name:"A",rank:rank1}]},{points:"",players:[{name:"B",rank:rank2}]}],
+			options:{
+			   subtype: "A",
+			   sets: "0/0",
+			   score: "0/0",
+			   court: "",
+			   surface: "",
+			   tour: "",
+			},
+	        updated_at : new Date()    
+	    };
+	    
+	    if (team1_id.length>2)
+	    	game.teams[0].players[0].id = team1_id;
+	    else
+	    	game.teams[0].players[0].name = team1;
+
+	    	
+	    if (team2_id.length>2)
+	    	game.teams[1].players[0].id = team2_id;	    
+	    else
+	    	game.teams[1].players[0].name = team2;	    
+
+       console.log('gameadd on envoie objet ',game);
         
-        /*
-        else {
-          var game = new Game({
-            id: id,
-            team1: team1_id,
-            team2: team2_id,
-            city: city,
-            playerid: playerid,
-            token: token
-          });
-        }
-        */
-        
-        //on sauve dans model
-        //game.save();
         
         //On sauve dans Collections
-        games = new Games();
-        games.create(game);
+        games = new GamesCollection();
+        gamecache = games.create(game);
      
-        //games.save(name: 'Diving with scuba') # local save
-        //Si connexion on envoie au serveur
-		games.storage.sync.push(); // POST /api/dreams and PUT /api/dreams/:id
+        //Si connexion on envoie au serveur    
+		//games.storage.sync.push(); // POST /api/dreams and PUT /api/dreams/:id
+		
+		console.log('gamecache.id ',gamecache.id);
         
+        if (gamecache.id !== 'null')
+        	//Backbone.Router.navigate("/#games/"+gamecache.id, true);
+			window.location.href ='#games/'+gamecache.id;
 
-        //if (game.id !== 'null')
-        	//Backbone.Router.navigate("/#games/"+game.id, true);
-        //	console.log('routage');
-
-       
-  	  
         return false;
       },     
     
@@ -271,7 +287,7 @@ var GameAddView = Backbone.View.extend({
     //render the content into div of view
     render: function(){
 
-	   	this.$el.html(_.template(this.gameAddTemplate({playerid:Owner.id,token:Owner.token})));     
+	   	this.$el.html(_.template(this.gameAddTemplate({playerid:this.Owner.id,token:this.Owner.token})));     
                                     
 	   	this.$el.trigger('pagecreate');
       

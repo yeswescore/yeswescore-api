@@ -18,6 +18,8 @@ var PlayersCollection = Backbone.Collection.extend({
 		
 		if (param==='follow')
 			this.storage = new Offline.Storage('playersfollow', this, {local:true});		
+		else if (param==='me')
+			this.storage = new Offline.Storage('Owner', this, {local:true});
 		else		
 			this.storage = new Offline.Storage('players', this);	
 		

@@ -11,7 +11,7 @@ jQuery.support.cors = true;
 /* pas de cache */
 jQuery.ajaxSetup({ cache: false });
 
-DEV = '1';
+DEV = '0';
 
 if (DEV === '1') {
 	var appConfig = {

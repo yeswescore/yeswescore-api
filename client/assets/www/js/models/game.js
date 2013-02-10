@@ -138,8 +138,8 @@ var GameModel = Backbone.Model.extend({
 			teams:[{points:"",players:[{name:"A"}]},{points:"",players:[{name:"B"}]}],
 			options:{
 			   subtype: "A",
-			   sets: "",
-			   score: "",
+			   sets: "0/0",
+			   score: "0/0",
 			   court: "",
 			   surface: "",
 			   tour: "",

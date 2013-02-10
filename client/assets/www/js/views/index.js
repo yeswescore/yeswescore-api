@@ -50,8 +50,12 @@ var IndexView = Backbone.View.extend({
         	//debug si pas de Owner, on init le localStorage
         	window.localStorage.clear();
         	
-            player = new PlayerModel();
-            player.save();
+            //player = new PlayerModel();
+            //player.save();
+            players = new PlayersCollection('me');
+            players.create();
+            
+            
         }
         
         
