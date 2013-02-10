@@ -11,17 +11,17 @@ var GameFollowView = Backbone.View.extend({
         
         $.mobile.showPageLoadingMsg();
         
-        this.games = new GamesFollow();
-        this.games.fetch();
-        
-
+        this.games = new GamesCollection('follow');
+		this.gamesfollow = new GamesCollection(this.gamesfollow.storage.findAll({local:true}));
+		
         this.render();
         
         //this.games.on( 'all', this.renderList, this );
-        this.games.on("all", this.renderList, this);
+        //this.games.on("all", this.renderList, this);
         //this.games.findAll();
         
         //$.mobile.showPageLoadingMsg();
+        this.renderList();
         
     },
     
@@ -68,7 +68,7 @@ var GameFollowView = Backbone.View.extend({
     
      console.log('renderList');
     	
-      $(this.listview).html(_.template(this.gameListViewTemplate({games:this.games.toJSON(),query:' '})));    	
+      $(this.listview).html(_.template(this.gameListViewTemplate({games:this.gamesfollow.toJSON(),query:' '})));    	
 
       $(this.listview).listview('refresh');
       
@@ -81,7 +81,7 @@ var GameFollowView = Backbone.View.extend({
     onClose: function(){
       //Clean
       this.undelegateEvents();
-      this.games.off("all",this.renderList,this);
+      //this.games.off("all",this.renderList,this);
       
     }
 
