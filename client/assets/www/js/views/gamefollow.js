@@ -12,7 +12,7 @@ var GameFollowView = Backbone.View.extend({
         $.mobile.showPageLoadingMsg();
         
         this.games = new GamesCollection('follow');
-		this.gamesfollow = new GamesCollection(this.gamesfollow.storage.findAll({local:true}));
+		this.gamesfollow = new GamesCollection(this.games.storage.findAll({local:true}));
 		
         this.render();
         

@@ -32,13 +32,13 @@ if (DEV === '1') {
 }
 else {
 	var appConfig = {
-			  apiURL : "http://api.zescore.com",
-			  serviceAuth : "http://api.zescore.com/v1/auth/",		  
-			  serviceConf : "http://api.zescore.com/bootstrap/conf.json",		  
-			  serviceURL : "http://api.zescore.com/v1/",
-			  serviceURLGames : "http://api.zescore.com/v1/games/",
-			  serviceURLPlayers : "http://api.zescore.com/v1/players/",
-			  serviceURLClubs : "http://api.zescore.com/v1/clubs/",
+			  apiURL : "http://api.yeswescore.com",
+			  serviceAuth : "http://api.yeswescore.com/v1/auth/",		  
+			  serviceConf : "http://api.yeswescore.com/bootstrap/conf.json",		  
+			  serviceURL : "http://api.yeswescore.com/v1/",
+			  serviceURLGames : "http://api.yeswescore.com/v1/games/",
+			  serviceURLPlayers : "http://api.yeswescore.com/v1/players/",
+			  serviceURLClubs : "http://api.yeswescore.com/v1/clubs/",
 			  versionClient : "0.0.0.1",
 			  gameRefresh : 35000,
 			  networkState: "false",

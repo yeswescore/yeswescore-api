@@ -13,12 +13,11 @@ var GameAddView = Backbone.View.extend({
     	
 
 	   	//Owner = JSON.parse(window.localStorage.getItem("Owner"));
-	   	this.players = new PlayersCollection('me');
-	   	
-	   	console.log('Owner',this.players.storage.findAll({local:true}));
-	   	
+	   	this.players = new PlayersCollection('me');   	
+	   	//console.log('Owner',this.players.storage.findAll({local:true}));	   	
 		this.Owner = new PlayerModel(this.players.storage.findAll({local:true}));
 	   	
+	   	console.log('Owner',this.Owner);
 
     	this.render();
         $.mobile.hidePageLoadingMsg(); 

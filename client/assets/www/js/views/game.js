@@ -17,8 +17,11 @@ var GameView = Backbone.View.extend({
     	
     	
     	//Owner = JSON.parse(window.localStorage.getItem("Owner"));
-		this.Owner = new PlayersCollection("me");
-		 
+		this.players = new PlayersCollection("me");
+	   	//console.log('Owner',this.players.storage.findAll({local:true}));		
+		this.Owner = new PlayerModel(this.players.storage.findAll({local:true}));  
+		
+		console.log('Owner',this.Owner);
 
     	this.games = new GamesCollection();
 
@@ -45,10 +48,10 @@ var GameView = Backbone.View.extend({
     		this.players.create(new PlayerModel(cache.teams[1].players[0]));
     		
     		//Add Club
-    		if (cache.teams[0].players[0].club.id !== undefined ) {	
+    		if (cache.teams[0].players[0].club !== undefined ) {	
     			this.clubs.create(new ClubModel(cache.teams[0].players[0].club));
     		}
-    		if (cache.teams[1].players[0].club.id !== undefined ) {	
+    		if (cache.teams[1].players[0].club !== undefined ) {	
     			this.clubs.create(new ClubModel(cache.teams[1].players[0].club));
     		}    		
     		
@@ -402,7 +405,7 @@ var GameView = Backbone.View.extend({
         this.games.storage.save(this.scoreboard);
         
         //On rafraichit tout 
-        $(this.displayViewScoreBoard).html(_.template(this.gameViewScoreBoardTemplate({game:this.scoreboard.toJSON(),Owner:Owner})));    	
+        $(this.displayViewScoreBoard).html(_.template(this.gameViewScoreBoardTemplate({game:this.scoreboard.toJSON(),Owner:this.Owner})));    	
 
         //FIXME: refresh div
         $(this.displayViewScoreBoard).listview('refresh');
@@ -437,7 +440,7 @@ var GameView = Backbone.View.extend({
       //FIXME: refresh only input and id
     	
       this.$el.html(_.template(this.gameViewTemplate({
-                                    game:this.scoreboard.toJSON(),Owner:Owner,
+                                    game:this.scoreboard.toJSON(),Owner:this.Owner,
                                     follow:this.follow
                                     })));                                        
 
