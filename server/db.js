@@ -962,7 +962,8 @@ var generateGamesAsync = function () {
           var comment = {
             type: "comment",
             owner: players.random().id,
-            data: { text: generateFakeComment() }
+            data: { text: generateFakeComment() },
+            dates: { creation: Date.now() + 10 * j }
           }
           game.stream.push(comment);
         }

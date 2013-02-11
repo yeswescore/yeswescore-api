@@ -120,6 +120,57 @@ app.get('/v1/games/:id', function (req, res){
   });
 });
 
+/**
+ * Read a game stream
+ * 
+ * Generic options:
+ *  /v1/games/:id/stream/?limit=5       (default=10)
+ *
+ * Specific options:
+ *  /v1/games/:id/stream/?after=
+ * 
+ * WARNING: might be performance hits. We can't use $elemMatch (see below).
+ * FIXME: solution: create a separate collection for the stream.
+ */
+app.get('/v1/games/:id/stream/', function (req, res){
+  var limit = req.query.limit || 5;
+  var after = req.query.after || null;
+  
+  // searching player by id.
+  var query = DB.Model.Game.findById(req.params.id)
+  query.exec(function (err, game) {
+    if (err)
+      return app.defaultError(res)(err);
+    if (game === null)
+      return app.defaultError(res)("no game found");
+    
+    // we select the stream & filter using javascript.
+    // this cannot be done at the driver level using something like
+    // > query.select({ stream: { $elemMatchAll: { 'dates.creation' : { $gte: new Date(after) } } } });
+    // because $elemMatchAll doesn't exist & $elemMatch only return 1 result.
+    // @øee http://docs.mongodb.org/manual/reference/projection/elemMatch/#_S_elemMatch
+    // @see https://jira.mongodb.org/browse/SERVER-6612
+    
+    // after
+    var stream = game.stream || [];
+    if (after) {
+      after = new Date(after).getTime();
+      console.log('after = ' + after);
+      stream = stream.filter(function (streamItem) {
+        console.log(' VS ' + new Date(streamItem.dates.creation).getTime());
+        return new Date(streamItem.dates.creation).getTime() >= after;
+      });
+    }
+    
+    // limit
+    stream = stream.filter(function (streamItem, index) {
+      return index < limit;
+    });
+    
+    res.end(JSON.stringifyModels(stream));
+  });
+});
+
 /*
  * Create a game
  *
