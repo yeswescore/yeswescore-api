@@ -30,7 +30,11 @@ var PlayerModel = Backbone.Model.extend({
 		            	  $('span.success').html('Login OK '+data.id).show();
 		            	
 		            	
-		            	  window.localStorage.setItem("Owner",JSON.stringify(data));  
+		            	  //window.localStorage.setItem("Owner",JSON.stringify(data));  
+		            	  
+		            	  players = new PlayersCollection('me');
+            			  players.create(data);
+		            	  
 		              }
 		              else 
 		            	  $('span.success').html('Erreur').show();

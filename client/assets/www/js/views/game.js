@@ -18,7 +18,6 @@ var GameView = Backbone.View.extend({
     	
     	//Owner = JSON.parse(window.localStorage.getItem("Owner"));
 		this.players = new PlayersCollection("me");
-	   	//console.log('Owner',this.players.storage.findAll({local:true}));		
 		this.Owner = new PlayerModel(this.players.storage.findAll({local:true}));  
 		
 		console.log('Owner',this.Owner);
@@ -402,7 +401,7 @@ var GameView = Backbone.View.extend({
     renderRefresh: function(){
         
         //On met à jour la cache
-        this.games.storage.save(this.scoreboard);
+        if (this.scoreboard!==undefined) this.games.storage.save(this.scoreboard);
         
         //On rafraichit tout 
         $(this.displayViewScoreBoard).html(_.template(this.gameViewScoreBoardTemplate({game:this.scoreboard.toJSON(),Owner:this.Owner})));    	

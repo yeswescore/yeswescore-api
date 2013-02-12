@@ -7,10 +7,37 @@ var AccountView = Backbone.View.extend({
 		
     	this.accountViewTemplate = _.template(tpl.get('accountViewTemplate'));
     
-    	Owner = JSON.parse(window.localStorage.getItem("Owner"));
+    	//Owner = JSON.parse(window.localStorage.getItem("Owner"));
+    	this.players = new PlayersCollection("me");
+		this.Owner = new PlayerModel(this.players.storage.findAll({local:true})[0]); 
+		
+		console.log(this.Owner.toJSON()); 
+
+		console.log(this.Owner.id); 
     	
     	this.render();
 
+    },
+    
+    events: {
+        'vclick #debug': 'debug'      
+    },
+        
+    debug: function(){        
+        
+
+        console.log('synchro');
+        players = new PlayersCollection('me');
+        players.storage.sync.push();
+
+        //players = new PlayersCollection();
+        //players.storage.sync.push();
+
+        games = new GamesCollection();
+        games.storage.sync.push();
+        
+        
+        
     },
 
     //render the content into div of view
@@ -21,7 +48,7 @@ var AccountView = Backbone.View.extend({
       //console.log('render account Owner.Club.id  ',Owner.club.id);
       
         
-      $(this.el).html(_.template(this.accountViewTemplate({Owner:Owner})));
+      $(this.el).html(_.template(this.accountViewTemplate({Owner:this.Owner})));
       
       $(this.el).trigger('pagecreate');
     	

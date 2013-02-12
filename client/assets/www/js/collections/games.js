@@ -15,6 +15,7 @@ var GamesCollection = Backbone.Collection.extend({
 		if (param==='follow')
 			this.storage = new Offline.Storage('gamesfollow', this);		
 		else
+			//, keys:{parent_id:this}
 			this.storage = new Offline.Storage('games', this);
 	},
 	

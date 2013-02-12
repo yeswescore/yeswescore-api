@@ -39,11 +39,10 @@ var IndexView = Backbone.View.extend({
         
         
         //Controle si localStorage contient Owner
-        var Owner = window.localStorage.getItem("Owner");
-        
-        console.log('Owner',Owner);
-        
-        if (Owner === null) {
+        //var Owner = window.localStorage.getItem("Owner");
+
+        var Owner;
+        if (Owner === undefined) {
         	//alert('Pas de owner');
         	//Creation user à la volée
         	
@@ -54,11 +53,9 @@ var IndexView = Backbone.View.extend({
             //player.save();
             players = new PlayersCollection('me');
             players.create();
-            
-            
+
         }
-        
-        
+  
        
         
     },

@@ -8,21 +8,8 @@
 <a href="#games/me/<%= Owner.id %>" data-role="button" id="">Mes Matchs</a>
 <a href="#games/follow" data-role="button" id="">Matchs Suivis</a>
 <a href="#players/follow" data-role="button" id="">Joueurs Suivis</a>
-<% 
 
-if(Owner.club.id !== "") 
-	print ('<a href="#" data-role="button" id="" class="ui-disabled">Mon Club</a>'); 
-else 
-	print ('<a href="#clubs/'+Owner.club.id+'" data-role="button" id="">Mon Club</a>');
-	
-%>
-<!-- 
-<a href="#" data-role="button" id="" class="ui-disabled">Mon Coach Sportif</a>
- -->
-<a href="#" data-role="button" id="" class="ui-disabled">Calcul Classement</a>
 
-<p align="center">Vos donn&eacute;es sont enregistr&eacute;es en local. Pour les sauver, cliquez sur :</p>
-<!-- Parametres -->
 <% 
 
 if(Owner.mail === '') 
@@ -33,6 +20,9 @@ else
 %>
 
 <a href="#players/signin" data-role="button" id="">Charger un autre compte</a>
+<br/>
+<br/>
+<a id="debug" data-role="button">Debug</a>
 
 
 </div><!-- /content -->
