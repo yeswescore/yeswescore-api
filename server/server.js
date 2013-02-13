@@ -1,3 +1,6 @@
+// helpers
+require('./helpers.js');
+
 // simple static server
 var app = require('./app.js')
   , express = require('express')
@@ -5,9 +8,6 @@ var app = require('./app.js')
   , Conf = require('./conf.js')
   , DB = require('./db.js');
   
-// helpers
-require('./helpers.js');
-
 // default Content-Type
 app.use(function (req, res, next) {
   res.type('application/json; charset=utf-8');
