@@ -127,7 +127,7 @@ DB.Definition.Club = {
     pos: {type: [Number], index: '2d'},
     address: String
   },
-  fedid: { type: String },
+  fedid: { type: String, unique: true, sparse: true },
   ligue: String,
   zip: String,
   outdoor: Number,
