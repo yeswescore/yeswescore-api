@@ -132,11 +132,11 @@ app.get('/v1/clubs/:id/games/', function(req, res){
  *   location: {
  *     city: String,
  *     pos: {type: [Number], index: '2d'},
+ *     zip: String,
  *     address: String
  *   },
  *   fedid: String,
  *   ligue: String,
- *   zip: String,
  *   outdoor: Number,
  *   indoor: Number,
  *   countPlayers: Number,
@@ -158,13 +158,14 @@ app.post('/v1/clubs/', express.bodyParser(), function(req, res){
       location : {
         pos: req.body.location.pos || [],
         address: req.body.location.address || "",
+        zip: req.body.location.zip || "",
         city: req.body.location.city || ""
       },
-      fedid: req.body.fedid || "",
-      ligue: req.body.ligue || "",
-      zip: req.body.zip || ""
+      ligue: req.body.ligue || ""
     });
     // might be undefined
+    if (typeof req.body.fedid !== "undefined" && req.body.fedid)
+      club.fedid = req.body.fedid;
     if (typeof req.body.outdoor !== "undefined")
       club.outdoor = parseInt(req.body.outdoor, 10);
     if (typeof req.body.indoor !== "undefined")

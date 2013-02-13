@@ -83,10 +83,10 @@ var generateClubsAsync = function () {
       location: {
         address: "random adress " + Math.random(),
         city: generateFakeCity(),
+        zip: "zip"+Math.random(),
         pos: generateFakeLocation()
       },
       ligue: "ligue"+Math.random(),
-      zip: "zip"+Math.random(),
       outdoor: Math.round(Math.random() * 10),
       indoor: Math.round(Math.random() * 10),
       countPlayers: Math.round(Math.random() * 100),

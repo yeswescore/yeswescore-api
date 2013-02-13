@@ -206,11 +206,11 @@ assert.isClub = function (club) {
     location : {
       city: { _type: "string|undefined" },
       address: { _type: "string|undefined" },
+      zip: { _type: "string|undefined" },
       pos: { _type: "pos|undefined" }
     },
     fedid: { _type: "string|undefined" },
     ligue: { _type: "string|undefined" },
-    zip: { _type: "string|undefined" },
     outdoor: { _type: "number|undefined" },
     indoor: { _type: "number|undefined" },
     countPlayers: { _type: "number|undefined" },
