@@ -15,13 +15,16 @@ echo "This batch will: "
 echo "  - import all clubs from 02-import-clubs/clubs.csv"
 echo "  - create a new club if the club doesn't exist using fedid as primary key"
 echo ""
-echo -n "Are you sure you want to continue [Y/n]: "
-read o
 # are we ok to continue ?
-if [ $o != "Y" ]
+if [ "$AUTOEXEC" != "true" ]
 then
-  echo "bye bye"
-  exit 1
+  echo -n "Are you sure you want to continue [Y/n]: "
+  read o
+  if [ $o != "Y" ]
+  then
+    echo "bye bye"
+    exit 1
+  fi
 fi
 
 # are we in dev or in prod.
