@@ -29,7 +29,7 @@ then
   port=`cat .port | head -1`
   echo "using port number $port from file .port"
   echo "mongo db will be dev$port"
-  export ZESCORE_PORT=$port
+  export YESWESCORE_PORT=$port
   if [ "$1" = "debug" ]
   then
     echo "debug mode activated"

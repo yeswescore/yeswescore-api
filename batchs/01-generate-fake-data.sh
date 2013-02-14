@@ -32,7 +32,7 @@ then
 else
   export NODE_ENV="DEV"
   port=`cat ../server/.port | head -1`
-  export ZESCORE_PORT=$port
+  export YESWESCORE_PORT=$port
 fi
 
 ./01-generate-fake-data/generate.js

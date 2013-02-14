@@ -1,6 +1,6 @@
 {
-    "name": "zeScore API",
-    "description": "zeScore API",
+    "name": "YesWeScore API",
+    "description": "YesWeScore API",
     "version": "0.0.1",
     "url": "http://api.yeswescore.com/",
     "options": {

@@ -9,9 +9,6 @@
  * - node restart
  *
  * Each deployment create a tag.
- * 
- * Copyright(c) 2012 ZeScore <zenodus.com>
- * MIT Licensed
  */
 
 // MODULES
