@@ -1,5 +1,18 @@
 #!/bin/sh
 
+# are we in dev or in prod.
+prod=`ifconfig 2>/dev/null | grep "91.121.184.177" |wc -l`
+
+if [ $prod -eq 1 ]
+then
+  echo "you are in prod environment, you cannot launch the server using ./dev.sh"
+  exit 1
+fi
+
+# reset the db
+export AUTOEXEC="true"
+../batchs/00-reset-db.sh
+
 export NODE_ENV="DEV"
 if [ -f ".port" ]
 then

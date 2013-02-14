@@ -29,7 +29,7 @@ mongoose.connection.on('connected', function () { DB.status = 'connected' });
 mongoose.connection.once('open', function () {
   if (Conf.env === 'DEV') {
     var Data = require('./data.js');
-    DB.reset().then(function () { Data.generateFakeDataAsync()});
+    Data.generateFakeDataAsync();
   }
 });
 mongoose.connect(Conf.get('mongo.url'));

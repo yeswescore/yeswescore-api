@@ -699,37 +699,6 @@ if (Conf.env === "DEV") {
   DB.Model.Game.randomAsync = function () { return DB.getRandomModelAsync(DB.Model.Game); };
 }
 
-DB.dropCollection = function (collectionName) {
-  var deferred = Q.defer();
-  if (Conf.env === "DEV") {
-    if (DB.status === "connected") {
-      mongoose.connection.collections[collectionName].drop( function(err) {
-        if (err)
-          deferred.reject("error dropping collection");
-        deferred.resolve("collection dropped");
-      });
-    } else {
-      deferred.reject("not connected");
-    }
-  }
-  else {
-    deferred.reject("drop collection only allowed on dev environment");
-  }
-  return deferred.promise;
-};
-
-DB.reset = function () {
-  if (Conf.env === "DEV") {
-    return Q.allResolved([
-      DB.dropCollection("clubs"),
-      DB.dropCollection("players"),
-      DB.dropCollection("games")
-    ]);
-  }
-  // FIXME: warning, should never be here 
-  return Q.allResolved([]);
-};
-
 // undefined if nothing is found
 DB.searchById = function (collection, id) {
    return collection.filter(function (o) { return o.id === id }).pop();
