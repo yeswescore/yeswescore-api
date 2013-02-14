@@ -60,9 +60,10 @@ function start() {
     nb_total++;
     // avoiding duplicates
     var fedid = row[0];
-    if (typeof fedids[fedid] !== "undefined")
+    if (typeof fedids[fedid] !== "undefined" || fedid == "")
     {
       nb_duplicates++;
+      console.log("duplicate on fedid: "+fedid+" row= "+JSON.stringify(row));
       return;
     }
     fedids[fedid] = true;
