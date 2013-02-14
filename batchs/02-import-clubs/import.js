@@ -2,6 +2,15 @@
 
 require('../../server/helpers.js');
 
+if (typeof process.argv[2] !== "string" ||
+    !process.argv[2].startsWith("/tmp/")) {
+  console.log('ERROR: missing arguments /tmp/file.csv');
+  console.log(JSON.stringify(process.argv));
+  process.exit(1);
+}
+
+var file = process.argv[2];
+
 var csv = require('csv')
   , fs = require('fs')
   , DB = require('../../server/db.js')
@@ -43,7 +52,7 @@ function start() {
   * 11 school
   */  
   csv()
-  .from.stream(fs.createReadStream('/tmp/clubs.csv')) // __dirname+
+  .from.stream(fs.createReadStream(file)) // __dirname+
   .transform(function (row, index) {
     return (index) ? row : null;
   })

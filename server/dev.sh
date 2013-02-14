@@ -1,5 +1,8 @@
 #!/bin/sh
 
+BASEDIR=$(dirname $0)
+cd $BASEDIR;
+
 # are we in dev or in prod.
 prod=`ifconfig 2>/dev/null | grep "91.121.184.177" |wc -l`
 
@@ -11,7 +14,14 @@ fi
 
 # reset the db
 export AUTOEXEC="true"
-../batchs/00-reset-db.sh
+oldPath=`pwd`
+cd ../batchs;
+./00-reset-db.sh
+# generate fake data
+./01-generate-fake-data.sh
+# import clubs
+./02-import-clubs.sh
+cd $oldPath;
 
 export NODE_ENV="DEV"
 if [ -f ".port" ]

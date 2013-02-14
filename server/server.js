@@ -27,10 +27,7 @@ require('./api/admin.js');
 mongoose.connection.on('error', function () { DB.status = 'disconnected' });
 mongoose.connection.on('connected', function () { DB.status = 'connected' });
 mongoose.connection.once('open', function () {
-  if (Conf.env === 'DEV') {
-    var Data = require('./data.js');
-    Data.generateFakeDataAsync();
-  }
+  // nothing yet.
 });
 mongoose.connect(Conf.get('mongo.url'));
 

@@ -1,7 +1,5 @@
-var app = require('./app.js')
-  , DB = require('./db.js')
+var DB = require('../../server/db.js')
   , Q = require('q');
-    
 
 // will export only a function.
 var Data = { };
@@ -293,13 +291,13 @@ var generateGamesAsync = function () {
 };
 
 Data.generateFakeDataAsync = function () {
-  generateClubsAsync()
+  return generateClubsAsync()
    .then(generatePlayersAsync)
    .then(generateGamesAsync)
-   .done(function () {
-     app.log('FAKE DATA GENERATED');
+   .then(function () {
+     console.log('FAKE DATA GENERATED');
    }, function (e) {
-     app.log('error generating data : ' + e, 'error');
+     console.log('error generating data : ' + e, 'error');
    }
   );
 };

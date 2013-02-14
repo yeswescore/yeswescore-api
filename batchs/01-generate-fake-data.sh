@@ -1,12 +1,12 @@
 #!/bin/sh
 
 echo -e "\033[32m"
-echo "> Executing batch 00-reset-db.sh"
+echo "> Executing batch 01-generate-fake-data.sh"
 echo -e "\033[0m"
 echo -e -n "\033[1;31;40m" 
 echo -n " WARNING: "
 echo -e -n "\033[0m"
-echo "This script will remove all the database"
+echo "This script will generate fake data in the database"
 
 if [ "$AUTOEXEC" != "true" ]
 then
@@ -25,14 +25,14 @@ prod=`ifconfig 2>/dev/null | grep "91.121.184.177" |wc -l`
 
 if [ $prod -eq 1 ]
 then
-  echo "you are in prod environment, you cannot delete"
-  dbname="prod"
+  echo " You are in prod environment, you cannot generate"
+  export NODE_ENV="PROD"
   # FIXME: security temporary disabled.
   # exit 1
 else
+  export NODE_ENV="DEV"
   port=`cat ../server/.port | head -1`
-  dbname="dev"$port
+  export ZESCORE_PORT=$port
 fi
 
-# 
-mongo $dbname --eval "db.dropDatabase()"
+./01-generate-fake-data/generate.js
