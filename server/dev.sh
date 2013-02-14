@@ -18,7 +18,7 @@ cd ../batchs;
 # generate fake data
 ./01-generate-fake-data.sh
 # import clubs
-./02-import-clubs.sh
+# ./02-import-clubs.sh # disabled, too long in dev :)
 cd $oldPath;
 
 export NODE_ENV="DEV"
