@@ -43,7 +43,7 @@ function start() {
   * 11 school
   */  
   csv()
-  .from.stream(fs.createReadStream(__dirname+'/clubs.csv'))
+  .from.stream(fs.createReadStream('/tmp/clubs.csv')) // __dirname+
   .transform(function (row, index) {
     return (index) ? row : null;
   })
@@ -69,14 +69,21 @@ function start() {
       },
       fedid: row[0],
       ligue: row[2],
-      outdoor: row[5],
-      indoor: row[6],
-      countPlayers: row[7],
-      countPlayers1AN: row[8],
-      countTeams: row[9],
-      countTeams1AN: row[10],
       school: row[11]
     };
+    // ensure numbers
+    if (parseInt(row[5], 10))
+      club.outdoor = parseInt(row[5], 10);
+    if (parseInt(row[6], 10))
+      club.indoor = parseInt(row[6], 10);
+    if (parseInt(row[7], 10))
+      club.countPlayers = parseInt(row[7], 10);
+    if (parseInt(row[8], 10))
+      club.countPlayers1AN = parseInt(row[8], 10);
+    if (parseInt(row[9], 10))
+      club.countTeams = parseInt(row[9], 10);
+    if (parseInt(row[10], 10))
+      club.countTeams1AN = parseInt(row[10], 10);
     nb_clubs++;
     clubs.push(club);
   })

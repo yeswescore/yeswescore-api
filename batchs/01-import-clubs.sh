@@ -24,20 +24,6 @@ then
   exit 1
 fi
 
-# does the directory exist ?
-if [ ! -d "01-import-clubs" ]
-then
-  usage "missing directory 01-import-clubs"
-  exit 1
-fi
-
-# does the csv exist ?
-if [ ! -f "./01-import-clubs/clubs.csv" ]
-then
-  usage "missing file clubs.csv in directory 01-import-clubs"
-  exit 1
-fi
-
 # are we in dev or in prod.
 prod=`ifconfig 2>/dev/null | grep "91.121.184.177" |wc -l`
 
@@ -59,7 +45,8 @@ else
 fi
 
 # building csv
-cat ../data/clubs/*.csv | head -1 > /tmp/$USER-clubs.csv
-ls -1 ../data/clubs/*.csv | xargs sed 1d >> /tmp/$USER-clubs.csv
+sudo rm -f /tmp/clubs.csv
+cat ../data/clubs/*.csv | head -1 > /tmp/clubs.csv
+ls -1 ../data/clubs/*.csv | xargs -n 1 sed 1d >> /tmp/clubs.csv
 
 ./01-import-clubs/import.js
