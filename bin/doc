@@ -23,7 +23,7 @@ sudo cat /tmp/doc.log
 ;;
 status)
 # Check to see if the process is running
-sudo pgrep -f '^node.*supervisor.*server.js' && echo "  ^--- pid of zescore server"
+sudo pgrep -f '^node.*supervisor.*server.js' && echo "  ^--- pid of yeswescore server"
 ;;
  
 *)

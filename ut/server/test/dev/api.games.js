@@ -129,7 +129,7 @@ describe('dev:games', function(){
         };
         
         var newGame = {
-          teams: [ { id: null, players: [ { name : "toto", nickname: "nick", email: { address: "foo"+Math.random()+"@zescore.com" }, rank: "15/2" } ] },
+          teams: [ { id: null, players: [ { name : "toto", nickname: "nick", email: { address: "foo"+Math.random()+"@yeswescore.com" }, rank: "15/2" } ] },
                    { id: null, players: [ { name : "titi" } ] } ]
         };
         http.post(options, newGame, function (game) {
@@ -173,7 +173,7 @@ describe('dev:games', function(){
             path: Conf["api.games"]+"?playerid="+randomPlayer._id+"&token="+randomPlayer.token
           };
           var newGame = {
-            teams: [ { id: null, players: [ { name : "toto", nickname: "nick", email: "foo"+Math.random()+"@zescore.com", rank: "15/2" } ] },
+            teams: [ { id: null, players: [ { name : "toto", nickname: "nick", email: "foo"+Math.random()+"@yeswescore.com", rank: "15/2" } ] },
                     { id: null, players: [ { name : "titi" , club: { id: randomclub._id } } ] } ]
           };
           http.post(options, newGame, function (game) {
@@ -458,7 +458,7 @@ describe('dev:games', function(){
           location: {
             pos: positions.borabora
           },
-          teams: [ { id: null, players: [ { name : nameFilter, email: "foo"+Math.random()+"@zescore.com", rank: "15/2" } ] },
+          teams: [ { id: null, players: [ { name : nameFilter, email: "foo"+Math.random()+"@yeswescore.com", rank: "15/2" } ] },
                    { id: null, players: [ { name : "titi" } ] } ]
         };
         http.post(options, newGame, function (game) {

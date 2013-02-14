@@ -42,7 +42,7 @@ describe('dev:players', function(){
       var newPlayer = {
         nickname : "TU-"+Math.random(),
         name: "TU-"+Math.random(),
-        email: { address: "marcd-"+Math.random()+"@zescore.com" },
+        email: { address: "marcd-"+Math.random()+"@yeswescore.com" },
         idlicense: "TU-"+Math.random(),
         rank: "15/2",
         language: "en",
@@ -89,7 +89,7 @@ describe('dev:players', function(){
         path: Conf["api.players"]
       };
       
-      var email = "marcd-"+Math.random()+"@zescore.com";
+      var email = "marcd-"+Math.random()+"@yeswescore.com";
       var newPlayer = {
         name: "TU-"+Math.random(),
         email: { address: email }
@@ -226,7 +226,7 @@ describe('dev:players', function(){
           nickname : "TU-"+Math.random(),
           name: "TU-"+Math.random(),
           rank: "15/2",
-          email: { address: "marcd-"+Math.random()+"@zescore.com" },
+          email: { address: "marcd-"+Math.random()+"@yeswescore.com" },
           club: { id: randomClub._id, name: randomClub.name }
         };
         http.post(options, newPlayer, function (player) {
@@ -238,7 +238,7 @@ describe('dev:players', function(){
           
           // modify the player
           player.name = "foobar";
-          player.email.address = "marcd-"+Math.random()+"@zescore.com";
+          player.email.address = "marcd-"+Math.random()+"@yeswescore.com";
           // saving
           var options = {
             host: Conf["http.host"],
@@ -285,7 +285,7 @@ describe('dev:players', function(){
         path: Conf["api.players"]
       };
       
-      var oldMail = "marcd-"+Math.random()+"@zescore.com";
+      var oldMail = "marcd-"+Math.random()+"@yeswescore.com";
       var newPlayer = {
         name: "TU-"+Math.random(),
         email: { address: oldMail },
@@ -301,7 +301,7 @@ describe('dev:players', function(){
           port: Conf["http.port"],
           path: Conf["api.players"]+player.id+"/?playerid="+player.id+"&token="+player.token
         };
-        var newMail =  "marcd-"+Math.random()+"@zescore.com";
+        var newMail =  "marcd-"+Math.random()+"@yeswescore.com";
         var modifiedPlayer = {
           email: { address: newMail }
         };
@@ -552,7 +552,7 @@ describe('dev:players', function(){
         path: Conf["api.players"]
       };
       
-      var email = "marcd-"+Math.random()+"@zescore.com";
+      var email = "marcd-"+Math.random()+"@yeswescore.com";
       var newPlayer = {
         name: "TU-"+Math.random(),
         email: { address: email }

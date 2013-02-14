@@ -2,7 +2,7 @@
     "name": "zeScore API",
     "description": "zeScore API",
     "version": "0.0.1",
-    "url": "http://api.zescore.com/",
+    "url": "http://api.yeswescore.com/",
     "options": {
         "linkNatives": "true",        
         "attributesEmit": "true",

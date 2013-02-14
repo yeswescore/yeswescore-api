@@ -1,4 +1,4 @@
-zescore
+YesWeScore
 =======
 
 batchs/  : directory containing batch scripts. ex: db migration.
