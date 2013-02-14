@@ -9,9 +9,6 @@
  * - node restart
  *
  * Each deployment create a tag.
- * 
- * Copyright(c) 2012 ZeScore <zenodus.com>
- * MIT Licensed
  */
 
 // MODULES
@@ -72,6 +69,6 @@ run("./deploy-checkout.sh "+branch).then(function (stdout) {
     
 
 // FIXME: RSYNC entre env dev et env prod + logs
-// rsync -rltgoDv --del --ignore-errors --force /home/syndr0m/Projs/zescore/server /opt/web/zescore/
+// rsync -rltgoDv --del --ignore-errors --force /home/syndr0m/Projs/yeswescore/server /opt/web/yeswescore/
 
 // FIXME: node stop/start

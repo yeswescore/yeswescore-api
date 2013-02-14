@@ -6,3 +6,7 @@ node_modules
 nohup.out
 # documentation
 doc/
+
+# scripts stuff..
+scripts/clubs/clubs.in.csv
+scripts/clubs/clubs.out.csv

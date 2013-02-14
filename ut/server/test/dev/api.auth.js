@@ -17,7 +17,7 @@ describe('dev:auth', function(){
       var newPlayer = {
         nickname : "TU-"+Math.random(),
         name: "TU-"+Math.random(),
-        email: { address: "marcd-"+Math.random()+"@zescore.com" },
+        email: { address: "marcd-"+Math.random()+"@yeswescore.com" },
         idlicense: "TU-"+Math.random(),
         rank: "15/2",
         uncryptedPassword: String(Math.random()),

@@ -28,11 +28,11 @@ rm -rf ~/deploy/
 mkdir ~/deploy/
 cd ~/deploy/
 # grabbing code from github
-git clone -b $1 git@github.com:syndr0m/zescore.git
+git clone -b $1 git@github.com:syndr0m/yeswescore.git
 # analysing result
 if [ $? -eq 0 ]
 then
-  echo "branch $1 is deployed in ~/deploy/zescore/"
+  echo "branch $1 is deployed in ~/deploy/yeswescore/"
 else
   echo "error during clone, abort."
   exit 1
@@ -40,6 +40,6 @@ fi
 
 # rsync
 echo "sending code to integration environment"
-sudo rsync -rltov --del --ignore-errors --exclude node_modules --exclude .git --force -e 'ssh -p 42' zescore /opt/web/
+sudo rsync -rltov --del --ignore-errors --exclude node_modules --exclude .git --force -e 'ssh -p 42' yeswescore /opt/web/
 echo "sending code to prod server"
-sudo rsync -rltov --del --ignore-errors --exclude node_modules --exclude .git --force -e 'ssh -p 42' zescore root@188.165.247.143:/opt/web/
+sudo rsync -rltov --del --ignore-errors --exclude node_modules --exclude .git --force -e 'ssh -p 42' yeswescore root@188.165.247.143:/opt/web/

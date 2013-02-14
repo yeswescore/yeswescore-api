@@ -132,11 +132,11 @@ app.get('/v1/clubs/:id/games/', function(req, res){
  *   location: {
  *     city: String,
  *     pos: {type: [Number], index: '2d'},
+ *     zip: String,
  *     address: String
  *   },
  *   fedid: String,
  *   ligue: String,
- *   zip: String,
  *   outdoor: Number,
  *   indoor: Number,
  *   countPlayers: Number,
@@ -149,42 +149,49 @@ app.get('/v1/clubs/:id/games/', function(req, res){
  * FIXME: who can create a club? owner?
  */
 app.post('/v1/clubs/', express.bodyParser(), function(req, res){
-  if (req.body.name) {
-    // creating a new club (no owner)
-    req.body.location = (req.body.location) ? req.body.location : {};
-    var club = new DB.Model.Club({
-      sport: "tennis",
-      name: req.body.name,
-      location : {
-        pos: req.body.location.pos || [],
-        address: req.body.location.address || "",
-        city: req.body.location.city || ""
-      },
-      fedid: req.body.fedid || "",
-      ligue: req.body.ligue || "",
-      zip: req.body.zip || ""
+  if (!req.body.name || !req.body.location || !req.body.location.city)
+    return app.defaultError(res)("please provide club name & city");
+  DB.Model.Club.findOne(
+    { name: req.body.name, 'location.city': req.body.location.city },
+    function (err, club) {
+      if (err)
+        return app.defaultError(res)(err);
+      if (club)
+        return app.defaultError(res)("club already registered");
+      // creating a new club (no owner)
+      req.body.location = (req.body.location) ? req.body.location : {};
+      var club = new DB.Model.Club({
+        sport: "tennis",
+        name: req.body.name,
+        location : {
+          pos: req.body.location.pos || [],
+          address: req.body.location.address || "",
+          zip: req.body.location.zip || "",
+          city: req.body.location.city || ""
+        },
+        ligue: req.body.ligue || ""
+      });
+      // might be undefined
+      if (typeof req.body.fedid !== "undefined" && req.body.fedid)
+        club.fedid = req.body.fedid;
+      if (typeof req.body.outdoor !== "undefined")
+        club.outdoor = parseInt(req.body.outdoor, 10);
+      if (typeof req.body.indoor !== "undefined")
+        club.indoor = parseInt(req.body.indoor, 10);
+      if (typeof req.body.countPlayers !== "undefined")
+        club.countPlayers = parseInt(req.body.countPlayers, 10);
+      if (typeof req.body.countPlayers1AN !== "undefined")
+        club.countPlayers1AN = parseInt(req.body.countPlayers1AN, 10);
+      if (typeof req.body.countTeams !== "undefined")
+        club.countTeams = parseInt(req.body.countTeams, 10);
+      if (typeof req.body.countTeams1AN !== "undefined")
+        club.countTeams1AN = parseInt(req.body.countTeams1AN, 10);
+      if (typeof req.body.school !== "undefined")
+        club.school = req.body.school;
+      DB.saveAsync(club)
+        .then(
+          function (club) { res.end(JSON.stringifyModels(club)) },
+          app.defaultError(res)
+        );
     });
-    // might be undefined
-    if (typeof req.body.outdoor !== "undefined")
-      club.outdoor = parseInt(req.body.outdoor, 10);
-    if (typeof req.body.indoor !== "undefined")
-      club.indoor = parseInt(req.body.indoor, 10);
-    if (typeof req.body.countPlayers !== "undefined")
-      club.countPlayers = parseInt(req.body.countPlayers, 10);
-    if (typeof req.body.countPlayers1AN !== "undefined")
-      club.countPlayers1AN = parseInt(req.body.countPlayers1AN, 10);
-    if (typeof req.body.countTeams !== "undefined")
-      club.countTeams = parseInt(req.body.countTeams, 10);
-    if (typeof req.body.countTeams1AN !== "undefined")
-      club.countTeams1AN = parseInt(req.body.countTeams1AN, 10);
-    if (typeof req.body.school !== "undefined")
-      club.school = req.body.school;
-    DB.saveAsync(club)
-      .then(
-        function (club) { res.end(JSON.stringifyModels(club)) },
-        app.defaultError(res)
-      );
-  } else {
-    app.defaultError(res)("please provide club name");
-  }
 });

@@ -58,11 +58,11 @@ describe('dev:clubs', function(){
         location: {
           address: "Hotel de ville",
           city: "Lyon",
+          zip: "zip"+Math.random(),
           pos: [ 42, 43 ]
         },
         fedid: String(Math.random()),
         ligue: "ligue"+Math.random(),
-        zip: "zip"+Math.random(),
         outdoor: Math.round(Math.random() * 10),
         indoor: Math.round(Math.random() * 10),
         countPlayers: Math.round(Math.random() * 100),
@@ -78,10 +78,11 @@ describe('dev:clubs', function(){
         assert(club.location.city == newClub.location.city);
         assert(club.location.pos[0] == newClub.location.pos[0]);
         assert(club.location.pos[1] == newClub.location.pos[1]);
+        assert(club.location.zip === newClub.location.zip, "should have same zip");
         
         assert(club.fedid === newClub.fedid, "should have same fedid");
         assert(club.ligue === newClub.ligue, "should have same ligue");
-        assert(club.zip === newClub.zip, "should have same zip");
+
         assert(club.outdoor === newClub.outdoor, "should have same outdoor");
         assert(club.indoor === newClub.indoor, "should have same indoor (" + club.indoor + " vs " + newClub.indoor + ")");
         assert(club.countPlayers === newClub.countPlayers, "should have same countPlayers");
@@ -91,6 +92,46 @@ describe('dev:clubs', function(){
         assert(club.school === newClub.school, "should have same school");
         
         done();
+      });
+    });
+  });
+  
+  describe('create random club, create a second one with same name+city', function() {
+    it('should create the club', function (done) {
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["api.clubs"]
+      };
+      
+      var randomName = "club-"+Math.random();
+      var randomCity = "city-"+Math.random();
+      
+      var newClub = {
+        name : randomName,
+        location: {
+          city: randomCity
+        }
+      };
+      http.post(options, newClub, function (club) {
+        assert.isClub(club);
+        assert(club.name === newClub.name, "should have same name");
+        assert(club.location.city === newClub.location.city, "should have same city");
+
+        // try to create a 2nd one
+        var newClub2 = {
+          name : randomName,
+          location: {
+            city: randomCity
+          }
+        };
+
+        http.post(options, newClub2, function (error) {
+          assert.isError(error, "should be an error");
+          assert(error.error === "club already registered", "should have error club already registered");
+        
+          done();
+        });
       });
     });
   });
@@ -113,6 +154,7 @@ describe('dev:clubs', function(){
       var newClub = {
         name : nameFilter,
         location: {
+          city: "borabora",
           pos: positions.borabora
         }
       };

@@ -28,11 +28,11 @@ rm -rf ~/deploy/
 mkdir ~/deploy/
 cd ~/deploy/
 # grabbing code from github
-git clone -b $1 git@github.com:syndr0m/zescore.git
+git clone -b $1 git@github.com:syndr0m/yeswescore.git
 # analysing result
 if [ $? -eq 0 ]
 then
-  echo "branch $1 is deployed in ~/deploy/zescore/"
+  echo "branch $1 is deployed in ~/deploy/yeswescore/"
   echo "[CHECKOUT-OK]"
 else
   echo "error during clone, abort."
