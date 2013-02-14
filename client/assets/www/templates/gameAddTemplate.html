@@ -10,16 +10,23 @@
 
   <span class="success label label-info hide" style="color:red"></span>	
   
+  <div class="control-group">
+    <div class="controls">
+      <button type="submit" value="Save" class="button">Save</button>
+    </div>
+  </div>
+  
   <div data-role="fieldcontain">
  	<fieldset data-role="controlgroup" id="click_myself">
 		<input type="checkbox" name="myself" id="myself" class="custom" />
-		<label for="myself">Joueur 1 - S'il s'agit de vous, cochez ici</label>
+		<label for="myself">* Joueur 1 - S'il s'agit de vous, cochez ici</label>
     </fieldset>
   </div>
 
   <div class="control-group">
     <div class="controls">
-      <input type="text" id="team1" name="team1" placeholder="Joueur 1" class='input-xlarge' value=""/>
+      <input type="text" id="team1" name="team1" placeholder="Joueur 1" class='input-xlarge' value="Vincent"/>
+      <input type="text" id="rank1" name="rank1" placeholder="Classement 1" class='input-xlarge' value="15/5"/>   
       <ul id="team1_suggestions" data-role="listview" data-inset="true"></ul>
       <input type='hidden' id='team1_id' class='input' value='' />
       <span class="team1_error label label-info hide"></span>
@@ -28,13 +35,14 @@
   
   <div data-role="fieldcontain">
  	<fieldset data-role="controlgroup">
-		<label for="autosearch">Joueur 2 - Indiquez au moins 4 lettres</label>
+		<label for="autosearch">* Joueur 2 - Indiquez au moins 4 lettres</label>
     </fieldset>
   </div>  
   
   <div class="control-group">
     <div class="controls">
-      <input type="text" id="team2" name="team2" placeholder="Joueur 2" class='input-xlarge' value=""/>
+      <input type="text" id="team2" name="team2" placeholder="Joueur 2" class='input-xlarge' value="Ludovic"/>
+      <input type="text" id="rank2" name="rank2" placeholder="Classement 2" class='input-xlarge' value="15/3"/>      
       <ul id="team2_suggestions" data-role="listview" data-inset="true"></ul>
       <input type='hidden' id='team2_id' class='input' value='' />  
       <span class="team2_error label label-info hide"></span>
@@ -42,19 +50,116 @@
   </div>
 
   <div class="control-group">
-    <label class="control-label" for="city">Ville</label>
+    <label class="control-label" for="city">* Ville</label>
     <div class="controls">
-      <input type="text" id="city" name="city" placeholder="Ville" class='input-xlarge' value="Calais"/>
+      <input type="text" id="city" name="city" placeholder="Ville" class='input-xlarge' value="Coulogne"/>
       <span class="city_error label label-info hide"></span>
     </div>
   </div>
-     
   
+  <hr/>
+  
+   <div class="control-group">
+		<label for="subtype" class="select">Type</label>
+		<div class="controls">	
+		<select name="subtype" id="subtype">
+			<option value="A">A - Normal</option>
+			<option value="B">B - Traditionnel (3 sets à 6 jeux pt décisif)</option>
+			<option value="C">C - 3 sets à 4 jeux - jeu décisif à 4/4</option>
+			<option value="D">D - 3 sets à 4 jeux - jeu décisif à 4/4 pt décisif</option>
+			<option value="E">E - 3 sets à 3 jeux - jeu décisif à 2/2</option>
+			<option value="F">F - 3 sets à 3 jeux - jeu décisif à 2/2 pt décisif</option>
+			<option value="G">G - 3 jeux décisifs</option> 
+			<option value="H">H - 3 Sets à 4 jeux - jeu décisif à 3/3 pt décisif</option>
+			<option value="I">I - 3 sets à 5 jeux - jeu décisif à 4/4 pt décisif</option>			
+		</select>
+		</div>
+	  </div>  
+  
+    <div class="control-group">
+		<label for="court" class="select">Court</label>
+		<div class="controls">			
+		<select name="court" id="court">
+			<option value="">Selection</option>	
+			<option value="1">Terrain 1</option>	
+			<option value="2">Terrain 2</option>	
+			<option value="3">Terrain 3</option>	
+			<option value="4">Terrain 4</option>
+			<option value="5">Terrain 5</option>	
+			<option value="6">Terrain 6</option>	
+			<option value="7">Terrain 7</option>	
+			<option value="8">Terrain 8</option>
+			<option value="9">Terrain 9</option>	
+			<option value="10">Terrain 10</option>	
+			<option value="11">Terrain 11</option>
+			<option value="">---</option>	
+			<option value="A">Terrain A</option>	
+			<option value="B">Terrain B</option>	
+			<option value="C">Terrain C</option>
+			<option value="D">Terrain D</option>	
+			<option value="E">Terrain E</option>	
+			<option value="F">Terrain F</option>																
+		</select>
+		</div>
+    </div>    
+     
   <div class="control-group">
-    <div class="controls">
-      <button type="submit" value="Save" class="button">Save</button>
-    </div>
-  </div>
+	<label for="tour" class="select">Tour</label>
+	<div class="controls">
+	<select name="tour" id="tour">
+		<option value="">Selection</option>
+		<option value="">Poule</option>
+		<option value="">Consolante</option>
+		<option value="">1er tour</option>
+		<option value="">2e tour</option>
+		<option value="">3e tour</option>
+		<option value="">4e tour</option>
+		<option value="">5e tour</option>
+		<option value="">6e tour</option>
+		<option value="">7e tour</option>
+		<option value="">8e tour</option>
+		<option value="">9e tour</option>
+		<option value="">1/256 finale</option>
+		<option value="">1/128 finale</option>
+		<option value="">1/64 finale</option>
+		<option value="">1/32 finale</option>
+		<option value="">1/16 finale</option>
+		<option value="">1/8 finale</option>
+		<option value="">1/4 finale</option>
+		<option value="">1/2 finale</option>
+		<option value="">Finale</option>
+		<option value="">Journée 1</option>
+		<option value="">Journée 2</option>
+		<option value="">Journée 3</option>
+		<option value="">Journée 4</option>
+		<option value="">Journée 5</option>
+		<option value="">Journée 6</option>
+		<option value="">Journée 7</option>
+		<option value="">Journée 8</option>
+		<option value="">Journée 9</option>
+		<option value="">Journée 10</option>
+	</select>
+	</div>
+  </div>   
+	
+    <div class="control-group">
+		<label for="surface" class="select">Format</label>
+		<div class="controls">			
+		<select name="surface" id="surface">
+			<option value="">Selection</option>	
+			<option value="BP">Béton poreux (quick) - BP</option>	
+			<option value="EP">Enrobé poreux - EP</option>	
+			<option value="EPDM">Granulats caoutchouc - EPDM</option>	
+			<option value="GAS">Gazon synthétique - GAS</option>	
+			<option value="GAZ">Gazon naturel - GAZ</option>	
+			<option value="MOQ">Moquette - MOQ</option>	
+			<option value="NVTB">Terre battue non gélive - NVTB</option>	
+			<option value="PAR">Parquet (bois) - PAR</option>	
+			<option value="RES">Résine (greenset) - RES</option>	
+			<option value="TB">Terre-battue - TB</option>
+		</select>
+		</div>
+    </div>   
   
   	<input type="hidden" id="playerid" value="<%= playerid %>" class="input" />
 	<input type="hidden" id="token" value="<%= token %>" class="input" />

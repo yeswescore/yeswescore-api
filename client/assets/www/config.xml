@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<widget xmlns = "http://www.w3.org/ns/widgets" xmlns:gap = "http://phonegap.com/ns/1.0" id = "com.zenodus.client" version = "0.0.0.5">
+<widget xmlns = "http://www.w3.org/ns/widgets" xmlns:gap = "http://phonegap.com/ns/1.0" id = "com.zenodus.client" version = "0.0.0.8">
 
 <preference name="phonegap-version" value="2.2.0" />
 
-<name>zeScore</name>
+<name>YesWeScore</name>
 
 <description>
 - Live score on Internet
-- Send your results to Facebook and Twiter
+- Send your results to Facebook
 - Few different types of scoring plus custom option. 
 - Full scoreboard always visible
 </description>
 
-<author href="https://www.zescore.com" email="vincent@zescore.com">ZENODUS</author>
+<author href="https://www.yeswescore.com" email="support@yeswescore.com">ZENODUS</author>
 
 <icon src="icon.png" />
 
@@ -37,7 +37,8 @@
 <feature name="http://api.phonegap.com/1.0/device"/>
 
 <!-- Whitelisting -->
-<!-- <access origin="*" /> -->
+<access origin="*" />
+<!-- 
 <access origin="http://reachtheflow.com:8080" subdomains="true" />
-
+ -->
 </widget>

@@ -1,0 +1,34 @@
+<% if(clubs.length==0) { %>
+        <li><p>Aucun resultat pour <%= query %></p></li>
+<% } %> 
+
+<%
+
+    for (var i = 0; i < clubs.length; i++) {
+    	
+    	club = clubs[i];
+    
+    %>
+        
+        <li title="<% if (club!==undefined) print(club.id); %>">
+        
+       <fieldset data-role="controlgroup" data-type="horizontal">
+       <input type="checkbox" name="club_choice" value="<% if (club!==undefined) print(club.id); %>" id="club_choice" class="custom" />
+       <label for="club_name"><% if (club!==undefined) print(club.name); %> - </label>
+       <label for="club_city"><% if (club!==undefined) print(club.city); %></label>
+       </fieldset>
+      
+        </li>
+    <%
+    	if (i>5) break;
+    
+        }
+        
+        if (clubs.length>5) {
+     %>
+      <li>
+     	... ( <%= clubs.length %> resultats)
+        </li>
+     <%   
+        }
+%>

@@ -5,12 +5,13 @@
 
 <div data-role="content">
 <h3><%= club.name %></h3>
-Sport : <%= club.sport %>&nbsp;&nbsp;&nbsp;&nbsp;City : <%= club.city %><br/>
+Sport : <%= club.sport %>&nbsp;&nbsp;&nbsp;&nbsp;City : <%= club.location.city %><br/>
+FFTID : <%= club.fftid %>
 Site :&nbsp;&nbsp;&nbsp;&nbsp;Facebook :<br/>
 
 <a href="#players/club/<%= club.id %>" data-role="button" id="listPlayer">Liste des joueurs</a>
 <a href="#games/club/<%= club.id %>" data-role="button" id="lastResult">Dernier resultat</a>
-<a href="#" data-role="button" id="followClub">Suivre le match</a>
+<a id="followButton" data-role="button">Suivre</a>
 
 </div><!-- /content -->
 

@@ -1,0 +1,135 @@
+<%
+team1_set1 = '&nbsp;';
+team1_set2 = '&nbsp;';
+team1_set3 = '&nbsp;';
+
+team2_set1 = '&nbsp;';
+team2_set2 = '&nbsp;';
+team2_set3 = '&nbsp;';
+set_current = 1;
+
+team1_sets = '0';
+team2_sets = '0';
+
+if (game.options.score !== null ) {
+	if (game.options.score.indexOf('/')!=-1) { 
+		scoreboard = game.options.score.split('/');
+		
+		team1_sets = scoreboard[0];
+		team2_sets = scoreboard[1];		
+		
+	}
+}
+
+if (game.options.sets !== null ) {
+	if (game.options.sets.indexOf(';')!=-1) { 
+	scoreboard = game.options.sets.split(';');
+	
+		if (scoreboard.length==2 || scoreboard.length==3) 
+		{
+			scoreboard1 = scoreboard[0].split('/');
+			team1_set1 = scoreboard1[0];
+			team2_set1 = scoreboard1[1];
+			
+			scoreboard2 = scoreboard[1].split('/');
+			team1_set2 = scoreboard2[0];
+			team2_set2 = scoreboard2[1];
+			
+			set_current=2;
+				
+		}
+		if (scoreboard.length==3) 
+		{
+			scoreboard3 = scoreboard[2].split('/');
+			team1_set3 = scoreboard3[0];
+			team2_set3 = scoreboard3[1];
+			
+			set_current=3;	
+		}
+	}
+	// 1 set
+	else 
+	{
+			if (game.options.sets.indexOf('/')!=-1) { 
+				
+				scoreboard1 = game.options.sets.split('/');
+				team1_set1 = scoreboard1[0];
+				team2_set1 = scoreboard1[1];
+				
+			}
+	
+	}
+}
+%>
+   
+<div class="ui-body ui-body-a">
+
+	<div class="ui-grid-d">
+		<div class="ui-block-a" style="width: 50%;">
+			<a href="#players/<%= game.teams[0].players[0].id %>" data-role="text" style="color: yellow">
+			<%= game.teams[0].players[0].name %> - <%= game.teams[0].players[0].rank %> 		
+			</a> 
+			<div id="var_service1"></div>	
+		</div>
+		<div class="ui-block-b" style="width: 10%;text-align:center;border: 1px solid #FFF" id="team1_sets_div"><%= team1_sets %></div>
+		<div class="ui-block-c" style="width: 10%;text-align:center;border: 1px solid #FFF" id="team1_set1_div"><%= team1_set1 %></div>
+		<div class="ui-block-d" style="width: 10%;text-align:center;border: 1px solid #FFF" id="team1_set2_div"><%= team1_set2 %></div>
+		<div class="ui-block-e" style="width: 10%;text-align:center;border: 1px solid #FFF" id="team1_set3_div"><%= team1_set3 %></div>
+	</div>
+	<!-- /grid-a -->
+
+	<div class="ui-grid-d">
+		<div class="ui-block-a" style="width: 50%;">&nbsp;</div>
+		<div class="ui-block-b" style="width: 10%;text-align:center;">
+			<font style="white-space: normal; font-size: small">SETS</font>
+		</div>
+		<div class="ui-block-c" style="width: 10%;text-align:center;">
+			<font style="white-space:normal;font-size: small">1</font>
+		</div>
+		<div class="ui-block-d" style="width: 10%;text-align:center;">
+			<font style="width: 10%;white-space:normal;font-size: small">2</font>
+		</div>
+		<div class="ui-block-e" style="width: 10%;text-align:center;">
+			<font style="width: 10%;white-space:normal;font-size: small">3</font>
+		</div>
+	</div>
+
+	<div class="ui-grid-d">
+		<div class="ui-block-a" style="width: 50%;">
+			<a href="#players/<%= game.teams[1].players[0].id %>" data-role="text" style="color: yellow">
+			<%= game.teams[1].players[0].name %> - <%= game.teams[1].players[0].rank %>		
+			</a>
+			<div id="var_service2"></div>	
+		</div>
+		<div class="ui-block-b" style="width: 10%;text-align:center;border: 1px solid #FFF" id="team2_sets_div"><%= team2_sets %></div>
+		<div class="ui-block-c" style="width: 10%;text-align:center;border: 1px solid #FFF" id="team2_set1_div"><%= team2_set1 %></div>
+		<div class="ui-block-d" style="width: 10%;text-align:center;border: 1px solid #FFF" id="team2_set2_div"><%= team2_set2 %></div>
+		<div class="ui-block-e" style="width: 10%;text-align:center;border: 1px solid #FFF" id="team2_set3_div"><%= team2_set3 %></div>
+	</div>
+	<!-- /grid-a -->
+</div>
+
+<%
+//if (game.owner === Owner.id) 
+//{
+%>
+<form>
+<input type="hidden" id="set_current" value="<%= set_current %>"/>
+<input type="hidden" id="gameid" value="<%= game.id %>"/>
+<input type="hidden" id="team1_id" value="<%= game.teams[0].players[0].id %>"/>
+<input type="hidden" id="team1_points" value="<%= game.teams[0].points %>"/>
+<input type="hidden" id="team1_set1" value="<%= team1_set1 %>"/>
+<input type="hidden" id="team1_set2" value="<%= team1_set2 %>"/>
+<input type="hidden" id="team1_set3" value="<%= team1_set3 %>"/>
+<input type="hidden" id="team2_id" value="<%= game.teams[1].players[0].id %>" />
+<input type="hidden" id="team2_points" value="<%= game.teams[1].points %>"/>
+<input type="hidden" id="team2_set1" value="<%= team2_set1 %>"/>
+<input type="hidden" id="team2_set2" value="<%= team2_set2 %>"/>
+<input type="hidden" id="team2_set3" value="<%= team2_set3 %>"/>
+<!--  BUG je prend owner 993a8c9ab5713eb0ba4e70b1 et token 3135411 de la partie 64ff2998c7520d7ef9cf07d8 -->
+<input type="hidden" id="playerid" value="<%= Owner.id %>" />
+<input type="hidden" id="token" value="<%= Owner.token %>" />
+</form>
+<%
+//}
+%>

@@ -5,11 +5,11 @@
 <%
     for (var i = 0; i < clubs.length; i++) {
     	
-    	clubs = players[i];
+    	clubs = clubs[i];
     
     %>
         <li>
-        <a href="#clubs/<%= club.id %>" data-transition="slide">
+        <a data-transition="slide">
         <%= club.name %> : <%= club.city %> : <%= club.id %>  
 		<br/>
         </a>
