@@ -96,6 +96,46 @@ describe('dev:clubs', function(){
     });
   });
   
+  describe('create random club, create a second one with same name+city', function() {
+    it('should create the club', function (done) {
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["api.clubs"]
+      };
+      
+      var randomName = "club-"+Math.random();
+      var randomCity = "city-"+Math.random();
+      
+      var newClub = {
+        name : randomName,
+        location: {
+          city: randomCity
+        }
+      };
+      http.post(options, newClub, function (club) {
+        assert.isClub(club);
+        assert(club.name === newClub.name, "should have same name");
+        assert(club.location.city === newClub.location.city, "should have same city");
+
+        // try to create a 2nd one
+        var newClub2 = {
+          name : randomName,
+          location: {
+            city: randomCity
+          }
+        };
+
+        http.post(options, newClub2, function (error) {
+          assert.isError(error, "should be an error");
+          assert(error.error === "club already registered", "should have error club already registered");
+        
+          done();
+        });
+      });
+    });
+  });
+  
   describe('create random club located in borabora, then search it from tupai within 50km & search it from 10km', function() {
     it('should find the club first then not find it', function (done) {
       var options = {
@@ -114,6 +154,7 @@ describe('dev:clubs', function(){
       var newClub = {
         name : nameFilter,
         location: {
+          city: "borabora",
           pos: positions.borabora
         }
       };
