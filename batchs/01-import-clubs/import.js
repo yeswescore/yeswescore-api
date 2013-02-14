@@ -17,9 +17,15 @@ mongoose.connection.on('connected', function () {
   start();
 });
 mongoose.connect(Conf.get('mongo.url'));
+console.log('connecting to '+Conf.get('mongo.url'));
+
+var nb_total = 0;
+var nb_duplicates = 0;
+var nb_clubs = 0;
 
 function start() {
   var clubs = [];
+  var fedids = {};
   
   /*
   * input csv format :
@@ -42,6 +48,16 @@ function start() {
     return (index) ? row : null;
   })
   .on('record', function (row) {
+    nb_total++;
+    // avoiding duplicates
+    var fedid = row[0];
+    if (typeof fedids[fedid] !== "undefined")
+    {
+      nb_duplicates++;
+      return;
+    }
+    fedids[fedid] = true;
+    // 
     var club = {
       sport: "tennis",
       name: row[1],
@@ -61,14 +77,22 @@ function start() {
       countTeams1AN: row[10],
       school: row[11]
     };
+    nb_clubs++;
     clubs.push(club);
   })
   .on('end', function(count){
-    console.log('saving... please wait');
+    console.log('saving ' + nb_clubs + ' clubs ... please wait');
     DB.Model.Club.create(clubs, function (err) {
-      if (err)
+      if (err) {
         console.log('error: ' + err);
-      console.log('DONE');
+        process.exit(1);
+      }
+      console.log('everything went ok.');
+      console.log('stats:');
+      console.log(' total input clubs   : ' + nb_total);
+      console.log(' total duplicates    : ' + nb_duplicates);
+      console.log(' total clubs imported: ' + nb_clubs);
+      process.exit(0);
     });
   })
   .on('error', function(error){
