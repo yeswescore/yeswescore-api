@@ -3,8 +3,8 @@
 # YesWeScore startup service script
 # USAGE: start|stop|status|logs
 #
-# INSTALL: sudo cp yeswescore /etc/init.d/; sudo chmod +x /etc/init.d/yeswescore
-# LAUNCH:  sudo service yeswescore start
+# INSTALL: sudo cp yeswescore-server /etc/init.d/; sudo chmod +x /etc/init.d/yeswescore-server
+# LAUNCH:  sudo service yeswescore-server start
 # 
 # /!\ depends on node supervisor.
 # npm install supervisor -g
@@ -14,7 +14,7 @@ case "$1" in
 start)
 echo "Starting YesWeScore Api."
 sudo su node -c 'date > /tmp/supervisor.log'
-sudo su node -c 'export NODE_ENV="PROD"; /usr/bin/supervisor -w /opt/web/yeswescore/server/ /opt/web/yeswescore/server/server.js &>> /tmp/supervisor.log &'
+sudo su node -c 'export NODE_ENV="PROD"; /usr/bin/supervisor -w /opt/web/yeswescore-server/server/ /opt/web/yeswescore-server/server/server.js &>> /tmp/supervisor.log &'
 ;;
 stop)
 echo "Stopping YesWeScore Api."

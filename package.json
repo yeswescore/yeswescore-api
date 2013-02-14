@@ -1,5 +1,5 @@
 {
-  "name": "yeswescore",
+  "name": "yeswescore-server",
   "private": true,
   "description": "yeswescore api",
   "version": "0.0.1",
@@ -20,6 +20,6 @@
   },
   "repository": {
     "type" : "git",
-    "url" : "git://github.com/syndr0m/yeswescore.git"
+    "url" : "git://github.com/voltek62/yeswescore-server.git"
   }
 }
