@@ -46,15 +46,6 @@ var StreamModel = Backbone.Model.extend({
 	        }
 	        else {
 	        	
-	        	/*
-	        	 var params = _.extend({
-	                 type: 'GET',
-	                 dataType: 'json',
-	                 url: model.url(),
-	                 processData:false
-	             }, options);
-
-	             return $.ajax(params);*/
 	             
 	             return Backbone.sync(method, model, options); 
 	             

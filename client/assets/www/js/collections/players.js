@@ -16,10 +16,12 @@ var PlayersCollection = Backbone.Collection.extend({
 		
 		console.log('Players mode '+param);
 		
+		//, {local:true}
+		
 		if (param==='follow')
-			this.storage = new Offline.Storage('playersfollow', this, {local:true});		
+			this.storage = new Offline.Storage('playersfollow', this);		
 		else if (param==='me')
-			this.storage = new Offline.Storage('Owner', this, {local:true});
+			this.storage = new Offline.Storage('Owner', this);
 		else		
 			this.storage = new Offline.Storage('players', this);	
 		
@@ -27,7 +29,7 @@ var PlayersCollection = Backbone.Collection.extend({
 	  
     url:function() {
     	
-     console.log('mode de Players',this.mode); 	
+     console.log('url() : mode de Players',this.mode); 	
      //console.log('url Players',appConfig.serviceURLPlayers+'autocomplete/?q='+this.query); 	
           
      if (this.mode === 'club')
@@ -36,6 +38,8 @@ var PlayersCollection = Backbone.Collection.extend({
         return appConfig.serviceURLPlayers+'autocomplete/?q='+this.query;        
       else	
       	return appConfig.serviceURLPlayers;
+      	
+      	
     },
 	
 

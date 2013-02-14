@@ -403,8 +403,14 @@
         localId = item.id;
         delete item.attributes.id;
         _ref = item.get('sid') === 'new' ? ['create', null] : ['update', item.attributes.sid], method = _ref[0], item.id = _ref[1];
+        
+        console.log('pushItem method ',method);
+        
         this.ajax(method, item, {
           success: function(response, status, xhr) {
+          
+          	console.log('response ',response);
+          
             if (method === 'create') {
               item.set({
                 sid: response.id

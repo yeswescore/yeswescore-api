@@ -1,0 +1,51 @@
+<div data-role="header" data-theme="b" data-position="fixed">
+    <a href="#" data-transition="slide" data-reverse="true" data-icon="back">Back</a>
+    <h1>zeScore</h1>
+</div><!-- /header -->
+
+<div data-role="content">
+
+<a href="#games/me/<%= Owner.id %>" data-role="button" id="">Mes Matchs</a>
+<a href="#games/follow" data-role="button" id="">Matchs Suivis</a>
+<a href="#players/follow" data-role="button" id="">Joueurs Suivis</a>
+<% 
+
+if(Owner.club.id !== "") 
+	print ('<a href="#" data-role="button" id="" class="ui-disabled">Mon Club</a>'); 
+else 
+	print ('<a href="#clubs/'+Owner.club.id+'" data-role="button" id="">Mon Club</a>');
+	
+%>
+<!-- 
+<a href="#" data-role="button" id="" class="ui-disabled">Mon Coach Sportif</a>
+ -->
+<a href="#" data-role="button" id="" class="ui-disabled">Calcul Classement</a>
+
+<p align="center">Vos donn&eacute;es sont enregistr&eacute;es en local. Pour les sauver, cliquez sur :</p>
+<!-- Parametres -->
+<% 
+
+if(Owner.mail === '') 
+	print ('<a href="#players/form" data-role="button" id="">Inscription</a>'); 
+else 
+	print ('<a href="#players/form" data-role="button" id="">Profil</a>');
+	
+%>
+
+<a href="#players/signin" data-role="button" id="">Charger un autre compte</a>
+<br/>
+<br/>
+<a id="debug" data-role="button">Debug</a>
+
+
+</div><!-- /content -->
+
+<div data-role="footer" data-theme="b" data-position="fixed">
+   <div data-role="navbar">
+	<ul>
+		<li><a href="#">Suivre</a></li>
+		<li><a href="#games/add">Diffuser</a></li>
+		<li><a href="#account" class="ui-btn-active ui-state-persist">Mon Compte</a></li>
+	</ul>				
+	</div><!-- /navbar -->
+</div>

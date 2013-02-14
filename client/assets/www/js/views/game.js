@@ -18,7 +18,7 @@ var GameView = Backbone.View.extend({
     	
     	//Owner = JSON.parse(window.localStorage.getItem("Owner"));
 		this.players = new PlayersCollection("me");
-		this.Owner = new PlayerModel(this.players.storage.findAll({local:true}));  
+		this.Owner = new PlayerModel(this.players.storage.findAll({local:true})[0]);  
 		
 		console.log('Owner',this.Owner);
 

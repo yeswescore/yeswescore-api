@@ -173,7 +173,7 @@ var PlayerModel = Backbone.Model.extend({
 	        } 
 	        */
 			
-			window.localStorage.setItem("Owner",JSON.stringify(new PlayerModel()));
+			//window.localStorage.setItem("Owner",JSON.stringify(new PlayerModel()));
 	       
 	        return Backbone.sync(method, model, options); 
 	        

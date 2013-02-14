@@ -3,7 +3,7 @@
 
 <preference name="phonegap-version" value="2.2.0" />
 
-<name>zeScore</name>
+<name>YesWeScore</name>
 
 <description>
 - Live score on Internet
@@ -12,7 +12,7 @@
 - Full scoreboard always visible
 </description>
 
-<author href="https://www.zescore.com" email="vincent@zescore.com">ZENODUS</author>
+<author href="https://www.yeswescore.com" email="support@yeswescore.com">ZENODUS</author>
 
 <icon src="icon.png" />
 

@@ -30,11 +30,11 @@ var AccountView = Backbone.View.extend({
         players = new PlayersCollection('me');
         players.storage.sync.push();
 
-        //players = new PlayersCollection();
-        //players.storage.sync.push();
+        players = new PlayersCollection();
+        players.storage.sync.push();
 
-        games = new GamesCollection();
-        games.storage.sync.push();
+        //games = new GamesCollection();
+        //games.storage.sync.push();
         
         
         
