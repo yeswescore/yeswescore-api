@@ -10,9 +10,9 @@
     %>
         <li>
         <a href="#games/<%= game.id %>" data-transition="slide">
-        <%= game.city %> : <%= game.teams[0].players[0].name %> ( <%= game.teams[0].players[0].rank %> ) vs <%= game.teams[1].players[0].name %> ( <%= game.teams[1].players[0].rank %> )
+        <%= game.location.city %> : <%= game.teams[0].players[0].name %> ( <%= game.teams[0].players[0].rank %> ) vs <%= game.teams[1].players[0].name %> ( <%= game.teams[1].players[0].rank %> )
 		<br/>
-		Score : <%= game.score %>&nbsp;&nbsp;&nbsp;Sets : <%= game.sets %>&nbsp;&nbsp;&nbsp;Statut : <%= game.status %>
+		Score : <%= game.options.score %>&nbsp;&nbsp;&nbsp;Sets : <%= game.options.sets %>&nbsp;&nbsp;&nbsp;Statut : <%= game.status %>
         </a>
         </li>
     <%
