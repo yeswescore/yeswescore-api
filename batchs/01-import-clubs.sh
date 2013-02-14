@@ -45,5 +45,16 @@ if [ $prod -eq 1 ]
 then
   echo "you are in prod environment, are you sure you want to import ?"
   export NODE_ENV="prod"
+else
+  port=`cat ../server/.port | head -1`
+  export ZESCORE_PORT=$port
+  echo -n "using port number $port, is it ok ? [Y/n]"
+  read o
+  # are we ok to continue ?
+  if [ $o != "Y" ]
+  then
+    echo "bye bye"
+    exit 1
+  fi
 fi
 ./01-import-clubs/import.js
