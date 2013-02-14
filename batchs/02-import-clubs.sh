@@ -20,9 +20,7 @@ then
 fi
 
 # are we in dev or in prod.
-prod=`ifconfig 2>/dev/null | grep "91.121.184.177" |wc -l`
-
-if [ $prod -eq 1 ]
+if [ "$NODE_ENV" = "PROD" ]
 then
   echo " You are in prod environment, are you sure you want to import ?"
   export NODE_ENV="prod"
