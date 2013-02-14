@@ -5,14 +5,14 @@ function usage()
   echo ""
   echo "error: "$1
   echo ""
-  echo "usage: ./01-import-clubs.sh"
-  echo " ( You must put clubs.csv in ./01-import-clubs/ )"
+  echo "usage: ./02-import-clubs.sh"
+  echo " ( You must put clubs.csv in ./02-import-clubs/ )"
   echo ""
 }
 
-echo "Executing batch 01-import-clubs.sh"
+echo "Executing batch 02-import-clubs.sh"
 echo "This batch will: "
-echo "  - import all clubs from 01-import-clubs/clubs.csv"
+echo "  - import all clubs from 02-import-clubs/clubs.csv"
 echo "  - create a new club if the club doesn't exist using fedid as primary key"
 echo ""
 echo -n "Are you sure you want to continue [Y/n]: "
@@ -49,4 +49,4 @@ sudo rm -f /tmp/clubs.csv
 cat ../data/clubs/*.csv | head -1 > /tmp/clubs.csv
 ls -1 ../data/clubs/*.csv | xargs -n 1 sed 1d >> /tmp/clubs.csv
 
-./01-import-clubs/import.js
+./02-import-clubs/import.js
