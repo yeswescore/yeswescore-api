@@ -57,4 +57,9 @@ else
     exit 1
   fi
 fi
+
+# building csv
+cat ../data/clubs/*.csv | head -1 > /tmp/$USER-clubs.csv
+ls -1 ../data/clubs/*.csv | xargs sed 1d >> /tmp/$USER-clubs.csv
+
 ./01-import-clubs/import.js
