@@ -10,18 +10,17 @@ app.get('/v1/email/confirm/', function (req, res) {
     { "email._token" : req.query.token },
     function (err, player) {
       if (err)
-        return res.end("http://www.yeswescore.com/#!mail-db-read-error/c1fj5");
+        return res.redirect("http://www.yeswescore.com/#!mail-db-read-error/c1fj5");
       if (!player) {
         // FIXME: redirect 301 vers une page d'erreur.
-        return res.end("http://www.yeswescore.com/#!mail-cant-find-player/c1gv2");
+        return res.redirect("http://www.yeswescore.com/#!mail-cant-find-player/c1gv2");
       }
       // changing email status
       player.email.status = "confirmed";
       player.save(function (err) {
         if (err)
-          return res.end("http://www.yeswescore.com/#!mail-db-save-error/c1kfo");
-        //res.end("http://www.yeswescore.com/#!mail/cy9y");
-        res.end(JSON.stringifyModels(player, { unhide: [ "token" ] }));
+          return res.redirect("http://www.yeswescore.com/#!mail-db-save-error/c1kfo");
+        res.redirect("http://www.yeswescore.com/#!mail/cy9y");
       });
   });
 });
