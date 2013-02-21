@@ -10,16 +10,16 @@ app.get('/v1/email/confirm/', function (req, res) {
     { "email._token" : req.query.token },
     function (err, player) {
       if (err)
-        return res.end("FIXME: should redirect to an error page (db read error)");
+        return res.end("http://www.yeswescore.com/#!mail-db-read-error/c1fj5");
       if (!player) {
         // FIXME: redirect 301 vers une page d'erreur.
-        return res.end("FIXME: should redirect to an error page (can't find player)");
+        return res.end("http://www.yeswescore.com/#!mail-cant-find-player/c1gv2");
       }
       // changing email status
       player.email.status = "confirmed";
       player.save(function (err) {
         if (err)
-          return res.end("FIXME: should redirect to an error page (db save error)");
+          return res.end("http://www.yeswescore.com/#!mail-db-save-error/c1kfo");
         //res.end("http://www.yeswescore.com/#!mail/cy9y");
         res.end(JSON.stringifyModels(player, { unhide: [ "token" ] }));
       });
