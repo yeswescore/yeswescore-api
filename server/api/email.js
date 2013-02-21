@@ -20,7 +20,7 @@ app.get('/v1/email/confirm/', function (req, res) {
       player.save(function (err) {
         if (err)
           return res.end("FIXME: should redirect to an error page (db save error)");
-        //res.end("FIXME: should redirect to a success page");
+        //res.end("http://www.yeswescore.com/#!mail/cy9y");
         res.end(JSON.stringifyModels(player, { unhide: [ "token" ] }));
       });
   });
