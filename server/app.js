@@ -81,7 +81,8 @@ var logs = {
     file: {
       filename: logsPath+'stats.log',
       maxsize: 104857600, // = 100 Mo
-      timestamp: true
+      timestamp: false,
+      json:false
     }
   }
 };

@@ -21,6 +21,7 @@ require('./api/documents.js');
 require('./api/email.js');
 require('./api/games.js');
 require('./api/players.js');
+require('./api/stats.js');
 require('./api/admin.js');
 
 // mongoose parameters
