@@ -12,27 +12,27 @@
 # [FIXME] restrict this script to root
 case "$1" in
 start)
-echo "Starting YesWeScore Api."
+echo "Starting yeswescore-server"
 sudo su node -c 'date > /tmp/supervisor.log'
-sudo su node -c 'export NODE_ENV="PROD"; /usr/bin/supervisor -w /opt/web/yeswescore-server/server/ /opt/web/yeswescore-server/server/server.js &>> /tmp/supervisor.log &'
+sudo su node -c 'export NODE_ENV="PROD"; /usr/bin/supervisor -w /opt/web/yeswescore-server/server/ /opt/web/yeswescore-server/server/server.js API &>> /tmp/supervisor-server.log &'
 ;;
 stop)
-echo "Stopping YesWeScore Api."
-sudo pkill -f '^node.*supervisor.*server.js'
+echo "Stopping yeswescore-server"
+sudo pkill -f '^node.*supervisor.*server.js API'
 sleep 1
-sudo pkill -9 -f '^node.*supervisor.*server.js'
+sudo pkill -9 -f '^node.*supervisor.*server.js API'
 ;;
 logs)
-echo "YesWeScore supervisor log."
-sudo cat /tmp/supervisor.log
+echo "yeswescore-server supervisor log."
+sudo cat /tmp/supervisor-server.log
 ;;
 status)
 # Check to see if the process is running
-sudo pgrep -f '^node.*supervisor.*server.js' && echo "  ^--- pid of yeswescore server"
+sudo pgrep -f '^node.*supervisor.*server.js API' && echo "  ^--- pid of yeswescore-server"
 ;;
  
 *)
-echo “YesWeScore service”
+echo yeswescore-server service”
 echo $”Usage: $0 {start|stop|status|logs}”
 exit 1
 esac
