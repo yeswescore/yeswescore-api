@@ -155,9 +155,7 @@ app.get('/v1/games/:id/stream/', function (req, res){
     var stream = game.stream || [];
     if (after) {
       after = new Date(after).getTime();
-      console.log('after = ' + after);
       stream = stream.filter(function (streamItem) {
-        console.log(' VS ' + new Date(streamItem.dates.creation).getTime());
         return new Date(streamItem.dates.creation).getTime() >= after;
       });
     }
@@ -167,7 +165,37 @@ app.get('/v1/games/:id/stream/', function (req, res){
       return index < limit;
     });
     
-    res.end(JSON.stringifyModels(stream));
+    // populating owners
+    // FIXME: should be optimized.
+    var ownersPromises = stream.map(function (streamItem) {
+      return Q.nfcall(DB.Model.Player.findById.bind(DB.Model.Player),
+                      streamItem.owner);
+    });
+    
+    Q.all(ownersPromises).then(
+      function (owners) {
+        // remplacing :
+        //  owner: "512fd6227293e00f60000026" 
+        // by
+        //  { id: "512fd6227293e00f60000026", name: "...", nickname: "...3 }
+        stream = stream.map(function (streamItem, index) {
+          // FIXME: mongoose missing feature.
+          // How to populate a model property manually after instantiation?
+          // https://groups.google.com/forum/?fromgroups=#!topic/mongoose-orm/nrBq_gOVzBo
+          var streamItemObject = streamItem.toObject();
+          var owner = owners[index];
+          var ownerId = streamItemObject.owner;
+          streamItemObject.owner = {
+            id: ownerId,
+            name: owner.name,
+            nickname: owner.nickname
+          };
+          return streamItemObject;
+        });
+        
+        // FIXME: should be stringifyModels when mongoose will be fixed.
+        res.end(JSON.stringify(stream));
+    });
   });
 });
 
