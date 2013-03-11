@@ -4,7 +4,7 @@ echo -e "\033[32m"
 echo "> Executing batch 02-import-clubs.sh"
 echo -e "\033[0m"
 echo " This batch will: "
-echo "  - import all clubs from 02-import-clubs/clubs.csv"
+echo "  - import all clubs from ../data/clubs/??.csv"
 echo "  - create a new club if the club doesn't exist using fedid as primary key"
 echo ""
 # are we ok to continue ?
@@ -32,8 +32,8 @@ fi
 
 # building csv
 rnd=`echo $RANDOM`
-cat ../data/clubs/*.csv | head -1 > /tmp/clubs-$rnd.csv
-ls -1 ../data/clubs/*.csv | xargs -n 1 sed 1d >> /tmp/clubs-$rnd.csv
+cat ../data/clubs/??.csv | head -1 > /tmp/clubs-$rnd.csv
+ls -1 ../data/clubs/??.csv | xargs -n 1 sed 1d >> /tmp/clubs-$rnd.csv
 
 ./02-import-clubs/import.js /tmp/clubs-$rnd.csv
 
