@@ -305,12 +305,7 @@ app.post('/v1/players/:id', express.bodyParser(), function(req, res){
         .then(function (authentifiedPlayer) {
         if (!authentifiedPlayer)
           throw "player not authenticated";
-      }).then(function () {
-        return DB.Model.findByIdAsync(DB.Model.Player, req.params.id);
-      }).then(function (player) {
-        if (!player)
-          throw "no player found";
-        return player;
+        return authentifiedPlayer;
       })
     ]
   ).then(function (qall) {

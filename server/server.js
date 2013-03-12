@@ -17,6 +17,7 @@ app.use(function (req, res, next) {
 require('./api/auth.js');
 require('./api/bootstrap.js');
 require('./api/clubs.js');
+require('./api/connections.js');
 require('./api/documents.js');
 require('./api/email.js');
 require('./api/games.js');

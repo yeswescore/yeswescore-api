@@ -25,9 +25,13 @@ export NODE_ENV="DEV"
 if [ -f ".port" ]
 then
   port=`cat .port | head -1`
-  echo "using port number $port from file .port"
+  fbport=`cat ../../yeswescore-facebook/server/.port`
+  echo ""
+  echo "using port number $port from file .port for api"
+  echo "using port number $fbport from file .port for fb"
   echo "mongo db will be dev$port"
   export YESWESCORE_PORT=$port
+  export YESWESCORE_FACEBOOK_PORT=$fbport
   if [ "$1" = "debug" ]
   then
     echo "debug mode activated"

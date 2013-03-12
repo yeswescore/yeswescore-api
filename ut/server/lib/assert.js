@@ -241,6 +241,12 @@ assert.isPlayerScheme = function (player, m) {
     idlicense: { _type: "string|undefined" },
     rank: { _type: "string|undefined" },
     token: { _type: "string|undefined" },
+    connection: {
+      facebook: {
+        id: { _type: "string|undefined" },
+        token: { _type: "string|undefined" }
+      }
+    },
     owner: { _type: "id|undefined" },
     club: { _type: "undefined|check", _check: function (value) {
         assert(typeof value === "object", "isPlayerScheme: club must be null or object");

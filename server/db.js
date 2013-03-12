@@ -167,6 +167,12 @@ DB.Definition.Player = {
   idlicense: String,
   password: { type: String, default: null },
   token: { type: String, default: DB.generateToken },
+  connection: {
+    facebook: {
+      id: String,
+      token: String
+    }
+  },
   rank: String,
   club: {
     id: { type: Schema.Types.ObjectId, ref: "Club" },
