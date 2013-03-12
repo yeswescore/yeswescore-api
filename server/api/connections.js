@@ -5,7 +5,15 @@ var DB = require("../db.js")
   , Q = require("q");
 
 /**
- * registering facebook player
+ * registering facebook id & token
+ * 
+ * You must be authentified (?playerid=...&token=...)
+ * 
+ * 4 Parameters are required :
+ * /v1/connections/fb/?playerid=...   player id
+ * /v1/connections/fb/?token=...      player token
+ * /v1/connections/fb/?fbid=...       facebook id
+ * /v1/connections/fb/?fbtoken=...    facebook token
  */
 app.get('/v1/connections/fb/', function(req, res){
   var scheme = Conf.get("facebook.yws.scheme")
