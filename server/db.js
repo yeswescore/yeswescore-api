@@ -163,7 +163,7 @@ DB.Definition.Player = {
       _confirmed: { type: Date }
     }
   },
-  language: { type: String, enum: [ "fr", "en"] },
+  language: { type: String, enum: [ "en", "fr" ] },
   idlicense: String,
   password: { type: String, default: null },
   token: { type: String, default: DB.generateToken },
@@ -252,6 +252,17 @@ DB.Schema.Player.virtual('uncryptedPassword').set(function (uncryptedPassword) {
   var shasum = crypto.createHash('sha256');
   shasum.update(uncryptedPassword+Conf.get("security.secret"));
   this.password = shasum.digest('hex');
+});
+
+DB.Schema.Player.virtual('languageSafe').set(function (languageUnsafe) {
+  // filtering languages to enter enum
+  // @see http://tools.ietf.org/html/rfc4646
+  // ex: en-US => en
+    var language = languageUnsafe.split('-')[0];
+    var languages = DB.Schema.Player.path('language').enumValues;
+    if (languages.indexOf(language) === -1)
+      language = Conf.get("default.language");
+    this.language = language;
 });
 
 // AUTO-FIELDS
