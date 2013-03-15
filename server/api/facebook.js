@@ -18,42 +18,55 @@ var DB = require("../db.js")
 app.get('/v1/facebook/login/', function(req, res){
   var scheme = Conf.get("facebook.yws.scheme")
     , host = Conf.get("facebook.yws.host")
-    , port = Conf.get("facebook.yws.port");
+    , port = Conf.get("facebook.yws.port")
+    , player;
+  
+  var error = function (message) {
+    var page = Conf.get("facebook.yws.inappbrowser.error");
+    var url = scheme+"://"+host+":"+port+page+"#message="+encodeURIComponent(message);
+    res.redirect(url);
+  };
+    
+  if (req.query.error)
+    return error(req.query.error_description);
+  if (!req.query.access_token)
+    return error("missing access_token");
+  
+  console.log('player is facebook login');
+  console.log(req.query);
   
   DB.isAuthenticatedAsync(req.query)
     .then(function (authentifiedPlayer) {
       if (!authentifiedPlayer)
         throw "player not authenticated";
-      return authentifiedPlayer;
-    }).then(function (player) {
-      // checking fb token
-      
-      
+      player = authentifiedPlayer;
+    }).then(function () {
       // connecting to facebook...
       var clientId = Conf.get('facebook.app.id')
         , clientSecret = Conf.get('facebook.app.secret');
       
-      https.get({
+      console.log('player authentified, requesting long token');
+        
+      return https.getAsync({
         host: Conf.get('facebook.graph.host'),
         port: Conf.get('facebook.graph.port'),
         path: "oauth/access_token?" +
            "grant_type=fb_exchange_token&" +
            "client_id=" + clientId + "&" +
-           "client_secret=" + clientSecret + "&"
-           "fb_exchange_token
+           "client_secret=" + clientSecret + "&" +
+           "fb_exchange_token=" + req.query.access_token
       });
+    }).then(function (data) {
+      console.log('RECEIVING LONG ACCESS TOKEN');
+      console.log(data);
       
       // saving facebook id & token.
       player.connection.facebook.id = req.query.fbid;
       player.connection.facebook.token = req.query.fbtoken;
       return Q.nfcall(player.save.bind(player));
     }).then(function () {
-      var page = Conf.get("facebook.yws.connect.success");
+      var page = Conf.get("facebook.yws.inappbrowser.success");
       var url = scheme+"://"+host+":"+port+page;
       res.redirect(url);
-    }, function (e) {
-      var page = Conf.get("facebook.yws.connect.error");
-      var url = scheme+"://"+host+":"+port+page+"#message="+encodeURIComponent(e);
-      res.redirect(url);
-    });
+    }, error);
 });
