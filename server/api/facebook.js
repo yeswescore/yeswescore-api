@@ -45,20 +45,20 @@ app.get('/v1/facebook/login/', function(req, res){
       var clientId = Conf.get('facebook.app.id')
         , clientSecret = Conf.get('facebook.app.secret');
       
-      console.log('player authentified, requesting long token');
-        
       return https.getAsync({
         host: Conf.get('facebook.graph.host'),
         port: Conf.get('facebook.graph.port'),
-        path: "oauth/access_token?" +
+        path: "/oauth/access_token?" +
            "grant_type=fb_exchange_token&" +
            "client_id=" + clientId + "&" +
            "client_secret=" + clientSecret + "&" +
            "fb_exchange_token=" + req.query.access_token
       });
     }).then(function (data) {
-      console.log('RECEIVING LONG ACCESS TOKEN');
-      console.log(data);
+      // data: access_token=AAAIyivk4N(...)vk4N&expires=5183956
+      var infos = /access_token=([^&]+)/.exec(String(data));
+      if (!infos)
+        throw "long access token";
       
       // saving facebook id & token.
       player.connection.facebook.id = req.query.fbid;
