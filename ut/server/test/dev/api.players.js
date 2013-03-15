@@ -81,6 +81,58 @@ describe('dev:players', function(){
     });
   });
   
+  describe('create basic player, language is non standard, then read it.', function () {
+    it('should be english by default ', function (done) {
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["api.players"]
+      };
+      
+      var newPlayer = {
+        nickname : "TU-"+Math.random(),
+        name: "TU-"+Math.random(),
+        email: { address: "marcd-"+Math.random()+"@yeswescore.com" },
+        idlicense: "TU-"+Math.random(),
+        rank: "15/2",
+        language: "ie-IE",
+        uncryptedPassword: "TU-"+Math.random(),
+        club: null
+      };
+      http.post(options, newPlayer, function (player) {
+        assert.isPlayerWithToken(player);
+        assert(newPlayer.nickname === player.nickname, "must have same nickname");
+        assert(newPlayer.name === player.name, "must have same name");
+        assert(newPlayer.rank === player.rank, "must have same rank");
+        assert(newPlayer.email.address === player.email.address, "must have same email");
+        assert(newPlayer.idlicense === player.idlicense, "must have same idlicense");
+        assert(typeof player.password === "undefined", "musn't have a password");
+        assert(typeof player.uncryptedPassword === "undefined", "musn't have an uncryptedPassword");
+        //
+        assert(player.language === "en", "must be default language (" + newPlayer.language + ")");
+        
+        // verify player exist in DB.
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["api.players"]+player.id
+        };
+        http.getJSON(options, function (p) {
+          assert.isPlayer(p, "must be a player");
+          assert(p.id === player.id, "must be same player");
+          assert(p.nickname === player.nickname, "must have same nickname");
+          assert(p.name === player.name, "must have same name");
+          assert(p.rank === player.rank, "must have same rank");
+          assert(p.email.address === player.email.address, "must have same email");
+          assert(p.idlicense === player.idlicense, "must have same idlicense");
+          //
+          assert(p.language === "en", "must be default language");
+          done();
+        });
+      });
+    });
+  });
+  
   describe('create two player with the same email', function () {
     it('should be an error on the second player', function (done) {
       var options = {
