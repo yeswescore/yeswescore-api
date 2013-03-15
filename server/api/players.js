@@ -236,13 +236,15 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
     var player = new DB.Model.Player({
         nickname: req.body.nickname || "",
         name: req.body.name || "",
-        language: req.body.language || Conf.get("default.language"),
         location : { currentPos: req.body.location.currentPos || [] },
         rank: req.body.rank || "",
         idlicense: req.body.idlicense || "",
         club: inlinedClub, // will be undefined !
         type: req.body.type || "default"
     });
+    // language
+    player.languageSafe = req.body.language || Conf.get("default.language");
+    // email
     if (req.body.email && req.body.email.address) {
       // registering email.
       // might be race condition between check & set. but will be catch by the index.
@@ -316,10 +318,13 @@ app.post('/v1/players/:id', express.bodyParser(), function(req, res){
     if (inlinedClub) {
       player["club"] = inlinedClub;
     }
-    ["nickname", "name", "rank", "idlicense", "language"].forEach(function (o) {
+    ["nickname", "name", "rank", "idlicense"].forEach(function (o) {
       if (typeof req.body[o] !== "undefined")
         player[o] = req.body[o];
     });
+    // language
+    if (typeof req.body.language !== "undefined")
+      player.languageSafe = req.body.language;
     // position
     if (req.body.location && req.body.location.currentPos)
       player.location = { currentPos : req.body.location.currentPos };
