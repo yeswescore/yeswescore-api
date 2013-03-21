@@ -90,6 +90,14 @@ var logs = {
       timestamp: true
     }
   },
+  report: {
+    file: {
+      filename: logsPath+'report.log',
+      maxsize: 104857600, // = 100 Mo
+      timestamp: false,
+      json:false
+    }
+  },
   stats: {
     file: {
       filename: logsPath+'stats.log',
@@ -111,6 +119,11 @@ if (Conf.get("env") === "DEV") {
     timestamp: true
   };
   logs.email["console"] = {
+    level: 'info',
+    colorize: 'true',
+    timestamp: true
+  };
+  logs.report["console"] = {
     level: 'info',
     colorize: 'true',
     timestamp: true

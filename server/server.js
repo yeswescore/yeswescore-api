@@ -24,6 +24,7 @@ require('./api/games.js');
 require('./api/players.js');
 require('./api/stats.js');
 require('./api/admin.js');
+require('./api/report.js');
 
 // mongoose parameters
 mongoose.connection.on('error', function () { DB.status = 'disconnected' });
