@@ -157,7 +157,7 @@ describe('dev:games', function(){
         path: Conf["documents.clubs"]+"random"
       };
       
-      http.getJSON(options, function (randomclub) {
+      http.getJSON(options, function (randomClub) {
         var options = {
           host: Conf["http.host"],
           port: Conf["http.port"],
@@ -174,7 +174,7 @@ describe('dev:games', function(){
           };
           var newGame = {
             teams: [ { id: null, players: [ { name : "toto", nickname: "nick", email: "foo"+Math.random()+"@yeswescore.com", rank: "15/2" } ] },
-                    { id: null, players: [ { name : "titi" , club: { id: randomclub._id } } ] } ]
+                    { id: null, players: [ { name : "titi" , club: { id: randomClub._id } } ] } ]
           };
           http.post(options, newGame, function (game) {
             assert.isGame(game, "game was correctly created");
@@ -187,8 +187,8 @@ describe('dev:games', function(){
             assert(typeof game.teams[0].players[0].email === "undefined", "email should be undefined");
             assert(game.teams[0].players[0].rank === newGame.teams[0].players[0].rank, "rank");
             // tests on clubs
-            assert(game.teams[1].players[0].club.id === randomclub._id, "club id");
-            assert(game.teams[1].players[0].club.name === randomclub.name, "club name");
+            assert(game.teams[1].players[0].club.id === randomClub._id, "club id");
+            assert(game.teams[1].players[0].club.name === randomClub.name, "club name");
             
             done();
           });
@@ -415,13 +415,90 @@ describe('dev:games', function(){
             var options = {
               host: Conf["http.host"],
               port: Conf["http.port"],
-              path: Conf["api.games"]+randomGame._id+"/?stream=true"
+              path: Conf["api.games"]+randomGame._id+"/stream/?limit=100000"
             };
-            http.getJSON(options, function (game) {
-              assert.isGame(game);
-              assert(game.stream.length === nbElementInStream + 1, "stream size should have grown by one");
-              assert(game.stream.pop().id === s.id, "stream last obj should be s");
+            http.getJSON(options, function (stream) {
+              assert.isArray(stream);
+              assert(stream.length === nbElementInStream + 1, "stream size should have grown by one");
+              assert(stream.pop().id === s.id, "stream last obj should be s");
               done();
+            });
+          });
+        });
+      });
+    });
+  });
+  
+  describe('write a comment on a stream, update it', function () {
+    it('should create a comment, beeing updated', function (done){
+      // read a game
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.games"]+"random"
+      };
+      http.getJSON(options, function (randomGame) {
+        assert.isObject(randomGame, "random game must exist");
+        
+        // nb Element ds le stream.
+        var nbElementInStream = randomGame.stream.length;
+        // request random player
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["documents.players"]+"random"
+        };
+        http.getJSON(options, function (randomPlayer) {
+          assert.isObject(randomPlayer, "random player must exist");
+          // adding comment in game stream
+          var streamObj = {
+            type: "comment",
+            data: { text : "test" }
+          };
+          var options = {
+            host: Conf["http.host"],
+            port: Conf["http.port"],
+            path: Conf["api.games"]+randomGame._id+"/stream/?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+          };
+          http.post(options, streamObj, function (s) {
+            assert.isStreamComment(s);
+            assert.isId(s.id);
+            
+            var streamId = s.id;
+            
+            // updating comment
+            var rndText = "test"+Math.random();
+            var streamObj = {
+              data: { text : rndText }
+            };
+            
+            var options = {
+              host: Conf["http.host"],
+              port: Conf["http.port"],
+              path: Conf["api.games"]+randomGame._id+"/stream/"+s.id+"/?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+            };
+            http.post(options, streamObj, function (s) {
+              assert.isStreamComment(s);
+              assert(s.data.text == rndText, "text should be updated");
+            
+              // reading game from DB
+              var options = {
+                host: Conf["http.host"],
+                port: Conf["http.port"],
+                path: Conf["api.games"]+randomGame._id+"/stream/?limit=100000"
+              };
+              http.getJSON(options, function (stream) {
+                assert.isArray(stream);
+                
+                stream = stream.filter(function (streamItem) {
+                  return streamItem.id == streamId;
+                });
+                
+                assert(stream.length == 1, "should be streamItem id in stream");
+                assert(stream[0].data.text == rndText, "should have text updated");
+                
+                done();
+              });
             });
           });
         });
@@ -485,6 +562,149 @@ describe('dev:games', function(){
               assert.isArray(games, 'games should be an array');
               assert(games.length === 0, 'cannot find the game (too far away)');
               done();
+            });
+          });
+        });
+      });
+    });
+  });
+  
+  describe('create a single game, then delete it', function () {
+    it('should not be able to find / read the game or modify it', function (done) {
+      // read a player
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.players"]+"random"
+      };
+      http.getJSON(options, function (randomPlayer) {
+        assert.isObject(randomPlayer, "random player must exist");
+      
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["api.games"]+"?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+        };
+        
+        var newGame = {
+          options: { score: "0/0" },
+          teams: [ { id: null, players: [ { name : "toto" } ] },
+                   { id: null, players: [ { name : "titi" } ] } ]
+        };
+        http.post(options, newGame, function (game) {
+          assert.isGame(game);
+          assert(game.options.score === newGame.options.score, "score should be the same");
+
+          var options = {
+            host: Conf["http.host"],
+            port: Conf["http.port"],
+            path: Conf["api.games"]+game.id+"/?playerid="+randomPlayer._id+"&token="+randomPlayer.token+"&_method=delete"
+          };
+          
+          http.post(options, game, function (empty) {
+            assert(Object.keys(empty).length === 0, 'must be empty (deleted)');
+            
+            // reading the game 
+            var options = {
+              host: Conf["http.host"],
+              port: Conf["http.port"],
+              path: Conf["api.games"]+game.id
+            };
+            http.getJSON(options, function (g) {
+              assert.isError(g);
+              assert(g.error == "no game found", "must be a no game found error");
+
+              // update the game
+              var options = {
+                host: Conf["http.host"],
+                port: Conf["http.port"],
+                path: Conf["api.games"]+game.id+"/?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+              };
+              
+              http.getJSON(options, function (g) {
+                assert.isError(g);
+                assert(g.error == "no game found", "must be a no game found error");
+                
+                // delete the game twice
+                var options = {
+                  host: Conf["http.host"],
+                  port: Conf["http.port"],
+                  path: Conf["api.games"]+game.id+"/?playerid="+randomPlayer._id+"&token="+randomPlayer.token+"&_method=delete"
+                };
+                
+                http.getJSON(options, function (g) {
+                  assert.isError(g);
+                  assert(g.error == "no game found", "must be a no game found error");
+                
+                  done();
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+  });
+  
+  describe('write a comment on a stream, delete it', function () {
+    it('should not be able to read it again / delete it', function (done){
+      // read a game
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.games"]+"random"
+      };
+      http.getJSON(options, function (randomGame) {
+        assert.isObject(randomGame, "random game must exist");
+        
+        // nb Element ds le stream.
+        var nbElementInStream = randomGame.stream.length;
+        // request random player
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["documents.players"]+"random"
+        };
+        http.getJSON(options, function (randomPlayer) {
+          assert.isObject(randomPlayer, "random player must exist");
+          // adding comment in game stream
+          var streamObj = {
+            type: "comment",
+            data: { text : "test" }
+          };
+          var options = {
+            host: Conf["http.host"],
+            port: Conf["http.port"],
+            path: Conf["api.games"]+randomGame._id+"/stream/?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+          };
+          http.post(options, streamObj, function (s) {
+            assert.isStreamComment(s);
+            assert.isId(s.id);
+            
+            // deleting
+            var options = {
+              host: Conf["http.host"],
+              port: Conf["http.port"],
+              path: Conf["api.games"]+randomGame._id+"/stream/"+s.id+"/?playerid="+randomPlayer._id+"&token="+randomPlayer.token+"&_method=delete"
+            };
+            http.getJSON(options, function (empty) {
+              assert(Object.keys(empty).length === 0, 'must be empty (deleted)');
+              
+              // ensure streamItem is not in stream any more
+              var options = {
+                host: Conf["http.host"],
+                port: Conf["http.port"],
+                path: Conf["api.games"]+randomGame._id+"/stream/?limit=100000"
+              };
+              
+              http.getJSON(options, function (stream) {
+                assert.isArray(stream, 'must be an array');
+                stream.forEach(function (streamItem) {
+                  assert(streamItem.id != s.id);
+                });
+                
+                done();
+              });
             });
           });
         });

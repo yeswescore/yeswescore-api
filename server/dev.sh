@@ -35,8 +35,10 @@ then
   if [ "$1" = "debug" ]
   then
     echo "debug mode activated"
+    echo " please launch 'node-inspector' to debug."
     node --debug server.js
   else
+    echo "to debug, use> ./dev.sh debug"
     node server.js
   fi
 else

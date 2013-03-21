@@ -50,7 +50,7 @@ app.get('/v1/games/', function(req, res){
   // process fields
   var fields = app.createPopulateFields(fields, populate);
   // heavy...
-  var query = DB.Model.Game.find({});
+  var query = DB.Model.Game.find({_deleted: false});
   if (text) {
     text = new RegExp("("+text.searchable().pregQuote()+")");
     query.or([
@@ -66,7 +66,7 @@ app.get('/v1/games/', function(req, res){
     query.where('status').in(status.split(","));
   if (longitude && latitude && distance)
     query.where('location.pos').within.centerSphere({ center: [ parseFloat(longitude), parseFloat(latitude) ], radius: parseFloat(distance) / 6378.137 });
-  query.select(fields.select);
+  query.where('_deleted', false);
   if (populatePaths.indexOf("teams.players") !== -1) {
     query.populate("teams.players", fields["teams.players"]);
   }
@@ -90,12 +90,9 @@ app.get('/v1/games/', function(req, res){
  *
  * Specific options:
  *  /v1/games/:id/?populate=teams.players
- *  /v1/games/:id/?stream=true
  */
 app.get('/v1/games/:id', function (req, res){
   var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.end,location.country,location.city,location.pos,teams,teams.players.name,teams.players.nickname,teams.players.club,teams.players.rank,options.type,options.subtype,options.sets,options.score,options.court,options.surface,options.tour";
-  if (req.query.stream === "true")
-    fields += ",stream"
   // populate option
   var populate = "teams.players";
   if (typeof req.query.populate !== "undefined")
@@ -105,7 +102,7 @@ app.get('/v1/games/:id', function (req, res){
   // preprocess fields
   var fields = app.createPopulateFields(fields, populate);
   // searching player by id.
-  var query = DB.Model.Game.findOne({_id:req.params.id})
+  var query = DB.Model.Game.findOne({_id:req.params.id, _deleted: false})
      .select(fields.select);
   if (populatePaths.indexOf("teams.players") !== -1) {
     query.populate("teams.players", fields["teams.players"]);
@@ -127,7 +124,7 @@ app.get('/v1/games/:id', function (req, res){
  *  /v1/games/:id/stream/?limit=5       (default=10)
  *
  * Specific options:
- *  /v1/games/:id/stream/?after=
+ *  /v1/games/:id/stream/?after=date    ex: "16:01:2013" ou "16 janvier 2013" ou...
  * 
  * WARNING: might be performance hits. We can't use $elemMatch (see below).
  * FIXME: solution: create a separate collection for the stream.
@@ -137,7 +134,7 @@ app.get('/v1/games/:id/stream/', function (req, res){
   var after = req.query.after || null;
   
   // searching player by id.
-  var query = DB.Model.Game.findById(req.params.id)
+  var query = DB.Model.Game.findOne({_id:req.params.id, _deleted: false})
   query.exec(function (err, game) {
     if (err)
       return app.defaultError(res)(err);
@@ -151,8 +148,13 @@ app.get('/v1/games/:id/stream/', function (req, res){
     // @øee http://docs.mongodb.org/manual/reference/projection/elemMatch/#_S_elemMatch
     // @see https://jira.mongodb.org/browse/SERVER-6612
     
-    // after
     var stream = game.stream || [];
+    // filtering
+    stream = stream.filter(function (s) {
+      return s._deleted === false;
+    });
+    
+    // after
     if (after) {
       after = new Date(after).getTime();
       stream = stream.filter(function (streamItem) {
@@ -182,7 +184,7 @@ app.get('/v1/games/:id/stream/', function (req, res){
           // FIXME: mongoose missing feature.
           // How to populate a model property manually after instantiation?
           // https://groups.google.com/forum/?fromgroups=#!topic/mongoose-orm/nrBq_gOVzBo
-          var streamItemObject = streamItem.toObject();
+          var streamItemObject = streamItem.toObject({virtuals: true, transform: true});
           var owner = owners[index];
           var ownerId = streamItemObject.owner;
           streamItemObject.owner = {
@@ -324,24 +326,18 @@ app.post('/v1/games/:id', express.bodyParser(), function(req, res){
   if (err)
     return app.defaultError(res)(err);
   // check player is authenticated
-  var owner = null;
   DB.isAuthenticatedAsync(req.query)
     .then(function searchGame(authentifiedPlayer) {
       if (authentifiedPlayer === null)
         throw "unauthorized";
-      owner = authentifiedPlayer.id;
-      // somme more security tests
-      var deferred = Q.defer();
-      DB.Model.Game.findById(req.params.id, function (err, game) {
-        if (err)
-          return deferred.reject(err);
-        if (game === null)
-          return deferred.reject("game doesn't exist");
-        if (game.owner != req.query.playerid) // /!\ cant do '!==' on objectId
-          return deferred.reject("you are not the owner of the game : "+game.owner+" " + req.query.playerid);
-        deferred.resolve(game);
-      });
-      return deferred.promise;
+      return Q.nfcall(DB.Model.Game.findOne.bind(DB.Model.Game),
+                      {_id:req.params.id, _deleted: false});
+    }).then(function checkGameOwner(game) {
+      if (game === null)
+        throw "no game found";
+      if (game.owner != req.query.playerid) // /!\ cant do '!==' on objectId
+        throw "you are not the owner of the game";
+      return game;
     }).then(function updateFields(game) {
       // updatable simple fields
       if (typeof req.body.status !== "undefined")
@@ -405,19 +401,14 @@ app.post('/v1/games/:id/stream/', express.bodyParser(), function(req, res){
   if (req.body.type !== "comment")
     return app.defaultError(res)("type must be comment");
   DB.isAuthenticatedAsync(req.query)
-    .then(function checkGameExist(authentifiedPlayer) {
+    .then(function searchGame(authentifiedPlayer) {
       if (authentifiedPlayer === null)
         throw "unauthorized";
-      var deferred = Q.defer();
-      DB.Model.Game.findById(req.params.id, function (err, game) {
-        if (err)
-          return deferred.reject(err);
-        if (game === null)
-          return deferred.reject("can't find game");
-        return deferred.resolve(game);
-      });
-      return deferred.promise;
+      return Q.nfcall(DB.Model.Game.findOne.bind(DB.Model.Game),
+                      {_id:req.params.id, _deleted: false});
     }).then(function pushIntoStream(game) {
+      if (game === null)
+        throw "no game found";
       // FIXME: performance issue here...
       //  we should be using { $push: { stream: streamItem } }
       //  but there are 2 problems :
@@ -440,3 +431,127 @@ app.post('/v1/games/:id/stream/', express.bodyParser(), function(req, res){
       res.end(JSON.stringifyModels(game.stream[game.stream.length - 1]));
     }, app.defaultError(res));
 });
+
+/*
+ * Update a streamitem
+ *
+ * You must be authentified
+ * 
+ * Body {
+ *   data: { text: "..." }
+ * }
+ * 
+ * This code is not performant.
+ */
+app.post('/v1/games/:id/stream/:streamid/', express.bodyParser(), function(req, res){
+  DB.isAuthenticatedAsync(req.query)
+    .then(function searchGame(authentifiedPlayer) {
+      if (authentifiedPlayer === null)
+        throw "unauthorized";
+      return Q.nfcall(DB.Model.Game.findOne.bind(DB.Model.Game),
+                      {_id:req.params.id, _deleted: false});
+    }).then(function checkGameOwner(game) {
+      if (game === null)
+        throw "no game found";
+      return game;
+    }).then(function (game) {
+      // search the streamItem
+      if (!Array.isArray(game.stream))
+        throw "empty stream";
+      var streamid = req.params.streamid
+        , l = game.stream.length;
+      for (var i = 0; i < l; ++i) {
+        if (game.stream[i]._id == streamid) {
+          // streamItem found => update it
+          if (req.body.data && req.body.data.text)
+            game.stream[i].data = { text: req.body.data.text };
+          game.stream[i].dates.update = Date.now();
+          return DB.saveAsync(game);
+        }
+      }
+      throw "no streamItem found";
+    }).then(function (game) {
+      var streamid = req.params.streamid
+        , l = game.stream.length;
+      for (var i = 0; i < l; ++i) {
+        if (game.stream[i]._id == streamid) {
+          var streamItem = game.stream[i].toObject({virtuals: true, transform: true});
+          res.end(JSON.stringify(streamItem));
+        }
+      }
+      // we normaly shouldn't reach this point.
+      throw "unknown exception";
+    }, app.defaultError(res));
+});
+
+/*
+ * Delete a game
+ *
+ * You must be authentified
+ * 
+ * /v1/games/:id/?_method=delete
+ * 
+ * FIXME: remove from player games.
+ */
+app.delete('/v1/games/:id/', function (req, res) {
+  DB.isAuthenticatedAsync(req.query)
+    .then(function searchGame(authentifiedPlayer) {
+      if (authentifiedPlayer === null)
+        throw "unauthorized";
+      return Q.nfcall(DB.Model.Game.findOne.bind(DB.Model.Game),
+                      {_id:req.params.id, _deleted: false});
+    }).then(function checkGameOwner(game) {
+      if (game === null)
+        throw "no game found";
+      if (game.owner != req.query.playerid) // /!\ cant do '!==' on objectId
+        throw "you are not the owner of the game";
+      return game;
+    }).then(function (game) {
+      // mark the game as deleted
+      game._deleted = true;
+      return DB.saveAsync(game);
+    }).then(function () {
+      res.end('{}'); // smallest json.
+    }, app.defaultError(res));
+});
+
+/*
+ * Delete a streamItem
+ *
+ * You must be authentified
+ * 
+ * /v1/games/:id/?_method=delete
+ * 
+ * FIXME: remove from player games.
+ */
+app.delete('/v1/games/:id/stream/:streamid/', function (req, res) {
+  DB.isAuthenticatedAsync(req.query)
+    .then(function searchGame(authentifiedPlayer) {
+      if (authentifiedPlayer === null)
+        throw "unauthorized";
+      return Q.nfcall(DB.Model.Game.findOne.bind(DB.Model.Game),
+                      {_id:req.params.id, _deleted: false});
+    }).then(function checkGameOwner(game) {
+      if (game === null)
+        throw "no game found";
+      return game;
+    }).then(function (game) {
+      // search the streamItem
+      if (!Array.isArray(game.stream))
+        throw "empty stream";
+      var streamid = req.params.streamid
+        , l = game.stream.length;
+      for (var i = 0; i < l; ++i) {
+        if (game.stream[i]._id == streamid) {
+          // streamItem found => delete it
+          game.stream[i]._deleted = true;
+          game.stream[i].dates.update = Date.now();
+          return DB.saveAsync(game);
+        }
+      }
+      throw "no streamItem found";
+    }).then(function () {
+      res.end('{}'); // smallest json.
+    }, app.defaultError(res));
+});
+

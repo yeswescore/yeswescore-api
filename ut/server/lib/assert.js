@@ -359,4 +359,8 @@ assert.isError = function (error, m) {
   assert(typeof error.error === "string", "must have error field");
 };
 
+assert.isEmptyObject = function (o) {
+  assert(Object.keys(o).length === 0, 'must be empty');
+};
+
 module.exports = assert;
