@@ -3,6 +3,21 @@ var express = require("express")
   , Conf = require("./conf.js")
   , winston = require("winston");
 
+// default express options
+app.use(express.compress());       // we do want to compress responses
+// methodOverride working with querystring?_method=xxxx
+app.use(function (req, res, next) {
+  console.log('req.query : ' + JSON.stringify(req.query));
+  if (req.query && req.query._method) {
+   console.log('methodOverride : ' +   req.query._method);
+    if (!req.body)
+      req.body = { };
+    req.body._method = req.query._method;
+  }
+  next();
+});
+app.use(express.methodOverride()); // we want to simulate http verbs. (delete & put)
+
 var routes = { /* "/v1/games/:id" : function (req, res) { ... } */ };
 app.get = (function (oldGet) {
   return function () {

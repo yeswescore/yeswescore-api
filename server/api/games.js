@@ -50,7 +50,7 @@ app.get('/v1/games/', function(req, res){
   // process fields
   var fields = app.createPopulateFields(fields, populate);
   // heavy...
-  var query = DB.Model.Game.find({});
+  var query = DB.Model.Game.find({_deleted: false});
   if (text) {
     text = new RegExp("("+text.searchable().pregQuote()+")");
     query.or([
@@ -66,7 +66,7 @@ app.get('/v1/games/', function(req, res){
     query.where('status').in(status.split(","));
   if (longitude && latitude && distance)
     query.where('location.pos').within.centerSphere({ center: [ parseFloat(longitude), parseFloat(latitude) ], radius: parseFloat(distance) / 6378.137 });
-  query.select(fields.select);
+  query.where('_deleted', false);
   if (populatePaths.indexOf("teams.players") !== -1) {
     query.populate("teams.players", fields["teams.players"]);
   }
@@ -105,7 +105,7 @@ app.get('/v1/games/:id', function (req, res){
   // preprocess fields
   var fields = app.createPopulateFields(fields, populate);
   // searching player by id.
-  var query = DB.Model.Game.findOne({_id:req.params.id})
+  var query = DB.Model.Game.findOne({_id:req.params.id, _deleted: false})
      .select(fields.select);
   if (populatePaths.indexOf("teams.players") !== -1) {
     query.populate("teams.players", fields["teams.players"]);
@@ -137,7 +137,7 @@ app.get('/v1/games/:id/stream/', function (req, res){
   var after = req.query.after || null;
   
   // searching player by id.
-  var query = DB.Model.Game.findById(req.params.id)
+  var query = DB.Model.Game.findOne({_id:req.params.id, _deleted: false})
   query.exec(function (err, game) {
     if (err)
       return app.defaultError(res)(err);
@@ -324,24 +324,18 @@ app.post('/v1/games/:id', express.bodyParser(), function(req, res){
   if (err)
     return app.defaultError(res)(err);
   // check player is authenticated
-  var owner = null;
   DB.isAuthenticatedAsync(req.query)
     .then(function searchGame(authentifiedPlayer) {
       if (authentifiedPlayer === null)
         throw "unauthorized";
-      owner = authentifiedPlayer.id;
-      // somme more security tests
-      var deferred = Q.defer();
-      DB.Model.Game.findById(req.params.id, function (err, game) {
-        if (err)
-          return deferred.reject(err);
-        if (game === null)
-          return deferred.reject("game doesn't exist");
-        if (game.owner != req.query.playerid) // /!\ cant do '!==' on objectId
-          return deferred.reject("you are not the owner of the game : "+game.owner+" " + req.query.playerid);
-        deferred.resolve(game);
-      });
-      return deferred.promise;
+      return Q.nfcall(DB.Model.Game.findOne.bind(DB.Model.Game),
+                      {_id:req.params.id, _deleted: false});
+    }).then(function checkGameOwner(game) {
+      if (game === null)
+        throw "no game found";
+      if (game.owner != req.query.playerid) // /!\ cant do '!==' on objectId
+        throw "you are not the owner of the game";
+      return game;
     }).then(function updateFields(game) {
       // updatable simple fields
       if (typeof req.body.status !== "undefined")
@@ -405,19 +399,14 @@ app.post('/v1/games/:id/stream/', express.bodyParser(), function(req, res){
   if (req.body.type !== "comment")
     return app.defaultError(res)("type must be comment");
   DB.isAuthenticatedAsync(req.query)
-    .then(function checkGameExist(authentifiedPlayer) {
+    .then(function searchGame(authentifiedPlayer) {
       if (authentifiedPlayer === null)
         throw "unauthorized";
-      var deferred = Q.defer();
-      DB.Model.Game.findById(req.params.id, function (err, game) {
-        if (err)
-          return deferred.reject(err);
-        if (game === null)
-          return deferred.reject("can't find game");
-        return deferred.resolve(game);
-      });
-      return deferred.promise;
+      return Q.nfcall(DB.Model.Game.findOne.bind(DB.Model.Game),
+                      {_id:req.params.id, _deleted: false});
     }).then(function pushIntoStream(game) {
+      if (game === null)
+        throw "no game found";
       // FIXME: performance issue here...
       //  we should be using { $push: { stream: streamItem } }
       //  but there are 2 problems :
@@ -440,3 +429,36 @@ app.post('/v1/games/:id/stream/', express.bodyParser(), function(req, res){
       res.end(JSON.stringifyModels(game.stream[game.stream.length - 1]));
     }, app.defaultError(res));
 });
+
+/*
+ * Delete a game
+ *
+ * You must be authentified
+ * 
+ * /v1/games/:id/?_method=delete
+ * 
+ * FIXME: remove from player games.
+ */
+app.delete('/v1/games/:id/', function (req, res) {
+  DB.isAuthenticatedAsync(req.query)
+    .then(function searchGame(authentifiedPlayer) {
+      if (authentifiedPlayer === null)
+        throw "unauthorized";
+      return Q.nfcall(DB.Model.Game.findOne.bind(DB.Model.Game),
+                      {_id:req.params.id, _deleted: false});
+    }).then(function checkGameOwner(game) {
+      if (game === null)
+        throw "no game found";
+      if (game.owner != req.query.playerid) // /!\ cant do '!==' on objectId
+        throw "you are not the owner of the game";
+      return game;
+    }).then(function (game) {
+      // mark the game as deleted
+      game._deleted = true;
+      return DB.saveAsync(game);
+    }).then(function () {
+      res.end('{}'); // smallest json.
+    }, app.defaultError(res));
+});
+
+
