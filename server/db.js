@@ -726,11 +726,6 @@ if (Conf.env === "DEV") {
   DB.Model.Game.randomAsync = function () { return DB.getRandomModelAsync(DB.Model.Game); };
 }
 
-// undefined if nothing is found
-DB.searchById = function (collection, id) {
-   return collection.filter(function (o) { return o.id === id }).pop();
-};
-
 DB.isAuthenticatedAsync = function (query) {
   var deferred = Q.defer();
   if (query.playerid && query.token) {
