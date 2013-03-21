@@ -19,7 +19,7 @@ app.get('/v1/facebook/login/', function(req, res){
   var scheme = Conf.get("facebook.yws.scheme")
     , host = Conf.get("facebook.yws.host")
     , port = Conf.get("facebook.yws.port")
-    , player;
+    , player, token;
   
   var error = function (message) {
     var page = Conf.get("facebook.yws.inappbrowser.error");
@@ -41,7 +41,7 @@ app.get('/v1/facebook/login/', function(req, res){
         throw "player not authenticated";
       player = authentifiedPlayer;
     }).then(function () {
-      // connecting to facebook...
+      // requesting long access token
       var clientId = Conf.get('facebook.app.id')
         , clientSecret = Conf.get('facebook.app.secret');
       
@@ -55,14 +55,29 @@ app.get('/v1/facebook/login/', function(req, res){
            "fb_exchange_token=" + req.query.access_token
       });
     }).then(function (data) {
+      console.log('FACEBOOK => long access token');
+      console.log(data);
       // data: access_token=AAAIyivk4N(...)vk4N&expires=5183956
       var infos = /access_token=([^&]+)/.exec(String(data));
       if (!infos)
         throw "long access token";
+      token = infos[1];
+      // requesting fbid
+      return https.getAsync({
+        host: Conf.get('facebook.graph.host'),
+        port: Conf.get('facebook.graph.port'),
+        path: "/me?fields=id,first_name,last_name,locale,location,email&" +
+           "access_token="+token
+      });
+    }).then(function (data) {
+      // data: {"id":"100005017327994","first_name":"Marcd","last_name":"Zescore",
+      //        "locale":"en_US","email":"marcd\u0040zescore.com"}
+      console.log('FACEBOOK => graph (/me)');
+      console.log(data);
       
       // saving facebook id & token.
       player.connection.facebook.id = req.query.fbid;
-      player.connection.facebook.token = req.query.fbtoken;
+      player.connection.facebook.token = token;
       return Q.nfcall(player.save.bind(player));
     }).then(function () {
       var page = Conf.get("facebook.yws.inappbrowser.success");
