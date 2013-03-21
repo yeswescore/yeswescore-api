@@ -429,6 +429,83 @@ describe('dev:games', function(){
     });
   });
   
+  describe('write a comment on a stream, update it', function () {
+    it('should create a comment, beeing updated', function (done){
+      // read a game
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.games"]+"random"
+      };
+      http.getJSON(options, function (randomGame) {
+        assert.isObject(randomGame, "random game must exist");
+        
+        // nb Element ds le stream.
+        var nbElementInStream = randomGame.stream.length;
+        // request random player
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["documents.players"]+"random"
+        };
+        http.getJSON(options, function (randomPlayer) {
+          assert.isObject(randomPlayer, "random player must exist");
+          // adding comment in game stream
+          var streamObj = {
+            type: "comment",
+            data: { text : "test" }
+          };
+          var options = {
+            host: Conf["http.host"],
+            port: Conf["http.port"],
+            path: Conf["api.games"]+randomGame._id+"/stream/?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+          };
+          http.post(options, streamObj, function (s) {
+            assert.isStreamComment(s);
+            assert.isId(s.id);
+            
+            var streamId = s.id;
+            
+            // updating comment
+            var rndText = "test"+Math.random();
+            var streamObj = {
+              data: { text : rndText }
+            };
+            
+            var options = {
+              host: Conf["http.host"],
+              port: Conf["http.port"],
+              path: Conf["api.games"]+randomGame._id+"/stream/"+s.id+"/?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+            };
+            http.post(options, streamObj, function (s) {
+              assert.isStreamComment(s);
+              assert(s.data.text == rndText, "text should be updated");
+            
+              // reading game from DB
+              var options = {
+                host: Conf["http.host"],
+                port: Conf["http.port"],
+                path: Conf["api.games"]+randomGame._id+"/stream/?limit=100000"
+              };
+              http.getJSON(options, function (stream) {
+                assert.isArray(stream);
+                
+                stream = stream.filter(function (streamItem) {
+                  return streamItem.id == streamId;
+                });
+                
+                assert(stream.length == 1, "should be streamItem id in stream");
+                assert(stream[0].data.text == rndText, "should have text updated");
+                
+                done();
+              });
+            });
+          });
+        });
+      });
+    });
+  });
+  
   describe('create a single game located in bora bora, then search it from tupai within 50km & search it from 10km', function () {
     it('should find the game first then not find it', function (done){
       // read a player

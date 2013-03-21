@@ -433,6 +433,58 @@ app.post('/v1/games/:id/stream/', express.bodyParser(), function(req, res){
 });
 
 /*
+ * Update a streamitem
+ *
+ * You must be authentified
+ * 
+ * Body {
+ *   data: { text: "..." }
+ * }
+ * 
+ * This code is not performant.
+ */
+app.post('/v1/games/:id/stream/:streamid/', express.bodyParser(), function(req, res){
+  DB.isAuthenticatedAsync(req.query)
+    .then(function searchGame(authentifiedPlayer) {
+      if (authentifiedPlayer === null)
+        throw "unauthorized";
+      return Q.nfcall(DB.Model.Game.findOne.bind(DB.Model.Game),
+                      {_id:req.params.id, _deleted: false});
+    }).then(function checkGameOwner(game) {
+      if (game === null)
+        throw "no game found";
+      return game;
+    }).then(function (game) {
+      // search the streamItem
+      if (!Array.isArray(game.stream))
+        throw "empty stream";
+      var streamid = req.params.streamid
+        , l = game.stream.length;
+      for (var i = 0; i < l; ++i) {
+        if (game.stream[i]._id == streamid) {
+          // streamItem found => update it
+          if (req.body.data && req.body.data.text)
+            game.stream[i].data = { text: req.body.data.text };
+          game.stream[i].dates.update = Date.now();
+          return DB.saveAsync(game);
+        }
+      }
+      throw "no streamItem found";
+    }).then(function (game) {
+      var streamid = req.params.streamid
+        , l = game.stream.length;
+      for (var i = 0; i < l; ++i) {
+        if (game.stream[i]._id == streamid) {
+          var streamItem = game.stream[i].toObject({virtuals: true, transform: true});
+          res.end(JSON.stringify(streamItem));
+        }
+      }
+      // we normaly shouldn't reach this point.
+      throw "unknown exception";
+    }, app.defaultError(res));
+});
+
+/*
  * Delete a game
  *
  * You must be authentified
@@ -493,6 +545,7 @@ app.delete('/v1/games/:id/stream/:streamid/', function (req, res) {
         if (game.stream[i]._id == streamid) {
           // streamItem found => delete it
           game.stream[i]._deleted = true;
+          game.stream[i].dates.update = Date.now();
           return DB.saveAsync(game);
         }
       }
