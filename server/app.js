@@ -7,9 +7,7 @@ var express = require("express")
 app.use(express.compress());       // we do want to compress responses
 // methodOverride working with querystring?_method=xxxx
 app.use(function (req, res, next) {
-  console.log('req.query : ' + JSON.stringify(req.query));
   if (req.query && req.query._method) {
-   console.log('methodOverride : ' +   req.query._method);
     if (!req.body)
       req.body = { };
     req.body._method = req.query._method;
