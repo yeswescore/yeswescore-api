@@ -36,7 +36,18 @@ app.get('/v1/report/players/:id/', function (req, res) {
 });
 
 app.get('/v1/report/games/:id/', function (req, res) {
-  
+  DB.Model.Game.findById(req.params.id, function (err, game) {
+    if (err || !game) {
+      reportLogger.info('game,'+req.params.id+',error,'+req.ip);
+      app.log('error reporting game'+req.params.id, 'error');
+      app.log(err, 'error');
+    } else {
+      game._reported = true;
+      game.save(); // async
+      reportLogger.info('game,'+req.params.id+',ok,'+req.ip);
+    }
+    res.end('{}');
+  });
 });
 
 app.get('/v1/report/teams/:id/', function (req, res) {

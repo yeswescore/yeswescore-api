@@ -87,4 +87,45 @@ describe('dev:report', function(){
       });
     });
   });
+  
+  describe('read random game, then report it', function(){
+    it('should report the game.', function (done){
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.games"]+"random"
+      };
+      
+      http.getJSON(options, function (randomGame) {
+        assert.isObject(randomGame, "random game must exist");
+        assert.isId(randomGame._id);
+        
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["api.report"]+"games/"+randomGame._id+"/"
+        };
+        http.getJSON(options, function (empty) {
+          assert.isEmptyObject(empty);
+          
+          // let some time for mongo to write report
+          setTimeout(function () {
+            var options = {
+              host: Conf["http.host"],
+              port: Conf["http.port"],
+              path: Conf["documents.games"]+randomGame._id+"/"
+            };
+            
+            http.getJSON(options, function (updatedGame) {
+              assert.isObject(updatedGame, "updatedGame must exist");
+              assert.isId(updatedGame._id, 'must be an id');
+              assert(updatedGame._id == randomGame._id, 'must have same id');
+              assert(updatedGame._reported == true, 'game must be reported');
+              done();
+            });
+          }, 200);
+        });
+      });
+    });
+  });
 });
