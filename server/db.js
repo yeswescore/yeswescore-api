@@ -137,6 +137,8 @@ DB.Definition.Club = {
   countTeams: Number,
   countTeams1AN: Number,
   school: String,
+  // private 
+  _deleted: { type: Boolean, default: false },
   // private searchable fields
   _searchableName: String  // AUTO-FIELD (Club pre save)
 };
@@ -181,6 +183,8 @@ DB.Definition.Player = {
   games: [ { type: Schema.Types.ObjectId, ref: "Game" } ], // AUTO-FIELD (Game post save)
   owner: { type: Schema.Types.ObjectId, ref: "Player" },
   type: { type: String, enum: [ "default", "owned" ], default: "default" },
+  // private 
+  _deleted: { type: Boolean, default: false },
   // private searchable fields
   _searchableNickname: String,  // AUTO-FIELD (Player pre save)
   _searchableName: String,      // AUTO-FIELD (Player pre save)
@@ -188,7 +192,9 @@ DB.Definition.Player = {
 };
 DB.Definition.Team = {
   players: [ { type: Schema.Types.ObjectId, ref: "Player" } ],
-  points: String
+  points: String,
+  // private 
+  _deleted: { type: Boolean, default: false }
 };
 DB.Definition.StreamItem = {
   dates : {
@@ -198,7 +204,9 @@ DB.Definition.StreamItem = {
   fbid: String,
   type: { type: String, enum: [ "comment" ] },
   owner: { type: Schema.Types.ObjectId, ref: "Player" },
-  data: Schema.Types.Mixed
+  data: Schema.Types.Mixed,
+  // private 
+  _deleted: { type: Boolean, default: false }
 };
 // WE must instantiate Team & Stream Schema FIRST.
 DB.Schema.Team = new Schema(DB.Definition.Team);
@@ -232,6 +240,8 @@ DB.Definition.Game = {
                                     "NVTB", "PAR", "RES", "TB", "" ] },
     tour: String
   },
+  // private 
+  _deleted: { type: Boolean, default: false },
   // private searchable fields
   _searchableCity: String,                                // AUTO-FIELD (Game pre save)
   _searchablePlayersNames: [ String ],                    // AUTO-FIELD (Player post save) ASYNC
