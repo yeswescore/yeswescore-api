@@ -41,7 +41,7 @@ describe('dev:report', function(){
               assert(updatedClub._reported == true, 'club must be reported');
               done();
             });
-          }, 200);
+          }, 50);
         });
       });
     });
@@ -82,7 +82,7 @@ describe('dev:report', function(){
               assert(updatedPlayer._reported == true, 'player must be reported');
               done();
             });
-          }, 200);
+          }, 50);
         });
       });
     });
@@ -123,7 +123,75 @@ describe('dev:report', function(){
               assert(updatedGame._reported == true, 'game must be reported');
               done();
             });
-          }, 200);
+          }, 50);
+        });
+      });
+    });
+  });
+  
+  describe('read random game, add stream item, report it', function(){
+    it('should report the stream item.', function (done){
+      // read a game
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.games"]+"random"
+      };
+      http.getJSON(options, function (randomGame) {
+        assert.isObject(randomGame, "random game must exist");
+        
+        // request random player
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["documents.players"]+"random"
+        };
+        http.getJSON(options, function (randomPlayer) {
+          assert.isObject(randomPlayer, "random player must exist");
+          // adding comment in game stream
+          var streamObj = {
+            type: "comment",
+            data: { text : "test" }
+          };
+          var options = {
+            host: Conf["http.host"],
+            port: Conf["http.port"],
+            path: Conf["api.games"]+randomGame._id+"/stream/?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+          };
+          http.post(options, streamObj, function (s) {
+            assert.isStreamComment(s);
+            assert.isId(s.id);
+            
+            // report the streamItem
+            var options = {
+              host: Conf["http.host"],
+              port: Conf["http.port"],
+              path: Conf["api.report"]+"games/"+randomGame._id+"/stream/"+s.id+"/"
+            };
+            
+            http.getJSON(options, function (empty) {
+              assert.isEmptyObject(empty);
+              
+              // let some time for mongo to write report
+              setTimeout(function () {
+                // reading game from DB
+                var options = {
+                  host: Conf["http.host"],
+                  port: Conf["http.port"],
+                  path: Conf["documents.games"]+randomGame._id
+                };
+                http.getJSON(options, function (game) {
+                  assert(Array.isArray(game.stream), 'game.stream should be an array');
+                  var streamItems = game.stream.filter(function (streamItem) {
+                    return streamItem._id == s.id;
+                  });
+                  assert(streamItems.length === 1, 'should find the streamItem');
+                  assert(streamItems[0]._reported === true, 'should be reported');
+                  done();
+                });
+              }, 50);
+            });
+          });
         });
       });
     });
