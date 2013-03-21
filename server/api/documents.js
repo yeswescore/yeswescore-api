@@ -53,8 +53,8 @@ if (Conf.env === "DEV") {
   });
 
   app.get('/documents/clubs/:id', function (req, res) {
-    DB.Model.Player.findOne({_id:req.params.id})
-                   .exec(function (err, club) {
+    DB.Model.Club.findOne({_id:req.params.id})
+                 .exec(function (err, club) {
       if (err)
         return app.defaultError(res)(err);
       if (club === null)
