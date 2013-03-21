@@ -179,7 +179,7 @@ app.get('/v1/games/:id/stream/', function (req, res){
           // FIXME: mongoose missing feature.
           // How to populate a model property manually after instantiation?
           // https://groups.google.com/forum/?fromgroups=#!topic/mongoose-orm/nrBq_gOVzBo
-          var streamItemObject = streamItem.toObject();
+          var streamItemObject = streamItem.toObject({virtuals: true, transform: true});
           var owner = owners[index];
           var ownerId = streamItemObject.owner;
           streamItemObject.owner = {
