@@ -90,12 +90,9 @@ app.get('/v1/games/', function(req, res){
  *
  * Specific options:
  *  /v1/games/:id/?populate=teams.players
- *  /v1/games/:id/?stream=true
  */
 app.get('/v1/games/:id', function (req, res){
   var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.end,location.country,location.city,location.pos,teams,teams.players.name,teams.players.nickname,teams.players.club,teams.players.rank,options.type,options.subtype,options.sets,options.score,options.court,options.surface,options.tour";
-  if (req.query.stream === "true")
-    fields += ",stream"
   // populate option
   var populate = "teams.players";
   if (typeof req.query.populate !== "undefined")
