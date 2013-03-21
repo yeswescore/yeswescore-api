@@ -5,9 +5,6 @@ var DB = require("../db.js")
   
 var reportLogger = winston.loggers.get('email');
 
-/**
- * Report a club.
- */
 app.get('/v1/report/clubs/:id/', function (req, res) {
   DB.Model.Club.findById(req.params.id, function (err, club) {
     if (err || !club) {
@@ -24,7 +21,18 @@ app.get('/v1/report/clubs/:id/', function (req, res) {
 });
 
 app.get('/v1/report/players/:id/', function (req, res) {
-  
+  DB.Model.Player.findById(req.params.id, function (err, player) {
+    if (err || !player) {
+      reportLogger.info('player,'+req.params.id+',error');
+      app.log('error reporting player '+req.params.id, 'error');
+      app.log(err, 'error');
+    } else {
+      player._reported = true;
+      player.save(); // async
+      reportLogger.info('player,'+req.params.id+',ok');      
+    }
+    res.end('{}');
+  });
 });
 
 app.get('/v1/report/games/:id/', function (req, res) {

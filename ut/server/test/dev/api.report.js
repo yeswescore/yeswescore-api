@@ -46,4 +46,45 @@ describe('dev:report', function(){
       });
     });
   });
+  
+  describe('read random player, then report it', function(){
+    it('should report the player.', function (done){
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.players"]+"random"
+      };
+      
+      http.getJSON(options, function (randomPlayer) {
+        assert.isObject(randomPlayer, "random player must exist");
+        assert.isId(randomPlayer._id);
+        
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["api.report"]+"players/"+randomPlayer._id+"/"
+        };
+        http.getJSON(options, function (empty) {
+          assert.isEmptyObject(empty);
+          
+          // let some time for mongo to write report
+          setTimeout(function () {
+            var options = {
+              host: Conf["http.host"],
+              port: Conf["http.port"],
+              path: Conf["documents.players"]+randomPlayer._id+"/"
+            };
+            
+            http.getJSON(options, function (updatedPlayer) {
+              assert.isObject(updatedPlayer, "updatedPlayer must exist");
+              assert.isId(updatedPlayer._id, 'must be an id');
+              assert(updatedPlayer._id == randomPlayer._id, 'must have same id');
+              assert(updatedPlayer._reported == true, 'player must be reported');
+              done();
+            });
+          }, 200);
+        });
+      });
+    });
+  });
 });
