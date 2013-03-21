@@ -94,7 +94,7 @@ var logs = {
     file: {
       filename: logsPath+'report.log',
       maxsize: 104857600, // = 100 Mo
-      timestamp: false,
+      timestamp: true,
       json:false
     }
   },
