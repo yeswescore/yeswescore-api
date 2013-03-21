@@ -157,7 +157,7 @@ describe('dev:games', function(){
         path: Conf["documents.clubs"]+"random"
       };
       
-      http.getJSON(options, function (randomclub) {
+      http.getJSON(options, function (randomClub) {
         var options = {
           host: Conf["http.host"],
           port: Conf["http.port"],
@@ -174,7 +174,7 @@ describe('dev:games', function(){
           };
           var newGame = {
             teams: [ { id: null, players: [ { name : "toto", nickname: "nick", email: "foo"+Math.random()+"@yeswescore.com", rank: "15/2" } ] },
-                    { id: null, players: [ { name : "titi" , club: { id: randomclub._id } } ] } ]
+                    { id: null, players: [ { name : "titi" , club: { id: randomClub._id } } ] } ]
           };
           http.post(options, newGame, function (game) {
             assert.isGame(game, "game was correctly created");
@@ -187,8 +187,8 @@ describe('dev:games', function(){
             assert(typeof game.teams[0].players[0].email === "undefined", "email should be undefined");
             assert(game.teams[0].players[0].rank === newGame.teams[0].players[0].rank, "rank");
             // tests on clubs
-            assert(game.teams[1].players[0].club.id === randomclub._id, "club id");
-            assert(game.teams[1].players[0].club.name === randomclub.name, "club name");
+            assert(game.teams[1].players[0].club.id === randomClub._id, "club id");
+            assert(game.teams[1].players[0].club.name === randomClub.name, "club name");
             
             done();
           });
