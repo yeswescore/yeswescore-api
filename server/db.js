@@ -139,6 +139,7 @@ DB.Definition.Club = {
   school: String,
   // private 
   _deleted: { type: Boolean, default: false },
+  _reported: { type: Boolean, default: false },
   // private searchable fields
   _searchableName: String  // AUTO-FIELD (Club pre save)
 };
@@ -185,6 +186,7 @@ DB.Definition.Player = {
   type: { type: String, enum: [ "default", "owned" ], default: "default" },
   // private 
   _deleted: { type: Boolean, default: false },
+  _reported: { type: Boolean, default: false },
   // private searchable fields
   _searchableNickname: String,  // AUTO-FIELD (Player pre save)
   _searchableName: String,      // AUTO-FIELD (Player pre save)
@@ -194,7 +196,8 @@ DB.Definition.Team = {
   players: [ { type: Schema.Types.ObjectId, ref: "Player" } ],
   points: String,
   // private 
-  _deleted: { type: Boolean, default: false }
+  _deleted: { type: Boolean, default: false },
+  _reported: { type: Boolean, default: false }
 };
 DB.Definition.StreamItem = {
   dates : {
@@ -206,7 +209,8 @@ DB.Definition.StreamItem = {
   owner: { type: Schema.Types.ObjectId, ref: "Player" },
   data: Schema.Types.Mixed,
   // private 
-  _deleted: { type: Boolean, default: false }
+  _deleted: { type: Boolean, default: false },
+  _reported: { type: Boolean, default: false }
 };
 // WE must instantiate Team & Stream Schema FIRST.
 DB.Schema.Team = new Schema(DB.Definition.Team);
@@ -242,6 +246,7 @@ DB.Definition.Game = {
   },
   // private 
   _deleted: { type: Boolean, default: false },
+  _reported: { type: Boolean, default: false },
   // private searchable fields
   _searchableCity: String,                                // AUTO-FIELD (Game pre save)
   _searchablePlayersNames: [ String ],                    // AUTO-FIELD (Player post save) ASYNC
