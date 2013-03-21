@@ -124,7 +124,7 @@ app.get('/v1/games/:id', function (req, res){
  *  /v1/games/:id/stream/?limit=5       (default=10)
  *
  * Specific options:
- *  /v1/games/:id/stream/?after=
+ *  /v1/games/:id/stream/?after=date    ex: "16:01:2013" ou "16 janvier 2013" ou...
  * 
  * WARNING: might be performance hits. We can't use $elemMatch (see below).
  * FIXME: solution: create a separate collection for the stream.
@@ -148,8 +148,13 @@ app.get('/v1/games/:id/stream/', function (req, res){
     // @øee http://docs.mongodb.org/manual/reference/projection/elemMatch/#_S_elemMatch
     // @see https://jira.mongodb.org/browse/SERVER-6612
     
-    // after
     var stream = game.stream || [];
+    // filtering
+    stream = stream.filter(function (s) {
+      return s._deleted === false;
+    });
+    
+    // after
     if (after) {
       after = new Date(after).getTime();
       stream = stream.filter(function (streamItem) {
@@ -458,4 +463,42 @@ app.delete('/v1/games/:id/', function (req, res) {
     }, app.defaultError(res));
 });
 
+/*
+ * Delete a streamItem
+ *
+ * You must be authentified
+ * 
+ * /v1/games/:id/?_method=delete
+ * 
+ * FIXME: remove from player games.
+ */
+app.delete('/v1/games/:id/stream/:streamid/', function (req, res) {
+  DB.isAuthenticatedAsync(req.query)
+    .then(function searchGame(authentifiedPlayer) {
+      if (authentifiedPlayer === null)
+        throw "unauthorized";
+      return Q.nfcall(DB.Model.Game.findOne.bind(DB.Model.Game),
+                      {_id:req.params.id, _deleted: false});
+    }).then(function checkGameOwner(game) {
+      if (game === null)
+        throw "no game found";
+      return game;
+    }).then(function (game) {
+      // search the streamItem
+      if (!Array.isArray(game.stream))
+        throw "empty stream";
+      var streamid = req.params.streamid
+        , l = game.stream.length;
+      for (var i = 0; i < l; ++i) {
+        if (game.stream[i]._id == streamid) {
+          // streamItem found => delete it
+          game.stream[i]._deleted = true;
+          return DB.saveAsync(game);
+        }
+      }
+      throw "no streamItem found";
+    }).then(function () {
+      res.end('{}'); // smallest json.
+    }, app.defaultError(res));
+});
 
