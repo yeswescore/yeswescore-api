@@ -204,9 +204,11 @@ DB.Definition.StreamItem = {
     creation: { type: Date, default: Date.now },
     update: { type: Date, default: Date.now }
   },
-  fbid: String,
   type: { type: String, enum: [ "comment" ] },
-  owner: { type: Schema.Types.ObjectId, ref: "Player" },
+  owner: {
+    player: { type: Schema.Types.ObjectId, ref: "Player" },
+    facebook: { id: String, name: String }
+  },
   data: Schema.Types.Mixed,
   // private 
   _deleted: { type: Boolean, default: false },
@@ -731,20 +733,32 @@ if (Conf.env === "DEV") {
   DB.Model.Game.randomAsync = function () { return DB.getRandomModelAsync(DB.Model.Game); };
 }
 
-DB.isAuthenticatedAsync = function (query) {
-  var deferred = Q.defer();
+/**
+ * @param object query string ex: ?playerid=...&token=...    or  ?fbid=...&token=...
+ * @param object options      default=undefined
+ * @return promise
+ * 
+ * options:
+ *  facebook: true    allowing facebook auth (facebookid + token)
+ */
+DB.isAuthenticatedAsync = function (query, options) {
+  // default auth: using our system (playerid & token)
   if (query.playerid && query.token) {
-    DB.Model.Player.findOne({_id: query.playerid, token: query.token})
-                   .exec(function (err, player) {
-                      if (err)
-                        deferred.reject(err);
-                      else
-                        deferred.resolve(player);
-                   });
-  } else {
-    deferred.resolve(null); // no player.
+    return Q.nfcall(
+      DB.Model.Player.findOne.bind(DB.Model.Player),
+      {_id: query.playerid, token: query.token}
+    );
   }
-  return deferred.promise;
+  // FIXME: move this in a "security object?"
+  // fb app auth: using fbid + checksum  
+  if (options && options.facebook && query.fbid && query.token) {
+    var shasum = crypto.createHash('sha256');
+    shasum.update(query.fbid + Conf.get("facebook.app.secret"));
+    if (shasum.digest('hex') === query.token) {
+      return Q.resolve(query.fbid);
+    }
+  }
+  return Q.resolve(null);
 };
 
 module.exports = DB;

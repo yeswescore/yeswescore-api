@@ -339,7 +339,13 @@ assert.isStreamObject = function (o, m) {
       creation: { _type: "date" },
       update: { _type: "date" }
     },
-    owner: { _type: "id" },
+    owner: {
+      player: { _type: "id|undefined" },
+      facebook: {
+        id: { _type: "string|undefined" },
+        name: { _type: "string|undefined" }
+      }
+    },
     data: { _type: "check", _check: function (data) {
         assert.isObject(data, "isStreamObject: streamObject.data must be an object");
       }

@@ -169,29 +169,37 @@ app.get('/v1/games/:id/stream/', function (req, res){
     
     // populating owners
     // FIXME: should be optimized.
-    var ownersPromises = stream.map(function (streamItem) {
-      return Q.nfcall(DB.Model.Player.findById.bind(DB.Model.Player),
-                      streamItem.owner);
+    var playersPromises = stream.map(function (streamItem) {
+      if (streamItem.owner.player)
+        return Q.nfcall(DB.Model.Player.findById.bind(DB.Model.Player),
+                        streamItem.owner.player);
+      return Q.resolve(null); // facebook
     });
     
-    Q.all(ownersPromises).then(
-      function (owners) {
+    Q.all(playersPromises).then(
+      function (players) {
         // remplacing :
-        //  owner: "512fd6227293e00f60000026" 
-        // by
-        //  { id: "512fd6227293e00f60000026", name: "...", nickname: "...3 }
+        //     { owner: { player: "512fd6227293e00f60000026" } } 
+        //  or { owner: { facebook: { id: "7293e00f6", name: "..." } } }
+        //
+        // to:
+        //
+        //     { owner: { player: { id: "...", name: "...", nickname: "..." } } }
+        //  or { owner: { facebook: { id: "7293e00f6", name: "..." } } }
         stream = stream.map(function (streamItem, index) {
           // FIXME: mongoose missing feature.
           // How to populate a model property manually after instantiation?
           // https://groups.google.com/forum/?fromgroups=#!topic/mongoose-orm/nrBq_gOVzBo
           var streamItemObject = streamItem.toObject({virtuals: true, transform: true});
-          var owner = owners[index];
-          var ownerId = streamItemObject.owner;
-          streamItemObject.owner = {
-            id: ownerId,
-            name: owner.name,
-            nickname: owner.nickname
-          };
+          var player = players[index];
+          if (player) {
+            var playerId = streamItemObject.owner.player;
+            streamItemObject.owner.player = {
+              id: playerId,
+              name: player.name,
+              nickname: player.nickname
+            };
+          }
           return streamItemObject;
         });
         
@@ -391,16 +399,26 @@ app.post('/v1/games/:id', express.bodyParser(), function(req, res){
  * 
  * Body {
  *     type: "comment",   (default="comment")
- *     owner: ObjectId,    (must equal ?playerid)
- *     fbid: ...,
+ *     owner: { player: ObjectId, facebook: { id: "...", name: "..." } }
  *     data: { text: "..." }
  *   }
  * }
  */
 app.post('/v1/games/:id/stream/', express.bodyParser(), function(req, res){
+  // input validation
   if (req.body.type !== "comment")
     return app.defaultError(res)("type must be comment");
-  DB.isAuthenticatedAsync(req.query)
+  if (req.query.fbid) {
+    if (!req.body.owner || !req.body.owner.facebook)
+      return app.defaultError(res)("missing owner.facebook");
+    if (typeof req.body.owner.facebook.id !== "string" ||
+        typeof req.body.owner.facebook.name !== "string")
+      return app.defaultError(res)("missing facebook.id or facebook.name");
+    if (req.query.fbid !== req.body.owner.facebook.id)
+      return app.defaultError(res)("fbid !== owner.facebook.id");
+  }
+  //
+  DB.isAuthenticatedAsync(req.query, { facebook: true })
     .then(function searchGame(authentifiedPlayer) {
       if (authentifiedPlayer === null)
         throw "unauthorized";
@@ -416,9 +434,16 @@ app.post('/v1/games/:id/stream/', express.bodyParser(), function(req, res){
       //   - seems to be a bug: no _id is created in mongo :(
       var streamItem = {};
       streamItem.type = "comment";
-      streamItem.owner = req.query.playerid;
-      if (req.query.fbid)
-        streamItem.fbid = req.query.fbid;
+      if (req.query.playerid) {
+        streamItem.owner = { player: req.query.playerid };
+      } else {
+        streamItem.owner = {
+          facebook: {
+            id: req.body.owner.facebook.id,
+            name: req.body.owner.facebook.name
+          }
+        };
+      }
       // adding text
       if (req.body.data && req.body.data.text)
         streamItem.data = { text: req.body.data.text };
@@ -444,7 +469,7 @@ app.post('/v1/games/:id/stream/', express.bodyParser(), function(req, res){
  * This code is not performant.
  */
 app.post('/v1/games/:id/stream/:streamid/', express.bodyParser(), function(req, res){
-  DB.isAuthenticatedAsync(req.query)
+  DB.isAuthenticatedAsync(req.query, { facebook: true })
     .then(function searchGame(authentifiedPlayer) {
       if (authentifiedPlayer === null)
         throw "unauthorized";
