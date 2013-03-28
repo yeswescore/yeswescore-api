@@ -261,7 +261,7 @@ var generateGamesAsync = function () {
           var date = new Date(new Date(game.dates.start).getTime() + delta);
           var comment = {
             type: "comment",
-            owner: players.random().id,
+            owner: { player: players.random().id },
             data: { text: generateFakeComment() },
             dates: { creation: Date.now() + 10 * j }
           }
