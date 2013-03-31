@@ -16,6 +16,18 @@ app.use(function (req, res, next) {
 });
 app.use(express.methodOverride()); // we want to simulate http verbs. (delete & put)
 
+// CORS in dev.
+if (Conf.get("env") === "DEV") {
+  app.use(function allowCrossDomain(req, res, next) {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Credentials', true);
+    res.header('Access-Control-Allow-Methods', 'POST, GET, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type');
+    next();
+  });
+}
+
+
 var routes = { /* "/v1/games/:id" : function (req, res) { ... } */ };
 app.get = (function (oldGet) {
   return function () {
