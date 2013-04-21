@@ -119,19 +119,22 @@ app.get('/v1/games/:id', function (req, res){
 
 /**
  * Read a game stream
+ *   sorting item by date_creation.
  * 
  * Generic options:
  *  /v1/games/:id/stream/?limit=5       (default=10)
  *
  * Specific options:
  *  /v1/games/:id/stream/?after=date    ex: "16:01:2013" ou "16 janvier 2013" ou...
+ *  /v1/games/:id/stream/?lastid=...    recherche ts les elements depuis tel ou tel id
  * 
  * WARNING: might be performance hits. We can't use $elemMatch (see below).
  * FIXME: solution: create a separate collection for the stream.
  */
 app.get('/v1/games/:id/stream/', function (req, res){
-  var limit = req.query.limit || 5;
+  var limit = req.query.limit || 10;
   var after = req.query.after || null;
+  var lastid = req.query.lastid || null;
   
   // searching player by id.
   var query = DB.Model.Game.findOne({_id:req.params.id, _deleted: false})
@@ -161,6 +164,22 @@ app.get('/v1/games/:id/stream/', function (req, res){
         return new Date(streamItem.dates.creation).getTime() >= after;
       });
     }
+    
+    // lastid
+    if (lastid) {
+      stream = stream.filter(function (streamItem) {
+        return streamItem.id > lastid;
+      });
+    }
+    
+    // sorting by date (new to old)
+    stream.sort(function (a, b) {
+      if (a.dates.creation < b.dates.creation)
+        return 1;
+      if (a.dates.creation > b.dates.creation)
+        return -1;
+      return 0;
+    });
     
     // limit
     stream = stream.filter(function (streamItem, index) {
