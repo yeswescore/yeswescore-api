@@ -76,7 +76,7 @@ app.get('/v1/games/', function(req, res){
        .exec(function (err, games) {
       if (err)
         return app.defaultError(res)(err);
-      res.end(JSON.stringifyModels(games));
+      res.send(JSON.stringifyModels(games));
     });
 });
 
@@ -113,7 +113,7 @@ app.get('/v1/games/:id', function (req, res){
     if (game === null)
       return app.defaultError(res)("no game found");
     // should we hide the owner ?
-    res.end(JSON.stringifyModels(game));
+    res.send(JSON.stringifyModels(game));
   });
 });
 
@@ -223,7 +223,7 @@ app.get('/v1/games/:id/stream/', function (req, res){
         });
         
         // FIXME: should be stringifyModels when mongoose will be fixed.
-        res.end(JSON.stringify(stream));
+        res.send(JSON.stringify(stream));
     });
   });
 });
@@ -472,7 +472,7 @@ app.post('/v1/games/:id/stream/', express.bodyParser(), function(req, res){
     }).then(function sendGame(game) {
       if (game.stream.length === 0)
         throw "no streamItem added";
-      res.end(JSON.stringifyModels(game.stream[game.stream.length - 1]));
+      res.send(JSON.stringifyModels(game.stream[game.stream.length - 1]));
     }, app.defaultError(res));
 });
 
@@ -520,7 +520,7 @@ app.post('/v1/games/:id/stream/:streamid/', express.bodyParser(), function(req, 
       for (var i = 0; i < l; ++i) {
         if (game.stream[i]._id == streamid) {
           var streamItem = game.stream[i].toObject({virtuals: true, transform: true});
-          res.end(JSON.stringify(streamItem));
+          res.send(JSON.stringify(streamItem));
         }
       }
       // we normaly shouldn't reach this point.
@@ -555,7 +555,7 @@ app.delete('/v1/games/:id/', function (req, res) {
       game._deleted = true;
       return DB.saveAsync(game);
     }).then(function () {
-      res.end('{}'); // smallest json.
+      res.send('{}'); // smallest json.
     }, app.defaultError(res));
 });
 
@@ -595,7 +595,7 @@ app.delete('/v1/games/:id/stream/:streamid/', function (req, res) {
       }
       throw "no streamItem found";
     }).then(function () {
-      res.end('{}'); // smallest json.
+      res.send('{}'); // smallest json.
     }, app.defaultError(res));
 });
 

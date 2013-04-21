@@ -54,10 +54,10 @@ app.get('/v1/clubs/autocomplete/', function(req, res){
       .exec(function (err, clubs) {
         if (err)
           return app.defaultError(res)(err);
-        res.end(JSON.stringifyModels(clubs));
+        res.send(JSON.stringifyModels(clubs));
       });
   } else {
-    res.end(JSON.stringify([]));
+    res.send(JSON.stringify([]));
   }
 });
   
@@ -78,7 +78,7 @@ app.get('/v1/clubs/:id', function(req, res){
       return app.defaultError(res)(err);
     if (club === null)
       return app.defaultError(res)("no club found");
-    res.end(JSON.stringifyModels(club));
+    res.send(JSON.stringifyModels(club));
   });
 });
 
@@ -119,7 +119,7 @@ app.get('/v1/clubs/:id/games/', function(req, res){
          .exec(function (err, games) {
          if (err)
             return app.defaultError(res)(err);
-         res.end(JSON.stringifyModels(games));
+         res.send(JSON.stringifyModels(games));
        });
     });
 });
@@ -190,7 +190,7 @@ app.post('/v1/clubs/', express.bodyParser(), function(req, res){
         club.school = req.body.school;
       DB.saveAsync(club)
         .then(
-          function (club) { res.end(JSON.stringifyModels(club)) },
+          function (club) { res.send(JSON.stringifyModels(club)) },
           app.defaultError(res)
         );
     });

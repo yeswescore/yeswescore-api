@@ -32,7 +32,7 @@ app.post('/v1/auth/', express.bodyParser(), function(req, res){
   }, function (err, player) {
     if (err || !player)
       return app.defaultError(res)("authentication");
-    res.end(JSON.stringifyModels(player, { unhide: [ "token" ] }));
+    res.send(JSON.stringifyModels(player, { unhide: [ "token" ] }));
   });
 });
 
@@ -70,7 +70,7 @@ app.post('/v1/auth/resetPassword/', express.bodyParser(), function(req, res){
       // everything went ok => sending email
       app.log('sending new password to '+req.body.email.address);
       Email.sendPasswordReset(player.email.address, newUncryptedPassword, player.language);
-      res.end(JSON.stringify({ message: "email send"}));
+      res.send(JSON.stringify({ message: "email send"}));
     });
   });
 });

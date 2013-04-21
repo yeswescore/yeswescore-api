@@ -10,5 +10,5 @@ if (Conf.env === "DEV") {
 }
 
 app.get('/version/', function (req, res) {
-    res.end("version 0.0.2");
+    res.send("version 0.0.2");
 });

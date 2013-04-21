@@ -16,7 +16,7 @@ app.get('/v1/report/clubs/:id/', function (req, res) {
       club.save(); // async
       reportLogger.info('club,'+req.params.id+',ok,'+req.ip);
     }
-    res.end('{}');
+    res.send('{}');
   });
 });
 
@@ -31,7 +31,7 @@ app.get('/v1/report/players/:id/', function (req, res) {
       player.save(); // async
       reportLogger.info('player,'+req.params.id+',ok,'+req.ip);
     }
-    res.end('{}');
+    res.send('{}');
   });
 });
 
@@ -46,7 +46,7 @@ app.get('/v1/report/games/:id/', function (req, res) {
       game.save(); // async
       reportLogger.info('game,'+req.params.id+',ok,'+req.ip);
     }
-    res.end('{}');
+    res.send('{}');
   });
 });
 
@@ -74,6 +74,6 @@ app.get('/v1/report/games/:id/stream/:streamid/', function (req, res) {
         reportLogger.info('streamItem,'+req.params.streamid+',ok,'+req.ip);
       }
     }
-    res.end('{}');
+    res.send('{}');
   });
 });

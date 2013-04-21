@@ -47,7 +47,7 @@ if (Conf.env === "DEV") {
     player.save(function (err) {
       if (err)
         return app.defaultError(res)(err);
-      res.end(JSON.stringifyModels(player, { unhide: [ "token" ] }));
+      res.send(JSON.stringifyModels(player, { unhide: [ "token" ] }));
     });
   });
   
@@ -67,7 +67,7 @@ if (Conf.env === "DEV") {
         if (typeof player.email._token === "undefined")
           return app.defaultError(res)("no token found");
         var url = Email.sendEmailConfirmation(player.email.address, player.email._token, language);
-        res.end('email send, callback url='+url);
+        res.send('email send, callback url='+url);
       });
   });
   
@@ -96,7 +96,7 @@ if (Conf.env === "DEV") {
       re.on("data", function (chunk) { answer += chunk })
         .on("end", function () {
           // forwarding result
-          res.end(answer);
+          res.send(answer);
         });
     });
     r.on("error", function (e) {

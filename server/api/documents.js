@@ -6,7 +6,7 @@ if (Conf.env === "DEV") {
   app.get('/documents/games/random', function (req, res) {
     DB.Model.Game.randomAsync().then(
       function success(game) {
-        res.end(JSON.stringify(game));
+        res.send(JSON.stringify(game));
       },
       app.defaultError(res)
     );
@@ -19,14 +19,14 @@ if (Conf.env === "DEV") {
         return app.defaultError(res)(err);
       if (game === null)
         return app.defaultError(res)("no game found");
-      res.end(JSON.stringify(game));
+      res.send(JSON.stringify(game));
     });
   });
 
   app.get('/documents/players/random', function (req, res) {
     DB.Model.Player.randomAsync().then(
       function success(player) {
-        res.end(JSON.stringify(player));
+        res.send(JSON.stringify(player));
       },
       app.defaultError(res)
     );
@@ -39,14 +39,14 @@ if (Conf.env === "DEV") {
         return app.defaultError(res)(err);
       if (player === null)
         return app.defaultError(res)("no player found");
-      res.end(JSON.stringify(player));
+      res.send(JSON.stringify(player));
     });
   });
 
   app.get('/documents/clubs/random', function (req, res) {
     DB.Model.Club.randomAsync().then(
       function success(club) {
-        res.end(JSON.stringify(club));
+        res.send(JSON.stringify(club));
       },
       app.defaultError(res)
     );
@@ -59,7 +59,7 @@ if (Conf.env === "DEV") {
         return app.defaultError(res)(err);
       if (club === null)
         return app.defaultError(res)("no club found");
-      res.end(JSON.stringify(club));
+      res.send(JSON.stringify(club));
     });
   });
 };

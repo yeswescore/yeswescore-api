@@ -8,5 +8,5 @@ app.get('/v1/stats/', function (req, res) {
   // maybe should fork this project & add options.nolevel
   //  in winston/lib/winston/common.js (low level format)
   statsLogger.info(req.query.q);
-  res.end('');
+  res.send('');
 });

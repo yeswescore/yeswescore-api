@@ -46,7 +46,7 @@ app.get('/v1/players/', function(req, res){
        .exec(function (err, players) {
     if (err)
       return app.defaultError(res)(err);
-    res.end(JSON.stringifyModels(players));
+    res.send(JSON.stringifyModels(players));
   });
 });
 
@@ -94,10 +94,10 @@ app.get('/v1/players/autocomplete/', function(req, res){
       .exec(function (err, players) {
         if (err)
           return app.defaultError(res)(err);
-        res.end(JSON.stringifyModels(players));
+        res.send(JSON.stringifyModels(players));
       });
   } else {
-    res.end(JSON.stringify([]));
+    res.send(JSON.stringify([]));
   }
 });
 
@@ -125,9 +125,9 @@ app.get('/v1/players/:id', function(req, res){
         if (player === null)
           return app.defaultError(res)("no player found");
         if (authentifiedPlayer)
-          res.end(JSON.stringifyModels(player, { unhide: [ "token" ] }));
+          res.send(JSON.stringifyModels(player, { unhide: [ "token" ] }));
         else
-          res.end(JSON.stringifyModels(player));
+          res.send(JSON.stringifyModels(player));
       });
     },
     app.defaultError(res, "authentication error"));
@@ -184,7 +184,7 @@ app.get('/v1/players/:id/games/', function(req, res){
          .exec(function (err, games) {
          if (err)
             return app.defaultError(res)(err);
-         res.end(JSON.stringifyModels(games));
+         res.send(JSON.stringifyModels(games));
        });
     });
 });
@@ -263,7 +263,7 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
     // everything went ok => sending email confirmation
     if (emailConfirmationRequired)
       Email.sendEmailConfirmation(player.email.address, player.email._token, player.language);
-    res.end(JSON.stringifyModels(player, { unhide: [ "token" ] }));
+    res.send(JSON.stringifyModels(player, { unhide: [ "token" ] }));
   }, app.defaultError(res));
 });
 
@@ -364,7 +364,7 @@ app.post('/v1/players/:id', express.bodyParser(), function(req, res){
   }).then(function (player) {
     if (emailConfirmationRequired)
       Email.sendEmailConfirmation(player.email.address, player.email._token, player.language);
-    res.end(JSON.stringifyModels(player, { unhide: [ "token" ] }));
+    res.send(JSON.stringifyModels(player, { unhide: [ "token" ] }));
   }, app.defaultError(res));
 });
 
