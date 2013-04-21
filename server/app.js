@@ -46,7 +46,7 @@ app.internalRedirect = function (route) {
 app.defaultError = function (res, msg) { 
   return function (err) {
     app.log('message: ' +  msg + ' error: ' + err, 'error');
-    res.end(JSON.stringify({error:err, message:msg}));
+    res.send(404, JSON.stringify({error:err, message:msg}));
   };
 };
 
