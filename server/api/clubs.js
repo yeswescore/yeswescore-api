@@ -91,7 +91,7 @@ app.get('/v1/clubs/:id', function(req, res){
  *  /v1/clubs/:id/games/?sort=nickname (default=-dates.start)
  * 
  * Specific options:
- *  /v1/clubs/:id/games/?status=ongoing   (default=ongoing,finished)
+ *  /v1/clubs/:id/games/?status=ongoing   (default=created,ongoing,finished)
  * 
  * NON STANDARD URL, used by facebook app
  * default behaviour is to include the stream
@@ -99,7 +99,7 @@ app.get('/v1/clubs/:id', function(req, res){
  * no params
  */
 app.get('/v1/clubs/:id/games/', function(req, res){
-  var status = req.query.status || "ongoing,finished";
+  var status = req.query.status || "created,ongoing,finished";
   var sort = req.query.sort || "-dates.start";
   var limit = req.query.limit || 10;
   var offset = req.query.offset || 0;

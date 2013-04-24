@@ -143,7 +143,7 @@ app.get('/v1/players/:id', function(req, res){
  * 
  * Specific options:
  *  /v1/players/:id/games/?owned=true  (default=false)
- *  /v1/players/:id/games/?status=ongoing   (default=ongoing,finished)
+ *  /v1/players/:id/games/?status=ongoing   (default=created,ongoing,finished)
  *  /v1/players/:id/games/?populate=teams.players (default=teams.players)
  * 
  * owned=true   games owned by the player
@@ -151,7 +151,7 @@ app.get('/v1/players/:id', function(req, res){
  * NON STANDARD URL
  */
 app.get('/v1/players/:id/games/', function(req, res){
-  var status = req.query.status || "ongoing,finished";
+  var status = req.query.status || "created,ongoing,finished";
   var sort = req.query.sort || "-dates.start";
   var limit = req.query.limit || 10;
   var offset = req.query.offset || 0;

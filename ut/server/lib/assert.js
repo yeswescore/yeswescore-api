@@ -277,7 +277,7 @@ assert.isGame = function (game) {
     id : { _type: "id" },
     sport: { _type: "enum", _enum: [ "tennis" ] },
     owner: { _type: "id" },
-    status: { _type : "enum|undefined", _enum: ["ongoing", "finished", "canceled" ] },
+    status: { _type : "enum|undefined", _enum: ["created", "ongoing", "finished", "canceled" ] },
     dates: {
       creation: { _type: "date" },
       update:  { _type: "date|undefined" },

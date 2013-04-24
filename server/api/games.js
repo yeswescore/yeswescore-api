@@ -23,7 +23,7 @@ var DB = require("../db.js")
  *  /v1/games/?q=text                (Mandatory)
  *  /v1/games/?club=:id
  *  /v1/games/?populate=teams.players (default=teams.players)
- *  /v1/games/?status=finished        (default=ongoing,finished)
+ *  /v1/games/?status=finished        (default=created,ongoing,finished)
  * 
  * only query games with teams
  * auto-populate teams.players
@@ -37,7 +37,7 @@ app.get('/v1/games/', function(req, res){
   var club = req.query.club || null;
   var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,location.country,location.city,location.pos,teams,teams.players.name,teams.players.nickname,teams.players.club,teams.players.rank,options.type,options.subtype,options.sets,options.score,options.court,options.surface,options.tour";
   var sort = req.query.sort || "-dates.start";
-  var status = req.query.status || "ongoing,finished";
+  var status = req.query.status || "created,ongoing,finished";
   var longitude = req.query.longitude;
   var latitude = req.query.latitude;
   var distance = req.query.distance;
@@ -238,7 +238,7 @@ app.get('/v1/games/:id/stream/', function (req, res){
  * 
  * Body {
  *   sport: String        (default="tennis")
- *   status: String,      (default="ongoing")
+ *   status: String,      (default="created")
  *   location : {
  *     country: String,         (default="")
  *     city: String,            (default="")
@@ -278,10 +278,11 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
       // => creating game
       req.body.location = (req.body.location) ? req.body.location : {};
       req.body.options = (req.body.options) ? req.body.options : {};
+        console.log('REQ BODY STATUS = ' + req.body.status);
       var game = new DB.Model.Game({
         sport: req.body.sport || "tennis",
         owner: authentifiedPlayer.id,
-        status: req.body.status || "ongoing",
+        status: req.body.status || "created",
         location : {
           country: req.body.location.country || "",
           city: req.body.location.city || "",
@@ -325,7 +326,7 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
  * /!\ Default output will be have teams.players populated
  * 
  * Body {
- *   status: String,      (default="ongoing")
+ *   status: String,      (default="")
  *   location: {
  *     country: String,        (default="")
  *     city: String,           (default="")

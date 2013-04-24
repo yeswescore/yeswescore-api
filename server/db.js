@@ -220,12 +220,12 @@ DB.Schema.StreamItem = new Schema(DB.Definition.StreamItem);
 // 
 DB.Definition.Game = {
   sport: { type: String, enum: ["tennis"] },
-  status: { type: String, enum: [ "ongoing", "finished", "canceled" ], default: "ongoing" },
+  status: { type: String, enum: [ "created", "ongoing", "finished", "canceled" ], default: "created" },
   owner: { type: Schema.Types.ObjectId, ref: "Player" },
   dates : {
     creation: { type: Date, default: Date.now },
     update: { type: Date, default: Date.now },
-    start: { type: Date, default: Date.now },
+    start: Date,
     end: Date
   },
   location : {
@@ -257,6 +257,24 @@ DB.Definition.Game = {
   _searchablePlayersClubsNames: [ String ]                // AUTO-FIELD (Player post save) ASYNC
 };
 
+// SETTERS
+DB.Definition.Game.status.set = function (status) {
+  // handling status.
+  console.log("lala: " + this.status + " => " + status);
+  var oldStatus = this.status;
+  this.dates = this.dates || {};
+  if (status === "created" && oldStatus === "ongoing")
+    this.dates.start = undefined;
+  if (status === "ongoing" && oldStatus === "created")
+    this.dates.start = Date.now();
+  if (status === "ongoing" && oldStatus === "finished")
+    this.dates.end = undefined;
+  if ((status === "finished" && oldStatus === "created") ||
+      (status === "finished" && oldStatus === "ongoing"))
+    this.dates.end = Date.now();
+  return status;
+};
+
 //
 // Schemas
 //
@@ -281,6 +299,7 @@ DB.Schema.Player.virtual('languageSafe').set(function (languageUnsafe) {
       language = Conf.get("default.language");
     this.language = language;
 });
+
 
 // AUTO-FIELDS
 DB.Schema.Club.pre('save', function (next) {
@@ -413,7 +432,7 @@ DB.Schema.Player.post('save', function () {
  * FIXME: performance: need to read teams.players ?
  * 
  */
-DB.Schema.Game.pre('save', function (next) {
+DB.Schema.Game.pre('save', function (next) {  
   // infos for post save
   this._wasModified = [];
   // game._searchableCity
@@ -567,8 +586,10 @@ DB.Model.Game.checkFields = function (game) {
   if (game.type && game.type !== "singles")
     return "wrong type (singles only)";
   // check status
-  if (game.status && game.status !== "ongoing" && game.status !== "finished" && game.status !== "canceled")
-    return "wrong status (ongoing/finished)";
+  if (game.status &&
+      game.status !== "created" && game.status !== "ongoing" &&
+      game.status !== "finished" && game.status !== "canceled")
+    return "wrong status (created/ongoing/finished/canceled)";
   // check teams
   if (game.teams) {
     if (!Array.isArray(game.teams) || game.teams.length !== 2)

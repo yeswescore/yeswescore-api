@@ -247,7 +247,7 @@ describe('dev:games', function(){
           assert(game.options.court === newGame.options.court, "court should be the same");
           assert(game.options.surface === newGame.options.surface, "surface should be the same");
           
-          assert(game.status === newGame.status, "status should be the same");
+          assert(game.status === newGame.status, "status should be the same " + game.status + " vs " + newGame.status);
           done();
         });
       });
@@ -279,6 +279,7 @@ describe('dev:games', function(){
         http.post(options, newGame, function (game) {
           assert.isGame(game);
           assert(game.options.score === newGame.options.score, "score should be the same");
+          assert(typeof game.dates.start === "undefined", "game shouldn't be started");
 
           var options = {
             host: Conf["http.host"],
@@ -288,6 +289,7 @@ describe('dev:games', function(){
           
           var newScore = "15/0";
           var modifiedGame = game;
+          game.status = "ongoing";
           game.options.subtype = "B";
           game.options.sets = "6/3";
           game.options.score = newScore;
@@ -314,6 +316,9 @@ describe('dev:games', function(){
               assert(g.options.court === modifiedGame.options.court, "court should be updated in DB");
               assert(g.options.surface === modifiedGame.options.surface, "surface should be updated in DB");
               assert(g.options.tour === modifiedGame.options.tour, "tour should be updated in DB");
+              
+              assert(g.status === modifiedGame.status, "status should be updated");
+              assert(typeof g.dates.start !== "undefined", "game should be started (dates.start!== undefined)");
               
               done();
             });
@@ -372,6 +377,65 @@ describe('dev:games', function(){
                 done();
               else
                 throw randomGame._id+" shoudn't be referenced in "+options.path;
+            });
+          });
+        });
+      });
+    });
+  });
+  
+  describe('create a single game, then change status', function () {
+    it('should create & give the game (not empty & valid)', function (done){
+      // read a player
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.players"]+"random"
+      };
+      http.getJSON(options, function (randomPlayer) {
+        assert.isObject(randomPlayer, "random player must exist");
+      
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["api.games"]+"?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+        };
+        
+        var newGame = {
+          status: "ongoing",
+          options: { score: "0/0" },
+          teams: [ { id: null, players: [ { name : "toto" } ] },
+                   { id: null, players: [ { name : "titi" } ] } ]
+        };
+        http.post(options, newGame, function (game) {
+          assert.isGame(game);
+          assert(game.options.score === newGame.options.score, "score should be the same");
+          assert(typeof game.dates.start !== "undefined", "game should be started");
+
+          var options = {
+            host: Conf["http.host"],
+            port: Conf["http.port"],
+            path: Conf["api.games"]+game.id+"/?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+          };
+          
+          var modifiedGame = game;
+          game.status = "finished";
+          
+          http.post(options, game, function (game) {
+            assert.isGame(game);
+            
+            // reading the game from DB to be sure !
+            var options = {
+              host: Conf["http.host"],
+              port: Conf["http.port"],
+              path: Conf["api.games"]+game.id
+            };
+            http.getJSON(options, function (g) {
+              assert.isGame(g);
+              assert(g.status === "finished", "game should be finished");
+              assert(typeof g.dates.end !== "undefined", "game should have and end date");
+              
+              done();
             });
           });
         });
