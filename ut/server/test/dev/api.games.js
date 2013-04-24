@@ -421,8 +421,8 @@ describe('dev:games', function(){
             http.getJSON(options, function (stream) {
               assert.isArray(stream);
               assert(stream.length === nbElementInStream + 1, "stream size should have grown by one");
-              var streamItem = stream.pop();
-              assert(streamItem.id === s.id, "stream last obj should be s");
+              var streamItem = stream.shift();
+              assert(streamItem.id == s.id, "stream first obj should be s");
               assert(streamItem.owner.player.id == randomPlayer._id, "should be the good player");
               assert(streamItem.owner.player.name === randomPlayer.name, "player name");
               assert(streamItem.owner.player.nickname === randomPlayer.nickname, "player nickname");
