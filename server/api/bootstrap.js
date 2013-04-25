@@ -15,8 +15,7 @@ app.get('/bootstrap/conf.json', function(req, res){
       
       conf = [
         { key: 'version.latest', value: latest, metadata: {} },
-        { key: 'bootstrap.update_interval', value: 24 * 3600 * 1000, metadata: {} }, // every day
-        { key: 'app.deprecated', value: true, metadata: {} }
+        { key: 'bootstrap.update_interval', value: 24 * 3600 * 1000, metadata: {} } // every day
       ];
       break;
   }
