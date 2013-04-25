@@ -16,13 +16,11 @@ app.get('/bootstrap/conf.json', function(req, res){
       conf = [
         { key: 'version.latest', value: latest, metadata: {} },
         { key: 'bootstrap.update_interval', value: 24 * 3600 * 1000, metadata: {} }, // every day
-        { key: 'api.games', value: baseUrl+Conf.get("api.games"), metadata: {} },
-        { key: 'api.players', value: baseUrl+Conf.get("api.players"), metadata: {} },
-        { key: 'api.clubs', value: baseUrl+Conf.get("api.clubs"), metadata: {} }
+        { key: 'app.deprecated', value: true, metadata: {} }
       ];
       break;
   }
   // 
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.send(JSON.stringify(conf));
+  res.end(JSON.stringify(conf));
 });
