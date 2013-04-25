@@ -21,16 +21,8 @@ app.get('/v1/facebook/login/', function(req, res){
     , port = Conf.get("facebook.yws.port")
     , player, token;
   
-  var error = function (message) {
-    var page = Conf.get("facebook.yws.inappbrowser.error");
-    var url = scheme+"://"+host+":"+port+page+"#message="+encodeURIComponent(message);
-    res.redirect(url);
-  };
-    
-  if (req.query.error)
-    return error(req.query.error_description);
   if (!req.query.access_token)
-    return error("missing access_token");
+    return app.defaultError(res)("missing access_token");
   
   console.log('player is facebook login');
   console.log(req.query);
@@ -72,16 +64,19 @@ app.get('/v1/facebook/login/', function(req, res){
     }).then(function (data) {
       // data: {"id":"100005017327994","first_name":"Marcd","last_name":"Zescore",
       //        "locale":"en_US","email":"marcd\u0040zescore.com"}
-      console.log('FACEBOOK => graph (/me)');
-      console.log(data);
-      
+      data = JSON.tryParse(data, null);
+      if (!data)
+        throw "requesting infos";
       // saving facebook id & token.
-      player.connection.facebook.id = req.query.fbid;
+      player.connection.facebook.id = data.id;
       player.connection.facebook.token = token;
       return Q.nfcall(player.save.bind(player));
     }).then(function () {
-      var page = Conf.get("facebook.yws.inappbrowser.success");
-      var url = scheme+"://"+host+":"+port+page;
-      res.redirect(url);
-    }, error);
+      app.internalRedirect('/v1/players/:id')(
+        {
+          query: req.query,
+          params: { id: player.id }
+        },
+        res);
+    }, app.defaultError(res));
 });
