@@ -260,7 +260,6 @@ DB.Definition.Game = {
 // SETTERS
 DB.Definition.Game.status.set = function (status) {
   // handling status.
-  console.log("lala: " + this.status + " => " + status);
   var oldStatus = this.status;
   this.dates = this.dates || {};
   if (status === "created" && oldStatus === "ongoing")
