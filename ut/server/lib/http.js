@@ -1,6 +1,13 @@
 var http = require("http")
   , assert = require("assert");
-   
+
+http.is302OK = function (options, f) {
+  http.get(options, function (res) {
+    assert.equal(res.statusCode, 302);
+    if (typeof f === "function")
+      f(res);
+  }).on("error", function (e) { throw e });
+};
 
 // simple high level funcs
 http.is200OK = function (options, f) {

@@ -631,9 +631,12 @@ describe('dev:players', function(){
             port: Conf["http.port"],
             path: Conf["api.email"]+"confirm/?token="+emailToken
           };
-          http.getJSON(options, function (result) {
-            assert(typeof result.error === "undefined", "should'nt be an error");
-            
+          
+          http.is302OK(options, function (res) {
+            var successUrl = "http://www.yeswescore.com/#!mail/cy9y";
+            if (res.headers.location !== successUrl)
+              throw "bad location, " + res.headers.location + " should be " + successUrl;
+              
             // read the player again (should be confirmed)
             var options = {
               host: Conf["http.host"],
