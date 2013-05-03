@@ -31,6 +31,7 @@ if (Conf.env === "DEV") {
   app.get('/v1/email/createFakePlayer/', function (req, res) {
     if (typeof req.query.email !== "string" || !req.query.email)
       return app.defaultError(res)("missing email");
+    req.query.email = req.query.email.toLowerCase();
     var player = new DB.Model.Player({
         nickname: "syndr0m",
         name: "Marc Dassonneville",
@@ -54,6 +55,7 @@ if (Conf.env === "DEV") {
   app.get('/v1/email/sendConfirmation/', function (req, res) {
     if (typeof req.query.email !== "string" || !req.query.email)
       return app.defaultError(res)("missing email");
+    req.query.email = req.query.email.toLowerCase();
     var language = req.query.language || "fr";
     DB.Model.Player.findOne(
       { "email.address" : req.query.email },
@@ -75,8 +77,8 @@ if (Conf.env === "DEV") {
   app.get('/v1/email/sendPassword/', function (req, res) {
     if (typeof req.query.email !== "string" || !req.query.email)
       return app.defaultError(res)("missing email");
+    req.query.email = req.query.email.toLowerCase();
     var language = req.query.language || "fr";
-    
     var data = JSON.stringify({ email: { address: req.query.email } });
     var postOptions = {
       host: Conf["http.host"],

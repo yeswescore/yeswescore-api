@@ -22,6 +22,8 @@ app.post('/v1/auth/', express.bodyParser(), function(req, res){
     return app.defaultError(res)("missing authentication fields");
   if (req.body.email.address.length === 0)
     return app.defaultError(res)("cannot login with empty email");
+  // email should only manipulated lowercase
+  req.body.email.address = req.body.email.address.toLowerCase();
   // creating player to hash password.
   var p = new DB.Model.Player();
   p.uncryptedPassword = req.body.uncryptedPassword;
@@ -51,6 +53,9 @@ app.post('/v1/auth/resetPassword/', express.bodyParser(), function(req, res){
     return app.defaultError(res)("missing authentication fields");
   if (req.body.email.address.length === 0)
     return app.defaultError(res)("empty email");
+  // email should only manipulated lowercase
+  req.body.email.address = req.body.email.address.toLowerCase();
+  //
   DB.Model.Player.findOne({
     'email.address': req.body.email.address,
     'email.status': 'confirmed'

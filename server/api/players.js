@@ -215,11 +215,13 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
   // preprocessing req.body.
   req.body.location = (req.body.location) ? req.body.location : {};
   req.body.email = (req.body.email) ? req.body.email : {};
+  if (req.body.email && typeof req.body.email.address === "string")
+    req.body.email.address = req.body.email.address.toLowerCase();
   
   var emailConfirmationRequired = false;
   
   Q.fcall(function () {
-    if (req.body.email && req.body.email.address)
+    if (req.body.email && typeof req.body.email.address === "string")
       return DB.Model.Player.isEmailRegisteredAsync(req.body.email.address);
     return null;
   }).then(function (emailRegistered) {
@@ -245,7 +247,7 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
     // language
     player.languageSafe = req.body.language || Conf.get("default.language");
     // email
-    if (req.body.email && req.body.email.address) {
+    if (req.body.email && typeof req.body.email.address === "string") {
       // registering email.
       // might be race condition between check & set. but will be catch by the index.
       player.email.address = req.body.email.address;
@@ -289,9 +291,9 @@ app.post('/v1/players/:id', express.bodyParser(), function(req, res){
   if (req.params.id !== req.query.playerid) {
     return app.defaultError(res)("id differs");
   }
-  
+  if (req.body.email && typeof req.body.email.address === "string")
+    req.body.email.address = req.body.email.address.toLowerCase();
   var emailConfirmationRequired = false;
-
   var club = req.body.club;
   Q.all(
     [
