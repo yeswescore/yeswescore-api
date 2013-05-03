@@ -5,9 +5,9 @@ var assert = require("../../lib/assert.js")
 if (Conf.env !== "DEV")
   process.exit(0);
 
-describe('dev:connections', function(){
+describe('dev:facebook', function(){
   describe('update a player fb token without token', function () {
-    it('should be an error (302 => error.html)', function (done) {
+    it('should be an error (404 => error.html)', function (done) {
       var options = {
         host: Conf["http.host"],
         port: Conf["http.port"],
@@ -20,19 +20,21 @@ describe('dev:connections', function(){
         var options = {
           host: Conf["http.host"],
           port: Conf["http.port"],
-          path: Conf["api.connections"]+"fb/?playerid="+randomPlayer._id+"&token=badToken&fbid=4242&fbtoken=4242"
+          path: Conf["api.facebook"]+"login/?playerid="+randomPlayer._id+"&token=badToken&fbid=4242&access_token=4242"
         };
-        http.get(options, function (res) {
-          assert(res.statusCode == 302, "must have been redirected");
-          assert(res.headers.location.indexOf("error.html") != -1, "must have an error in " + res.headers.location);
-          assert(res.headers.location.indexOf("success.html") == -1, "musn't have a success in " + res.headers.location);
-          
+        http.getJSON(options, function (data, res) {
+          assert(res.statusCode == 404);
+          assert.isError(data);
           done();
         });
       });
     });
   });
   
+  /*
+   * should grab a long access token
+   */
+  /*
   describe('update a player fb token ', function () {
     it('should be updated (301 => success.html)', function (done) {
       var options = {
@@ -50,10 +52,10 @@ describe('dev:connections', function(){
         var options = {
           host: Conf["http.host"],
           port: Conf["http.port"],
-          path: Conf["api.connections"]+"fb/?playerid="+randomPlayer._id+"&token="+randomPlayer.token+"&fbid="+fbid+"&fbtoken="+fbtoken
+          path: Conf["api.facebook"]+"login/?playerid="+randomPlayer._id+"&token="+randomPlayer.token+"&fbid="+fbid+"&access_token="+fbtoken
         };
-        http.get(options, function (res) {
-          assert(res.statusCode == 302, "must have been redirected");
+        http.getJSON(options, function (data) {
+          console.log(JSON.stringify(data));
           assert(res.headers.location.indexOf("error.html") == -1, "mustn't have an error in " + res.headers.location);
           assert(res.headers.location.indexOf("success.html") != -1, "must have a success in " + res.headers.location);
           
@@ -74,5 +76,6 @@ describe('dev:connections', function(){
       });
     });
   });
+  */
 });
         
