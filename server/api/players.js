@@ -142,12 +142,13 @@ app.get('/v1/players/:id', function(req, res){
  *  /v1/players/:id/games/?sort=nickname (default=-dates.start)
  * 
  * Specific options:
- *  /v1/players/:id/games/?owned=true  (default=false)
+ *  /v1/players/:id/games/?owned=true  (default=undefined)
  *  /v1/players/:id/games/?status=ongoing   (default=created,ongoing,finished)
  *  /v1/players/:id/games/?populate=teams.players (default=teams.players)
  * 
- * owned=true   games owned by the player
- * owned=false  games where the player plays
+ * owned=undefined games owned or played by the player
+ * owned=true      games owned by the player
+ * owned=false     games where the player plays
  * NON STANDARD URL
  */
 app.get('/v1/players/:id/games/', function(req, res){
@@ -156,7 +157,9 @@ app.get('/v1/players/:id/games/', function(req, res){
   var limit = req.query.limit || 10;
   var offset = req.query.offset || 0;
   var fields = req.query.fields || "sport,owner,dates.creation,dates.start,dates.end,location.country,location.city,location.currentPos,teams,teams.players.name,teams.players.nickname,teams.players.club,teams.players.rank,options.type,options.subtype,options.status,options.sets,options.score,options.court,options.surface,options.tour";
-  var owned = (req.query.owned === "true");
+  var owned = null;
+  owned = (req.query.owned === "true") ? true : owned;
+  owned = (req.query.owned === "false") ? false : owned;
   // populate option
   var populate = "teams.players";
   if (typeof req.query.populate !== "undefined")
@@ -170,9 +173,13 @@ app.get('/v1/players/:id/games/', function(req, res){
     if (club === null)
       return app.defaultError(res)("no player found");
     var query;
-    if (owned)
+    if (owned === null)
+      query = DB.Model.Game.find({ $or: [ 
+        {owner : req.params.id}, {"teams.players" : req.params.id}
+      ] });
+    if (owned === true)
       query = DB.Model.Game.find({ owner : req.params.id});
-    else
+    if (owned === false)
       query = DB.Model.Game.find({"teams.players" : req.params.id});
     query.select(fields.select);
     if (status)
