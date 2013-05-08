@@ -50,7 +50,7 @@ app.get('/v1/games/', function(req, res){
   // process fields
   var fields = app.createPopulateFields(fields, populate);
   // heavy...
-  var query = DB.Model.Game.find({_deleted: false});
+  var query = DB.Model.Game.find({_deleted: false}, fields.select);
   if (text) {
     text = new RegExp("("+text.searchable().pregQuote()+")");
     query.or([
