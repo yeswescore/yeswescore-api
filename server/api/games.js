@@ -98,12 +98,10 @@ app.get('/v1/games/:id', function (req, res){
   if (typeof req.query.populate !== "undefined")
     populate = req.query.populate;
   var populatePaths = (typeof populate === "string") ? populate.split(",") : [];
-
   // preprocess fields
   var fields = app.createPopulateFields(fields, populate);
   // searching player by id.
-  var query = DB.Model.Game.findOne({_id:req.params.id, _deleted: false})
-     .select(fields.select);
+  var query = DB.Model.Game.findOne({_id:req.params.id, _deleted: false}, fields.select);
   if (populatePaths.indexOf("teams.players") !== -1) {
     query.populate("teams.players", fields["teams.players"]);
   }

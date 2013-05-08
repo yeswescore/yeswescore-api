@@ -50,6 +50,8 @@ app.defaultError = function (res, msg) {
   };
 };
 
+// @param string fields   ex: "a,b,c,d,e,f.g.h,i,..."
+// @param populate        ex: "a.b,c.d.e.f"
 // @return { 'select' : fields, 'populate1': fields, ... }
 app.createPopulateFields = function (fields, populate) {
   var populate = populate || "";
