@@ -11,7 +11,7 @@ var DB = require("../db.js")
  * Generic options:
  *  /v1/players/?limit=10              (default=10)
  *  /v1/players/?offset=0              (default=0)
- *  /v1/players/?fields=nickname,name  (default=undefined)
+ *  /v1/players/?fields=name           (default=undefined)
  *  /v1/players/?longitude=40.234      (default=undefined)
  *  /v1/players/?latitude=40.456       (default=undefined)
  *  /v1/players/?distance=20           (default=undefined)
@@ -38,7 +38,7 @@ app.get('/v1/players/', function(req, res){
     query.where("club.id", club);
   if (text) {
     text = new RegExp("("+text.searchable().pregQuote()+")");
-    query.or([ {_searchableNickname: text}, {_searchableName: text} ]);
+    query.where("_searchableName", text);
   }
   query.where("type", "default");  
   query.skip(offset)
@@ -55,8 +55,8 @@ app.get('/v1/players/', function(req, res){
  * 
  * Generic options:
  *  /v1/players/autocomplete/?limit=5               (default=5)
- *  /v1/players/autocomplete/?fields=nickname,name  (default=nickname,name,type,club)
- *  /v1/players/autocomplete/?sort=nickname         (default=name)
+ *  /v1/players/autocomplete/?fields=name           (default=name,type,club)
+ *  /v1/players/autocomplete/?sort=name             (default=name)
  *  /v1/players/autocomplete/?longitude=40.234      (default=undefined)
  *  /v1/players/autocomplete/?latitude=40.456       (default=undefined)
  *  /v1/players/autocomplete/?distance=20           (default=undefined)
@@ -66,7 +66,7 @@ app.get('/v1/players/', function(req, res){
  *  /v1/players/autocomplete/?owner=:id   (autocomplete centered to an owner)
  */
 app.get('/v1/players/autocomplete/', function(req, res){
-  var fields = req.query.fields || "nickname,name,type,club";
+  var fields = req.query.fields || "name,type,club";
   var limit = req.query.limit || 5;
   var owner = req.query.owner;
   var sort = req.query.sort || "name";
@@ -82,7 +82,7 @@ app.get('/v1/players/autocomplete/', function(req, res){
     var query = DB.Model.Player
       .find({
         $and: [
-          { $or: [ {_searchableNickname: text}, {_searchableName: text} ] },
+          { _searchableName: text },
           { $or: [ {type: "default"}, {type: "owned", owner: owner} ] }
         ]
       });
@@ -107,7 +107,7 @@ app.get('/v1/players/autocomplete/', function(req, res){
  * Authentication provide password & token
  * 
  * Generic options:
- *  /v1/players/:id/?fields=nickname,name
+ *  /v1/players/:id/?fields=name
  *
  * Specific options:
  */
@@ -139,7 +139,7 @@ app.get('/v1/players/:id', function(req, res){
  * Generic options:
  *  /v1/players/:id/games/?limit=5     (default=10)
  *  /v1/players/:id/games/?offset=0    (default=0)
- *  /v1/players/:id/games/?sort=nickname (default=-dates.start)
+ *  /v1/players/:id/games/?sort=name   (default=-dates.start)
  * 
  * Specific options:
  *  /v1/players/:id/games/?owned=true  (default=undefined)
@@ -156,7 +156,7 @@ app.get('/v1/players/:id/games/', function(req, res){
   var sort = req.query.sort || "-dates.start";
   var limit = req.query.limit || 10;
   var offset = req.query.offset || 0;
-  var fields = req.query.fields || "sport,owner,dates.creation,dates.start,dates.end,location.country,location.city,location.currentPos,teams,teams.players.name,teams.players.nickname,teams.players.club,teams.players.rank,options.type,options.subtype,options.status,options.sets,options.score,options.court,options.surface,options.tour";
+  var fields = req.query.fields || "sport,owner,dates.creation,dates.start,dates.end,location.country,location.city,location.currentPos,teams,teams.players.name,teams.players.club,teams.players.rank,options.type,options.subtype,options.status,options.sets,options.score,options.court,options.surface,options.tour";
   var owned = null;
   owned = (req.query.owned === "true") ? true : owned;
   owned = (req.query.owned === "false") ? false : owned;
@@ -202,7 +202,6 @@ app.get('/v1/players/:id/games/', function(req, res){
  * No authentication
  * 
  * Body {
- *   nickname: String, (default="")
  *   name: String,     (default="")
  *   rank: String,     (default="")
  *   email: { 
@@ -243,7 +242,6 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
     // creating a new player
     var inlinedClub = (club) ? { id: club.id, name: club.name } : null;
     var player = new DB.Model.Player({
-        nickname: req.body.nickname || "",
         name: req.body.name || "",
         location : { currentPos: req.body.location.currentPos || [] },
         rank: req.body.rank || "",
@@ -282,7 +280,6 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
  * You must be authentified (?playerid=...&token=...)
  * 
  * Body {
- *   nickname: String, (default=undefined)
  *   name: String,     (default=undefined)
  *   rank: String,     (default=undefined)
  *   email: {
@@ -327,7 +324,7 @@ app.post('/v1/players/:id', express.bodyParser(), function(req, res){
     if (inlinedClub) {
       player["club"] = inlinedClub;
     }
-    ["nickname", "name", "rank", "idlicense"].forEach(function (o) {
+    ["name", "rank", "idlicense"].forEach(function (o) {
       if (typeof req.body[o] !== "undefined")
         player[o] = req.body[o];
     });

@@ -11,9 +11,9 @@ var DB = require("../db.js")
  * YUIDoc
  @class     getAutocomplete
  @type      Url
- @param     limit  [limit=5]                        /v1/clubs/autocomplete/?limit=5
- @param     fields [fields=nickname,name,type,club] /v1/clubs/autocomplete/?fields=nickname,name
- @param     sort   [sort=nickname]                  /v1/clubs/autocomplete/?sort=nickname
+ @param     limit  [limit=5]               /v1/clubs/autocomplete/?limit=5
+ @param     fields [fields=name,type,club] /v1/clubs/autocomplete/?fields=name
+ @param     sort   [sort=name]             /v1/clubs/autocomplete/?sort=name
  
  @return array(clubs)
  
@@ -22,8 +22,8 @@ var DB = require("../db.js")
  * 
  * Generic options:
  *  /v1/clubs/autocomplete/?limit=5               (default=5)
- *  /v1/clubs/autocomplete/?fields=nickname,name  (default=name,location.city)
- *  /v1/clubs/autocomplete/?sort=nickname         (default=name)
+ *  /v1/clubs/autocomplete/?fields=name           (default=name,location.city)
+ *  /v1/clubs/autocomplete/?sort=name             (default=name)
  *  /v1/clubs/autocomplete/?longitude=40.234      (default=undefined)
  *  /v1/clubs/autocomplete/?latitude=40.456       (default=undefined)
  *  /v1/clubs/autocomplete/?distance=20           (default=undefined)
@@ -88,7 +88,7 @@ app.get('/v1/clubs/:id', function(req, res){
  * Generic options:
  *  /v1/clubs/:id/games/?limit=5     (default=10)
  *  /v1/clubs/:id/games/?offset=0    (default=0)
- *  /v1/clubs/:id/games/?sort=nickname (default=-dates.start)
+ *  /v1/clubs/:id/games/?sort=name   (default=-dates.start)
  * 
  * Specific options:
  *  /v1/clubs/:id/games/?status=ongoing   (default=created,ongoing,finished)

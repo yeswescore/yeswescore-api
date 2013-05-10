@@ -33,7 +33,6 @@ if (Conf.env === "DEV") {
       return app.defaultError(res)("missing email");
     req.query.email = req.query.email.toLowerCase();
     var player = new DB.Model.Player({
-        nickname: "syndr0m",
         name: "Marc Dassonneville",
         location : { currentPos: [] },
         rank: "",

@@ -15,7 +15,6 @@ describe('dev:auth', function(){
       };
       
       var newPlayer = {
-        nickname : "TU-"+Math.random(),
         name: "TU-"+Math.random(),
         email: { address: "marcd-"+Math.random()+"@yeswescore.com" },
         idlicense: "TU-"+Math.random(),
@@ -40,7 +39,6 @@ describe('dev:auth', function(){
           assert.isPlayerWithToken(player);
           
           assert(newPlayer.name === player.name, "must have same name");
-          assert(newPlayer.nickname === player.nickname, "must have same nickname");
           assert(newPlayer.rank === player.rank, "must have same rank");
           assert(newPlayer.email.address === player.email.address, "must have same email");
           

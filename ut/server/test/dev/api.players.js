@@ -40,7 +40,6 @@ describe('dev:players', function(){
       };
       
       var newPlayer = {
-        nickname : "TU-"+Math.random(),
         name: "TU-"+Math.random(),
         email: { address: "marcd-"+Math.random()+"@yeswescore.com" },
         idlicense: "TU-"+Math.random(),
@@ -51,7 +50,6 @@ describe('dev:players', function(){
       };
       http.post(options, newPlayer, function (player) {
         assert.isPlayerWithToken(player);
-        assert(newPlayer.nickname === player.nickname, "must have same nickname");
         assert(newPlayer.name === player.name, "must have same name");
         assert(newPlayer.rank === player.rank, "must have same rank");
         assert(newPlayer.email.address === player.email.address, "must have same email");
@@ -69,7 +67,6 @@ describe('dev:players', function(){
         http.getJSON(options, function (p) {
           assert.isPlayer(p, "must be a player");
           assert(p.id === player.id, "must be same player");
-          assert(p.nickname === player.nickname, "must have same nickname");
           assert(p.name === player.name, "must have same name");
           assert(p.rank === player.rank, "must have same rank");
           assert(p.email.address === player.email.address, "must have same email");
@@ -90,7 +87,6 @@ describe('dev:players', function(){
       };
       
       var newPlayer = {
-        nickname : "TU-"+Math.random(),
         name: "TU-"+Math.random(),
         email: { address: "marcd-"+Math.random()+"@yeswescore.com" },
         idlicense: "TU-"+Math.random(),
@@ -101,7 +97,6 @@ describe('dev:players', function(){
       };
       http.post(options, newPlayer, function (player) {
         assert.isPlayerWithToken(player);
-        assert(newPlayer.nickname === player.nickname, "must have same nickname");
         assert(newPlayer.name === player.name, "must have same name");
         assert(newPlayer.rank === player.rank, "must have same rank");
         assert(newPlayer.email.address === player.email.address, "must have same email");
@@ -120,7 +115,6 @@ describe('dev:players', function(){
         http.getJSON(options, function (p) {
           assert.isPlayer(p, "must be a player");
           assert(p.id === player.id, "must be same player");
-          assert(p.nickname === player.nickname, "must have same nickname");
           assert(p.name === player.name, "must have same name");
           assert(p.rank === player.rank, "must have same rank");
           assert(p.email.address === player.email.address, "must have same email");
@@ -181,7 +175,6 @@ describe('dev:players', function(){
       var newPlayer = { };
       http.post(options, newPlayer, function (player) {
         assert.isPlayerWithToken(player);
-          assert(player.nickname === "", "nickname should be empty string");
           assert(player.name === "", "name should be empty string");
           assert(player.rank === "", "rank should be empty string");
           assert(typeof player.email === "undefined", "email should be undefined");
@@ -196,7 +189,6 @@ describe('dev:players', function(){
         http.getJSON(options, function (p) {
           assert.isPlayer(p, "must be a player");
           assert(p.id === player.id, "must be same player");
-          assert(p.nickname === "", "nickname should be empty string");
           assert(p.name === "", "name should be empty string");
           assert(p.rank === "", "rank should be empty string");
           assert(typeof p.email === "undefined", "email should be undefined");
@@ -226,14 +218,12 @@ describe('dev:players', function(){
         };
         
         var newPlayer = {
-          nickname : "TU-"+Math.random(),
           name: "TU-"+Math.random(),
           rank: "15/2",
           club: { id: randomClub._id, name: randomClub.name }
         };
         http.post(options, newPlayer, function (player) {
           assert.isPlayerWithToken(player);
-          assert(newPlayer.nickname === player.nickname, "must have same nickname");
           assert(newPlayer.name === player.name, "must have same name");
           assert(newPlayer.rank === player.rank, "must have same rank");
           
@@ -275,7 +265,6 @@ describe('dev:players', function(){
         };
         
         var newPlayer = {
-          nickname : "TU-"+Math.random(),
           name: "TU-"+Math.random(),
           rank: "15/2",
           email: { address: "marcd-"+Math.random()+"@yeswescore.com" },
@@ -283,7 +272,6 @@ describe('dev:players', function(){
         };
         http.post(options, newPlayer, function (player) {
           assert.isPlayerWithToken(player);
-          assert(newPlayer.nickname === player.nickname, "must have same nickname");
           assert(newPlayer.name === player.name, "must have same name");
           assert(newPlayer.rank === player.rank, "must have same rank");
           assert(newPlayer.email.address === player.email.address, "must have same email");
@@ -425,7 +413,6 @@ describe('dev:players', function(){
         };
         
         var newPlayer = {
-          nickname : "TU-"+Math.random(),
           name: "TU-"+Math.random(),
           rank: "15/2",
           club: null
@@ -460,8 +447,8 @@ describe('dev:players', function(){
     });
   });
   
-  describe('update a player (name,nickname,rank,password,club)', function () {
-    it('should modify the player (name,nickname,rank,password,club)', function (done) {
+  describe('update a player (name,rank,password,club)', function () {
+    it('should modify the player (name,rank,password,club)', function (done) {
       var options = {
         host: Conf["http.host"],
         port: Conf["http.port"],
@@ -484,7 +471,6 @@ describe('dev:players', function(){
           var playerid = randomPlayer._id;
           var now = new Date().getTime();
           var rnd = function () { return String(Math.round(Math.random() * 1000000)); }
-          var nickname = "nickname"+now +rnd();
           var name = "name"+now +rnd();
           var rank = "rank"+now +rnd();
           var clubid = randomClub._id;
@@ -494,7 +480,6 @@ describe('dev:players', function(){
           var modifiedPlayer = {
             id: playerid,
             name: name,
-            nickname: nickname,
             rank: rank,
             uncryptedPassword: uncryptedPassword,
             club: { id: clubid },
@@ -510,7 +495,6 @@ describe('dev:players', function(){
           http.post(options, modifiedPlayer, function (player) {
             assert.isPlayerWithToken(player);
             assert(modifiedPlayer.name === player.name, "must have same name");
-            assert(modifiedPlayer.nickname === player.nickname, "must have same nickname");
             assert(modifiedPlayer.rank === player.rank, "must have same rank");
             assert(modifiedPlayer.club.id === player.club.id, "must have same club");
             assert(modifiedPlayer.language === player.language, "must have same language");
@@ -528,7 +512,6 @@ describe('dev:players', function(){
             http.getJSON(options, function (player) {
               assert.isPlayer(player);
               assert(modifiedPlayer.name === player.name, "must have same name");
-              assert(modifiedPlayer.nickname === player.nickname, "must have same nickname");
               assert(modifiedPlayer.rank === player.rank, "must have same rank");
               assert(modifiedPlayer.club.id === player.club.id, "must have same club");
               assert(player.club.id === randomClub._id, "must have same club id");

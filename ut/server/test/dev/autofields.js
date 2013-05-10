@@ -72,8 +72,8 @@ describe('autofields:player', function(){
   });
   
   
-  describe('update player nickname, name', function () {
-    it('should update player._searchableNickame, _searchableName', function (done) {
+  describe('update player name', function () {
+    it('should update _searchableName', function (done) {
       var options = {
         host: Conf["http.host"],
         port: Conf["http.port"],
@@ -87,12 +87,9 @@ describe('autofields:player', function(){
         var playerid = randomPlayer._id;
         var now = new Date().getTime();
         var rnd = function () { return String(Math.round(Math.random() * 1000000)); }
-        var nickname = "nickname"+now +rnd();
-        var name = "nickname"+now +rnd();
         
         var modifiedPlayer = {
           id: playerid,
-          nickname: nickname,
           name: name
         };
         // saving
@@ -104,7 +101,6 @@ describe('autofields:player', function(){
         
         http.post(options, modifiedPlayer, function (player) {
           assert.isPlayerWithToken(player);
-          assert(player.nickname === nickname, "must have same nickname");
           assert(player.name === name, "must have same name");
           
           // read from DB
@@ -115,7 +111,6 @@ describe('autofields:player', function(){
           };
           http.getJSON(options, function (player) {
             assert.isPlayer(player);
-            assert(player.nickname === nickname, "must have same nickname");
             assert(player.name === name, "must have same name");
             
             // read document from DB
@@ -126,9 +121,7 @@ describe('autofields:player', function(){
             };
             
             http.getJSON(options, function (player) {
-              assert(player.nickname === nickname, "must have same nickname");
               assert(player.name === name, "must have same name");
-              assert(player._searchableNickname === nickname, "must have an updated searchable Nickname");
               assert(player._searchableName === name, "must have an updated searchable Name");
               
               done();
@@ -139,8 +132,8 @@ describe('autofields:player', function(){
     });
   });
   
-  describe('update player nickname, name', function () {
-    it('should update player\'s games _searchablePlayersNickNames, _searchablePlayersNames', function (done) {
+  describe('update player name', function () {
+    it('should update player\'s games _searchablePlayersNames', function (done) {
       // FIXME: MIGHT FAIL IF PLAYER OF THE GAME IS OWNED
       var options = {
         host: Conf["http.host"],
@@ -166,12 +159,9 @@ describe('autofields:player', function(){
           //
           var now = new Date().getTime();
           var rnd = function () { return String(Math.round(Math.random() * 1000000)); }
-          var nickname = "nickname"+now +rnd();
-          var name = "nickname"+now +rnd();
           
           var modifiedPlayer = {
             id: playerid,
-            nickname: nickname,
             name: name
           };
           // saving
@@ -183,7 +173,6 @@ describe('autofields:player', function(){
           
           http.post(options, modifiedPlayer, function (player) {
             assert.isPlayerWithToken(player);
-            assert(player.nickname === nickname, "must have same nickname");
             assert(player.name === name, "must have same name");
             
             // read from DB
@@ -194,7 +183,6 @@ describe('autofields:player', function(){
             };
             http.getJSON(options, function (player) {
               assert.isPlayer(player);
-              assert(player.nickname === nickname, "must have same nickname");
               assert(player.name === name, "must have same name");
               
               // read document from DB
@@ -205,9 +193,7 @@ describe('autofields:player', function(){
               };
               
               http.getJSON(options, function (player) {
-                assert(player.nickname === nickname, "must have same nickname");
                 assert(player.name === name, "must have same name");
-                assert(player._searchableNickname === nickname, "must have an updated searchable Nickname");
                 assert(player._searchableName === name, "must have an updated searchable Name");
                 
                 // check if game was updated
@@ -218,7 +204,6 @@ describe('autofields:player', function(){
                 };
                 http.getJSON(options, function (game) {
                   assert.isObject(game, "game must be an object");
-                  assert(game._searchablePlayersNickNames.indexOf(nickname) !== -1, "game _searchablePlayersNickNames must be updated");
                   assert(game._searchablePlayersNames.indexOf(name) !== -1, "game _searchablePlayersNames must be updated");
                   
                   done();

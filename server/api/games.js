@@ -13,7 +13,7 @@ var DB = require("../db.js")
  * Generic options:
  *  /v1/games/?limit=10              (default=10)
  *  /v1/games/?offset=0              (default=0)
- *  /v1/games/?fields=nickname,name  (default=please check in the code)
+ *  /v1/games/?fields=name           (default=please check in the code)
  *  /v1/games/?sort=-dates.start     (default=-dates.start)
  *  /v1/games/?longitude=40.234      (default=undefined)
  *  /v1/games/?latitude=40.456       (default=undefined)
@@ -35,7 +35,7 @@ app.get('/v1/games/', function(req, res){
   var offset = req.query.offset || 0;
   var text = req.query.q;
   var club = req.query.club || null;
-  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,location.country,location.city,location.pos,teams,teams.players.name,teams.players.nickname,teams.players.club,teams.players.rank,options.type,options.subtype,options.sets,options.score,options.court,options.surface,options.tour";
+  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,options.type,options.subtype,options.sets,options.score,options.court,options.surface,options.tour";
   var sort = req.query.sort || "-dates.start";
   var status = req.query.status || "created,ongoing,finished";
   var longitude = req.query.longitude;
@@ -56,7 +56,6 @@ app.get('/v1/games/', function(req, res){
     query.or([
       { _searchableCity: text },
       { _searchablePlayersNames: text },
-      { _searchablePlayersNickNames: text },
       { _searchablePlayersClubsNames: text }
     ]);
   }
@@ -86,13 +85,13 @@ app.get('/v1/games/', function(req, res){
  * a bit complex due to "populate" option.
  * 
  * Generic options:
- *  /v1/games/:id/?fields=nickname,name         (default: please check in the code)
+ *  /v1/games/:id/?fields=name         (default: please check in the code)
  *
  * Specific options:
  *  /v1/games/:id/?populate=teams.players
  */
 app.get('/v1/games/:id', function (req, res){
-  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.end,location.country,location.city,location.pos,teams,teams.players.name,teams.players.nickname,teams.players.club,teams.players.rank,options.type,options.subtype,options.sets,options.score,options.court,options.surface,options.tour";
+  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.end,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,options.type,options.subtype,options.sets,options.score,options.court,options.surface,options.tour";
   // populate option
   var populate = "teams.players";
   if (typeof req.query.populate !== "undefined")
@@ -201,7 +200,7 @@ app.get('/v1/games/:id/stream/', function (req, res){
         //
         // to:
         //
-        //     { owner: { player: { id: "...", name: "...", nickname: "..." } } }
+        //     { owner: { player: { id: "...", name: "..." } } }
         //  or { owner: { facebook: { id: "7293e00f6", name: "..." } } }
         stream = stream.map(function (streamItem, index) {
           // FIXME: mongoose missing feature.
@@ -213,8 +212,7 @@ app.get('/v1/games/:id/stream/', function (req, res){
             var playerId = streamItemObject.owner.player;
             streamItemObject.owner.player = {
               id: playerId,
-              name: player.name,
-              nickname: player.nickname
+              name: player.name
             };
           }
           return streamItemObject;

@@ -130,7 +130,7 @@ describe('dev:games', function(){
         };
         
         var newGame = {
-          teams: [ { id: null, players: [ { name : "toto", nickname: "nick", email: { address: "foo"+Math.random()+"@yeswescore.com" }, rank: "15/2" } ] },
+          teams: [ { id: null, players: [ { name : "toto", email: { address: "foo"+Math.random()+"@yeswescore.com" }, rank: "15/2" } ] },
                    { id: null, players: [ { name : "titi" } ] } ]
         };
         http.post(options, newGame, function (game) {
@@ -140,7 +140,6 @@ describe('dev:games', function(){
           assert(game.teams[1].players[0].name === "titi", "second player is titi");
           assert.isId(game.teams[0].players[0].id, "first player should have an id");
           assert.isId(game.teams[1].players[0].id, "second player should have an id");
-          assert(game.teams[0].players[0].nickname === newGame.teams[0].players[0].nickname, "nick");
           assert(typeof game.teams[0].players[0].email === "undefined", "should not display player personnal info as email");
           assert(game.teams[0].players[0].rank === newGame.teams[0].players[0].rank, "rank");
           
@@ -174,7 +173,7 @@ describe('dev:games', function(){
             path: Conf["api.games"]+"?playerid="+randomPlayer._id+"&token="+randomPlayer.token
           };
           var newGame = {
-            teams: [ { id: null, players: [ { name : "toto", nickname: "nick", email: "foo"+Math.random()+"@yeswescore.com", rank: "15/2" } ] },
+            teams: [ { id: null, players: [ { name : "toto", email: "foo"+Math.random()+"@yeswescore.com", rank: "15/2" } ] },
                     { id: null, players: [ { name : "titi" , club: { id: randomClub._id } } ] } ]
           };
           http.post(options, newGame, function (game) {
@@ -184,7 +183,6 @@ describe('dev:games', function(){
             assert(game.teams[1].players[0].name === "titi", "second player is titi");
             assert.isId(game.teams[0].players[0].id, "first player should have an id");
             assert.isId(game.teams[1].players[0].id, "second player should have an id");
-            assert(game.teams[0].players[0].nickname === newGame.teams[0].players[0].nickname, "nick");
             assert(typeof game.teams[0].players[0].email === "undefined", "email should be undefined");
             assert(game.teams[0].players[0].rank === newGame.teams[0].players[0].rank, "rank");
             // tests on clubs
@@ -489,7 +487,6 @@ describe('dev:games', function(){
               assert(streamItem.id == s.id, "stream first obj should be s");
               assert(streamItem.owner.player.id == randomPlayer._id, "should be the good player");
               assert(streamItem.owner.player.name === randomPlayer.name, "player name");
-              assert(streamItem.owner.player.nickname === randomPlayer.nickname, "player nickname");
               done();
             });
           });

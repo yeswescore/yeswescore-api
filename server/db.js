@@ -144,7 +144,6 @@ DB.Definition.Club = {
   _searchableName: String  // AUTO-FIELD (Club pre save)
 };
 DB.Definition.Player = {
-  nickname: String,
   name: String,
   location: {
     currentPos: { type: [Number], index: '2d'}
@@ -188,7 +187,6 @@ DB.Definition.Player = {
   _deleted: { type: Boolean, default: false },  // FIXME: unused
   _reported: { type: Boolean, default: false },
   // private searchable fields
-  _searchableNickname: String,  // AUTO-FIELD (Player pre save)
   _searchableName: String,      // AUTO-FIELD (Player pre save)
   _searchableClubName: String   // AUTO-FIELD (Player pre save)
 };
@@ -252,7 +250,6 @@ DB.Definition.Game = {
   // private searchable fields
   _searchableCity: String,                                // AUTO-FIELD (Game pre save)
   _searchablePlayersNames: [ String ],                    // AUTO-FIELD (Player post save) ASYNC
-  _searchablePlayersNickNames: [ String ],                // AUTO-FIELD (Player post save) ASYNC
   _searchablePlayersClubsIds: [ Schema.Types.ObjectId ],  // AUTO-FIELD (Player post save) ASYNC
   _searchablePlayersClubsNames: [ String ]                // AUTO-FIELD (Player post save) ASYNC
 };
@@ -310,7 +307,6 @@ DB.Schema.Club.pre('save', function (next) {
 
 /*
  * Before saving a player we might need to 
- *  - update searchableNickname
  *  - update searchableName
  *  - update searchableClubName
  */
@@ -319,11 +315,6 @@ DB.Schema.Player.pre('save', function (next) {
     throw "should not save games "+JSON.stringify(this);
   // infos for post save
   this._wasModified = [];
-  // player._searchableNickname
-  if (this.isModified('nickname')) {
-    this._wasModified.push('nickname');
-    this._searchableNickname = this.nickname.searchable();
-  }
   // player._searchableName
   if (this.isModified('name')) {
     this._wasModified.push('name');
@@ -348,7 +339,7 @@ DB.Schema.Player.pre('save', function (next) {
 
 //
 // Optim: post('exec', ...) => 
-//     save in _dbValue = [ nickname, name, ... ]
+//     save in _dbValue = [ name, ... ]
 //  => prevent populate :
 //   - find(...).exec(
 //       $pull: oldPlayerName
@@ -357,7 +348,6 @@ DB.Schema.Player.pre('save', function (next) {
 
 /*
  * After saving a player we might need to 
- *  - update Game searchableNickname
  *  - update Game searchableName
  *  - update Game searchableClubName
  *  - update Game searchableClubId
@@ -366,7 +356,6 @@ DB.Schema.Player.post('save', function () {
   // SUPER HEAVY PLAYER GAMES UPDATE
   // SHOULD BE DISPATCHED TO A WORKER, ASYNC STUFF.
   if (this._wasModified.indexOf("name") === -1 &&
-      this._wasModified.indexOf("nickname") === -1 &&
       this._wasModified.indexOf("club") === -1)
     return;
 
@@ -386,14 +375,6 @@ DB.Schema.Player.post('save', function () {
         game._searchablePlayersNames = game.teams.reduce(function (p, team) {
           return p.concat(team.players.map(function (player) {
             return player.name.searchable();
-          }));
-        }, []);
-      }
-      //
-      if (wasModified.indexOf("nickname") !== -1) {
-        game._searchablePlayersNickNames = game.teams.reduce(function (p, team) {
-          return p.concat(team.players.map(function (player) {
-            return player.nickname.searchable();
           }));
         }, []);
       }
@@ -423,7 +404,6 @@ DB.Schema.Player.post('save', function () {
 
 /*
  * Before saving a game we might need to 
- *  - update searchableNickname   (teams were modified)
  *  - update searchableName
  *  - update searchableClubName
  *  - update searchableClubIds
@@ -465,7 +445,6 @@ DB.Schema.Game.pre('save', function (next) {
         if (!players)
           return next(); // FIXME: we should log this error.
         this._searchablePlayersNames = players.map(function (p) { return p.name.searchable() });
-        this._searchablePlayersNickNames = players.map(function (p) { return p.nickname.searchable() });
         this._searchablePlayersClubsIds = players.filter(function (p) { return p.club && p.club.id })
                                                 .map(function (p) { return p.club.id });
         this._searchablePlayersClubsNames = players.filter(function (p) { return p.club && p.club.name })
@@ -693,7 +672,6 @@ DB.Model.Game.createOwnedPlayersAsync = function (teams, owner) {
         (function createOwnedAnonymousPlayer(teamIndex, playerIndex) {
           var p = new DB.Model.Player({
             name: player.name || "",
-            nickname: player.nickname || "",
             rank: player.rank || "",
             type: "owned",
             owner: owner

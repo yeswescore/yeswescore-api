@@ -22,11 +22,6 @@ var generateFakeFirstName = function () {
            "Chloé","Clarisse","Emma","Eva","Gabrielle","isaure","Jade","Juliette","leonore","Louise","Margaux","Mathilde",
            "Maya","Romane","Rose","Roxane","Violette","Zélie","Zoé"].random();
 }
-var generateFakePseudo = function () {
-  return [ "Lamasperge","Kenex","JuniorGong","TelQuel","Danka","CanardPC","Mormon","DoofyGilmore","Cawotte_","Perle_Blanche","Ggate",
-           "C0mE_oN_And_TrY","drj-sg","JavierHernandez","noelstyle","BadReputation","GrenierDuJoueur","CumOnAndTry","LosAngeles",
-           "PetDeHap","idontknowhy","PEPSl","FenetrePVC","20thCenturyBoy","Titilabille","[B2OOBA]","SmashinPumpkins","Despe","EveryoneSuck","8mai1945"].random();
-}
 var generateFakeCity = function () {
   return [ "Bayeux", "Falaise", "Caen", "Honfleur", "Deauville", "Arromanches les Bains", "Lisieux", "Cabourg",
            "Trouville sur Mer", "Mont Saint Michel", "Cherbourg" ].random();
@@ -111,7 +106,6 @@ var generatePlayersAsync = function () {
      gClubs = clubs;
      var players = clubs.map(function (club) {
         return new DB.Model.Player({
-            nickname: generateFakePseudo(),
             name: generateFakeFirstName() + " " + generateFakeName(),
             location: {
               currentPos: generateFakeLocation()
@@ -129,7 +123,6 @@ var generatePlayersAsync = function () {
    }).then(function (players) {
       var anonymous = gClubs.map(function (club) {
           return new DB.Model.Player({
-              nickname: generateFakePseudo(),
               name: generateFakeFirstName() + " " + generateFakeName(),
               location: {
                 country: "",

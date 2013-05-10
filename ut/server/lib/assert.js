@@ -224,7 +224,6 @@ assert.isClub = function (club) {
 assert.isPlayerScheme = function (player, m) {
   assert.schema({
     id: { _type: "id" },
-    nickname: { _type: "string|undefined" },
     name: { _type: "string|undefined" },
     location: {
       currentPos: { _type: "array|undefined" }
