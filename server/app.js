@@ -179,4 +179,10 @@ var winstonStream = {
 };
 app.use(express.logger({stream:winstonStream}));
 
+// default Content-Type
+app.use(function (req, res, next) {
+  res.type('application/json; charset=utf-8');
+  next();
+});
+
 module.exports = app;

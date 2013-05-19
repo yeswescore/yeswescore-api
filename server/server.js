@@ -7,12 +7,6 @@ var app = require('./app.js')
   , mongoose = require('mongoose')
   , Conf = require('./conf.js')
   , DB = require('./db.js');
-  
-// default Content-Type
-app.use(function (req, res, next) {
-  res.type('application/json; charset=utf-8');
-  next();
-});
 
 require('./api/auth.js');
 require('./api/bootstrap.js');

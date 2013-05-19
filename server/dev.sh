@@ -26,12 +26,15 @@ if [ -f ".port" ]
 then
   port=`cat .port | head -1`
   fbport=`cat ../../yeswescore-facebook/server/.port`
+  wwwport=`cat ../../yeswescore-www/server/.port`
   echo ""
   echo "using port number $port from file .port for api"
   echo "using port number $fbport from file .port for fb"
+  echo "using port number $wwwport from file .port for www"
   echo "mongo db will be dev$port"
   export YESWESCORE_PORT=$port
   export YESWESCORE_FACEBOOK_PORT=$fbport
+  export YESWESCORE_WWW_PORT=$wwwport
   if [ "$1" = "debug" ]
   then
     echo "debug mode activated"
