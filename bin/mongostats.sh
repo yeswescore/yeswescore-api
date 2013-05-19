@@ -1,5 +1,8 @@
 #!/bin/bash
 
+BASEDIR=$(dirname $0)
+cd $BASEDIR;
+
 # are we in dev or in prod.
 if [ "$NODE_ENV" = "PROD" ]
 then
@@ -12,6 +15,7 @@ else
   dbname="dev"$port
 fi
 
+# date de lancement : 12 mai (inclu)
 echo -n "Nombre de players : "
 mongo $dbname --quiet --eval 'printjson(db.players.find({ "dates.creation": { $gte: ISODate("2013-05-12T00:00:00.000Z") } }).count())'
 
