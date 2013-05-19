@@ -27,6 +27,7 @@ app.post('/v1/auth/', express.bodyParser(), function(req, res){
   // creating player to hash password.
   var p = new DB.Model.Player();
   p.uncryptedPassword = req.body.uncryptedPassword;
+  app.log("/v1/auth: try to find "+req.body.email.address+" with password "+ p.password+ "uncrypted="+req.body.uncryptedPassword, 'error'); // FIXME : temporary log.
   //
   DB.Model.Player.findOne({
     'email.address': req.body.email.address,
@@ -34,6 +35,7 @@ app.post('/v1/auth/', express.bodyParser(), function(req, res){
   }, function (err, player) {
     if (err || !player)
       return app.defaultError(res)("authentication");
+    app.log("/v1/auth: found !", "error");
     res.send(JSON.stringifyModels(player, { unhide: [ "token" ] }));
   });
 });
