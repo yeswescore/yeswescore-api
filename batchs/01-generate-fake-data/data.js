@@ -105,16 +105,19 @@ var generatePlayersAsync = function () {
           .then(function (clubs) {
      gClubs = clubs;
      var players = clubs.map(function (club) {
+        var clubInfo = {
+          id: club.id,
+          name: club.name
+        };
+        if (Math.random() > 0.7)
+          clubInfo = undefined;
         return new DB.Model.Player({
             name: generateFakeFirstName() + " " + generateFakeName(),
             location: {
               currentPos: generateFakeLocation()
             },
             rank: "15/2",
-            club: {
-              id: club.id,
-              name: club.name
-            },
+            club: clubInfo,
             games: [],
             type: "default"
         });
@@ -122,20 +125,23 @@ var generatePlayersAsync = function () {
      return DB.saveAsync(players);
    }).then(function (players) {
       var anonymous = gClubs.map(function (club) {
-          return new DB.Model.Player({
-              name: generateFakeFirstName() + " " + generateFakeName(),
-              location: {
-                country: "",
-                pos: [],
-              },
-              rank: "15/2",
-              club: {
-                id: club.id,
-                name: club.name
-              },
-              games: [],
-              type: "owned"
-          });
+        var clubInfo = {
+          id: club.id,
+          name: club.name
+        };
+        if (Math.random() > 0.7)
+          clubInfo = undefined;
+        return new DB.Model.Player({
+            name: generateFakeFirstName() + " " + generateFakeName(),
+            location: {
+              country: "",
+              pos: [],
+            },
+            rank: "15/2",
+            club: clubInfo,
+            games: [],
+            type: "owned"
+        });
       });
       return DB.saveAsync(anonymous);
    });
