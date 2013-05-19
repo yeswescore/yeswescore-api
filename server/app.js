@@ -5,6 +5,12 @@ var express = require("express")
 
 // default express options
 app.use(express.compress());       // we do want to compress responses
+// security
+app.use(function (req, res, next) {
+  app.disable('x-powered-by');
+  res.setHeader('X-Powered-By', 'PHP/5.2.4-2freebsd'); // fake headers, but shouldn't be the same in dev & prod.
+  next();
+});
 // methodOverride working with querystring?_method=xxxx
 app.use(function (req, res, next) {
   if (req.query && req.query._method) {
