@@ -193,6 +193,32 @@
       }
     }
   );
+
+  Object.defineProperty(
+    String.prototype,
+    "toRegExp",
+    {
+      enumerable: false,
+      value: function () {
+        return this.replace(/[\-\[\]\/\{\}\(\)\*\+\?\.\\\^\$\|]/g, "\\$&");
+      }
+    }
+  );
+
+  Object.defineProperty(
+    String.prototype,
+    "trim",
+    {
+      enumerable: false,
+      value: function (s) {
+        if (s) {
+          s = s.toRegExp();
+          return this.replace(new RegExp("^(" + s + ")+|(" + s + ")+$", "g"), '');
+        }
+        return this.replace(/^\s+|\s+$/g, '');
+      }
+    }
+  );
   
   Object.defineProperty(
     String.prototype,

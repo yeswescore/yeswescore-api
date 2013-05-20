@@ -23,10 +23,10 @@ app.post('/v1/auth/', express.bodyParser(), function(req, res){
   if (req.body.email.address.length === 0)
     return app.defaultError(res)("cannot login with empty email");
   // email should only manipulated lowercase
-  req.body.email.address = req.body.email.address.toLowerCase();
+  req.body.email.address = req.body.email.address.toLowerCase().trim();
   // creating player to hash password.
   var p = new DB.Model.Player();
-  p.uncryptedPassword = req.body.uncryptedPassword;
+  p.uncryptedPassword = req.body.uncryptedPassword.trim();
   app.log("/v1/auth: try to find "+req.body.email.address+" with password "+ p.password+ "uncrypted="+req.body.uncryptedPassword, 'error'); // FIXME : temporary log.
   //
   DB.Model.Player.findOne({
@@ -56,7 +56,7 @@ app.post('/v1/auth/resetPassword/', express.bodyParser(), function(req, res){
   if (req.body.email.address.length === 0)
     return app.defaultError(res)("empty email");
   // email should only manipulated lowercase
-  req.body.email.address = req.body.email.address.toLowerCase();
+  req.body.email.address = req.body.email.address.toLowerCase().trim();
   //
   DB.Model.Player.findOne({
     'email.address': req.body.email.address,
