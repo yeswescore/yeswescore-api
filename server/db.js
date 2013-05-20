@@ -281,7 +281,8 @@ DB.Schema.Game = new Schema(DB.Definition.Game);
 // password virtual setter
 DB.Schema.Player.virtual('uncryptedPassword').set(function (uncryptedPassword) {
   var shasum = crypto.createHash('sha256');
-  shasum.update(uncryptedPassword+Conf.get("security.secret"));
+  // android bug with swipe: we do not want any [space] chars.
+  shasum.update(uncryptedPassword.replace(/ /g, '')+Conf.get("security.secret"));
   this.password = shasum.digest('hex');
 });
 
