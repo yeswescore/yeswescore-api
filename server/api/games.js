@@ -91,7 +91,7 @@ app.get('/v1/games/', function(req, res){
  *  /v1/games/:id/?populate=teams.players
  */
 app.get('/v1/games/:id', function (req, res){
-  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.end,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,options.type,options.subtype,options.sets,options.score,options.court,options.surface,options.tour";
+  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.end,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,teams.players.owner,options.type,options.subtype,options.sets,options.score,options.court,options.surface,options.tour";
   // populate option
   var populate = "teams.players";
   if (typeof req.query.populate !== "undefined")
