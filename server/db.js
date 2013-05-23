@@ -368,8 +368,10 @@ DB.Schema.Player.post('save', function () {
                 .select("teams")
                 .populate("teams.players")
                 .exec(function (err, games) {
-    if (err)
-      return; //FIXME: log
+    if (err) {
+      app.log('player post save error ' + err, 'error');
+      return;
+    }
     // for
     games.forEach(function postSaveUpdateForEachGame(game) {
       if (wasModified.indexOf("name") !== -1) {
