@@ -274,7 +274,6 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
       // => creating game
       req.body.location = (req.body.location) ? req.body.location : {};
       req.body.options = (req.body.options) ? req.body.options : {};
-        console.log('REQ BODY STATUS = ' + req.body.status);
       var game = new DB.Model.Game({
         sport: req.body.sport || "tennis",
         owner: authentifiedPlayer.id,
