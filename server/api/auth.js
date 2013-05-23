@@ -27,7 +27,7 @@ app.post('/v1/auth/', express.bodyParser(), function(req, res){
   // creating player to hash password.
   var p = new DB.Model.Player();
   p.uncryptedPassword = req.body.uncryptedPassword.trim();
-  app.log("/v1/auth: try to find "+req.body.email.address+" with password "+ p.password+ "uncrypted="+req.body.uncryptedPassword, 'error'); // FIXME : temporary log.
+  // app.log("/v1/auth: try to find "+req.body.email.address+" with password "+ p.password+ "uncrypted="+req.body.uncryptedPassword, 'error'); // SHOULD NOT BE USED IN PRODUCTION ENV.
   //
   DB.Model.Player.findOne({
     'email.address': req.body.email.address,
