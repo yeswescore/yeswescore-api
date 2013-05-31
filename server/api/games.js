@@ -11,7 +11,7 @@ var DB = require("../db.js")
  * a bit complex due to "populate" option.
  * 
  * Generic options:
- *  /v1/games/?limit=10              (default=10)
+ *  /v1/games/?limit=30              (default=30)
  *  /v1/games/?offset=0              (default=0)
  *  /v1/games/?fields=name           (default=please check in the code)
  *  /v1/games/?sort=-dates.start     (default=-dates.start)
@@ -31,7 +31,7 @@ var DB = require("../db.js")
  * fields filter works with populate : (...)?fields=teams.players.name
  */
 app.get('/v1/games/', function(req, res){
-  var limit = req.query.limit || 10;
+  var limit = req.query.limit || 30;
   var offset = req.query.offset || 0;
   var text = req.query.q;
   var club = req.query.club || null;
