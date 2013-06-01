@@ -326,9 +326,7 @@ DB.Schema.Player.pre('save', function (next) {
   // player._searchableClubName
   // player.club.name
   var self = this;
-  console.log('*************** IS CLUB MODIFIED ? ' + this.isModified('club'));
   if (this.isModified('club')) {
-    console.log('club is modified => pushing on stack');
     this._wasModified.push('club');
     DB.Model.Club.findById(this.club.id, function (err, club) {
       if (err) {
@@ -642,8 +640,6 @@ DB.Model.Game.updateTeamsPlayersAsync = function (game, teams) {
           game.markModified('teams');
         if (typeof playerid === "string")
           playerid = new ObjectId(playerid);
-        console.log('game ', game.toObject({ getters: true, virtuals: true }));
-        console.log('saving game.teams[teamIndex].players[..] = playerid ' + playerid);
         game.teams[teamIndex].players[playerIndex] = playerid;
       });
     });
