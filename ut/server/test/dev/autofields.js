@@ -16,7 +16,6 @@ describe('FIXME: autofields:club', function(){
     });
   });
 });
-
 describe('autofields:player', function(){
   describe('update game city', function () {
     it('should update game._searchableCity', function (done) {
@@ -71,8 +70,7 @@ describe('autofields:player', function(){
     });
   });
   
-  
-  describe('update player name', function () {
+  describe('update player name (1)', function () {
     it('should update _searchableName', function (done) {
       var options = {
         host: Conf["http.host"],
@@ -86,7 +84,7 @@ describe('autofields:player', function(){
         
         var playerid = randomPlayer._id;
         var now = new Date().getTime();
-        var rnd = function () { return String(Math.round(Math.random() * 1000000)); }
+        var name = "test"+Math.random();
         
         var modifiedPlayer = {
           id: playerid,
@@ -132,7 +130,7 @@ describe('autofields:player', function(){
     });
   });
   
-  describe('update player name', function () {
+  describe('update player name (2)', function () {
     it('should update player\'s games _searchablePlayersNames', function (done) {
       // FIXME: MIGHT FAIL IF PLAYER OF THE GAME IS OWNED
       var options = {
@@ -158,7 +156,7 @@ describe('autofields:player', function(){
           assert.isObject(randomPlayer);
           //
           var now = new Date().getTime();
-          var rnd = function () { return String(Math.round(Math.random() * 1000000)); }
+          var name = "test"+Math.random();
           
           var modifiedPlayer = {
             id: playerid,
@@ -216,7 +214,7 @@ describe('autofields:player', function(){
     });
   });
   
-  describe('update player club', function () {
+  describe('update player club (1)', function () {
     it('should update player _searchableClubName', function (done) {
       // FIXME: MIGHT NOT BE PERTINENT IF RANDOM CLUB === current player club.
       var options = {
@@ -284,7 +282,7 @@ describe('autofields:player', function(){
     });
   });
   
-  describe('update player club', function () {
+  describe('update player club (2)', function () {
     it('should update player\'s games _searchablePlayersClubsIds, _searchablePlayersClubsNames', function (done) {
       // FIXME: MIGHT FAIL IF PLAYER OF THE GAME IS OWNED
       // FIXME: MIGHT NOT BE PERTINENT IF RANDOM CLUB === current player club.
@@ -320,7 +318,10 @@ describe('autofields:player', function(){
           http.getJSON(options, function (randomPlayer) {
             assert.isObject(randomPlayer);
             //
-            
+            //if (randomPlayer.club && randomPlayer.club.id) {
+            //  console.log('player alread has a club id = ' + randomPlayer.club.id);
+            //}
+            //console.log('modifying player with clubid = ' + clubid);
             var modifiedPlayer = {
               id: playerid,
               club: { id: clubid }
@@ -367,6 +368,95 @@ describe('autofields:player', function(){
                     assert(game._searchablePlayersClubsIds.indexOf(clubid) !== -1, "game _searchablePlayersClubsIds must be updated");
                     assert(game._searchablePlayersClubsNames.indexOf(randomClub.name.searchable()) !== -1, "game _searchablePlayersClubsNames must be updated");
                     
+                    done();
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+  });
+  
+  describe('create a game', function () {
+    it('should update _searchable fields ', function (done) {  
+      // read a club => read a player (document & object) => update player with club
+      //  => create a game with player as owner & player
+      //  => check searchable fields in the game.
+      
+      // read a club.
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.clubs"]+"random"
+      };
+      http.getJSON(options, function (randomClub) {
+        // read a player document
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["documents.players"]+"random"
+        };        
+        http.getJSON(options, function (randomPlayer) {
+          assert.isObject(randomPlayer, "random player must exist");
+          // read a player normal object
+          var options = {
+            host: Conf["http.host"],
+            port: Conf["http.port"],
+            path: Conf["api.players"]+randomPlayer._id
+          };
+          http.getJSON(options, function (p) {
+            assert.isPlayer(p, "must be a player");
+            // assign club to player.
+            p.club = { id: randomClub._id, name: randomClub.name };
+            var options = {
+              host: Conf["http.host"],
+              port: Conf["http.port"],
+              path: Conf["api.players"]+p.id+"/?playerid="+p.id+"&token="+randomPlayer.token
+            };
+            // save.
+            http.post(options, p, function (player) {
+              assert.isPlayerWithToken(player);
+              // re-read player document...
+              var options = {
+                host: Conf["http.host"],
+                port: Conf["http.port"],
+                path: Conf["documents.players"]+player.id
+              };        
+              http.getJSON(options, function (randomPlayer) {
+                assert.isObject(randomPlayer, "random player must exist");
+                
+                // create a game
+                var options = {
+                  host: Conf["http.host"],
+                  port: Conf["http.port"],
+                  path: Conf["api.games"]+"?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+                };
+                
+                var newGame = {
+                  infos: { score: "0/0" },
+                  teams: [ { id: null, players: [ { id: randomPlayer._id, name : randomPlayer.name } ] },
+                          { id: null, players: [ { name : "titi" } ] } ]
+                };
+            
+                http.post(options, newGame, function (game) {
+                  assert.isGame(game);
+                  assert(game.teams[0].players[0].id == randomPlayer._id);
+                  assert(game.teams[0].players[0].name == randomPlayer.name);
+                  
+                  // read game document
+                  var options = {
+                    host: Conf["http.host"],
+                    port: Conf["http.port"],
+                    path: Conf["documents.games"]+game.id
+                  };
+                  http.getJSON(options, function (docGame) {
+                    assert.isObject(docGame, "random game must exist");
+                    // console.log(docGame._searchablePlayersClubsNames, randomPlayer._searchableClubName);
+                    // console.log(docGame._searchablePlayersNames, randomPlayer._searchableName);
+                    assert(docGame._searchablePlayersClubsNames.indexOf(randomPlayer._searchableClubName) !== -1, "searchable players clubs names");
+                    assert(docGame._searchablePlayersNames.indexOf(randomPlayer._searchableName) !== -1, "searchable players names");
                     done();
                   });
                 });
@@ -474,6 +564,51 @@ describe('autofields:player', function(){
                 });
               });
             });
+          });
+        });
+      });
+    });
+  });
+  
+  describe('update game player', function () {
+    it('should update player.games ', function (done) {
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.games"]+"random"
+      };
+      http.getJSON(options, function (randomGame) {
+        assert.isObject(randomGame);
+        var gameid = randomGame._id;
+        //
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["documents.players"]+randomGame.owner
+        };
+        http.getJSON(options, function (owner) {
+          assert.isObject(owner);
+          
+          var ownerid = owner._id;
+          var ownertoken = owner.token;
+          
+          var modifiedGame = {
+            id: randomGame._id,
+            teams: [
+              { points: "4242" },
+              { points: "4242" }
+            ]
+          };
+          
+          var options = {
+            host: Conf["http.host"],
+            port: Conf["http.port"],
+            path: Conf["api.games"]+gameid+"/?playerid="+ownerid+"&token="+ownertoken
+          };
+          http.post(options, modifiedGame, function (game) {
+            assert.isObject(game, "must be a game");
+            
+            done();
           });
         });
       });
