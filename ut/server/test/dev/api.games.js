@@ -67,7 +67,7 @@ describe('dev:games', function(){
       done(/* FIXME */);
     });
   });
-  
+
   describe('create a single game without info, without token', function () {
     it('should be an error', function (done) {
       var options = {
@@ -102,7 +102,9 @@ describe('dev:games', function(){
           path: Conf["api.games"]+"?playerid="+randomPlayer._id+"&token="+randomPlayer.token
         };
         
-        var newGame = { /* missing teams info */  };
+        var newGame = { 
+          // missing teams info
+        };
         http.post(options, newGame, function (error) {
           assert.isError(error, "missing info => creating game should end in error");
           assert(error.error === "teams format", "error should be 'teams format'");
@@ -111,7 +113,7 @@ describe('dev:games', function(){
       });
     });
   });
-  
+
   describe('create a single game between 2 teams of anonymous players, then read it', function () {
     it('should create & give the game (not empty & valid)', function (done){
       // read a player
@@ -144,6 +146,51 @@ describe('dev:games', function(){
           assert(game.teams[0].players[0].rank === newGame.teams[0].players[0].rank, "rank");
           
           done();
+        });
+      });
+    });
+  });
+  
+  describe('create a single game between 2 existing players, then read it', function () {
+    it('should create & give the game (not empty & valid)', function (done){
+      // read a player
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.players"]+"random"
+      };
+      http.getJSON(options, function (randomPlayer) {
+        assert.isObject(randomPlayer, "random player must exist");
+      
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["documents.players"]+"random"
+        };
+        http.getJSON(options, function (randomPlayer2) {
+          assert.isObject(randomPlayer2, "random player 2 must exist");
+        
+          var options = {
+            host: Conf["http.host"],
+            port: Conf["http.port"],
+            path: Conf["api.games"]+"?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+          };
+          
+          var newGame = {
+            teams: [ { id: null, players: [ randomPlayer._id ] },
+                    { id: null, players: [ randomPlayer2._id ] } ]
+          };
+          http.post(options, newGame, function (game) {
+            assert.isGame(game, "game was correctly created");
+            assert(Array.isArray(game.teams) && game.teams.length === 2, "two teams");
+            assert(game.teams[0].players[0].name === randomPlayer.name, "first player is toto");
+            assert(game.teams[1].players[0].name === randomPlayer2.name, "second player is titi");
+            assert.isId(game.teams[0].players[0].id, "first player should have an id");
+            assert.isId(game.teams[1].players[0].id, "second player should have an id");
+            assert(typeof game.teams[0].players[0].email === "undefined", "should not display player personnal info as email");
+            
+            done();
+          });
         });
       });
     });
@@ -495,6 +542,7 @@ describe('dev:games', function(){
     });
   });
   
+  /*
   describe('write a comment on a stream, using facebook auth', function () {
     it('should create a comment, size of stream +1 (not empty & valid)', function (done){
       // read a game
@@ -562,6 +610,7 @@ describe('dev:games', function(){
       });
     });
   });
+*/
   
   describe('write a comment on a stream, update it', function () {
     it('should create a comment, beeing updated', function (done){
