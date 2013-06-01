@@ -35,7 +35,7 @@ app.get('/v1/games/', function(req, res){
   var offset = req.query.offset || 0;
   var text = req.query.q;
   var club = req.query.club || null;
-  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,options.type,options.subtype,options.sets,options.score,options.court,options.surface,options.tour";
+  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour";
   var sort = req.query.sort || "-dates.start";
   var status = req.query.status || "created,ongoing,finished";
   var longitude = req.query.longitude;
@@ -91,7 +91,7 @@ app.get('/v1/games/', function(req, res){
  *  /v1/games/:id/?populate=teams.players
  */
 app.get('/v1/games/:id', function (req, res){
-  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.end,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,teams.players.owner,options.type,options.subtype,options.sets,options.score,options.court,options.surface,options.tour";
+  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.end,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,teams.players.owner,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour";
   // populate option
   var populate = "teams.players";
   if (typeof req.query.populate !== "undefined")
@@ -249,7 +249,7 @@ app.get('/v1/games/:id/stream/', function (req, res){
  *       ]
  *     }
  *   ],
- *   options: {
+ *   infos: {
  *      subtype: String   (default="A")
  *      sets: String,     (default="")
  *      score: String,    (default="")
@@ -273,7 +273,7 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
       // owned player are created
       // => creating game
       req.body.location = (req.body.location) ? req.body.location : {};
-      req.body.options = (req.body.options) ? req.body.options : {};
+      req.body.infos = (req.body.infos) ? req.body.infos : {};
       var game = new DB.Model.Game({
         sport: req.body.sport || "tennis",
         owner: authentifiedPlayer.id,
@@ -288,14 +288,14 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
           { points: "", players: [] }
         ],
         stream: [],
-        options: {
+        infos: {
           type: "singles",
-          subtype: req.body.options.subtype || "A",
-          sets: req.body.options.sets || "",
-          score: req.body.options.score || "",
-          court: req.body.options.court || "",
-          surface: req.body.options.surface || "",
-          tour: req.body.options.tour || ""
+          subtype: req.body.infos.subtype || "A",
+          sets: req.body.infos.sets || "",
+          score: req.body.infos.score || "",
+          court: req.body.infos.court || "",
+          surface: req.body.infos.surface || "",
+          tour: req.body.infos.tour || ""
         }
       });
       return DB.Model.Game.updateTeamsAsync(game, req.body.teams);
@@ -371,21 +371,21 @@ app.post('/v1/games/:id', express.bodyParser(), function(req, res){
         if (typeof req.body.location.city === "string")
           game.location.city = req.body.location.city;
       } 
-      if (typeof req.body.options !== "undefined") {
-        if (typeof req.body.options.type === "string")
-          game.options.type = req.body.options.type;
-        if (typeof req.body.options.subtype === "string")
-          game.options.subtype = req.body.options.subtype;
-        if (typeof req.body.options.sets === "string")
-          game.options.sets = req.body.options.sets;
-        if (typeof req.body.options.score === "string")
-          game.options.score = req.body.options.score;
-        if (typeof req.body.options.court === "string")
-          game.options.court = req.body.options.court;
-        if (typeof req.body.options.surface === "string")
-          game.options.surface = req.body.options.surface;
-        if (typeof req.body.options.tour === "string")
-          game.options.tour = req.body.options.tour;
+      if (typeof req.body.infos !== "undefined") {
+        if (typeof req.body.infos.type === "string")
+          game.infos.type = req.body.infos.type;
+        if (typeof req.body.infos.subtype === "string")
+          game.infos.subtype = req.body.infos.subtype;
+        if (typeof req.body.infos.sets === "string")
+          game.infos.sets = req.body.infos.sets;
+        if (typeof req.body.infos.score === "string")
+          game.infos.score = req.body.infos.score;
+        if (typeof req.body.infos.court === "string")
+          game.infos.court = req.body.infos.court;
+        if (typeof req.body.infos.surface === "string")
+          game.infos.surface = req.body.infos.surface;
+        if (typeof req.body.infos.tour === "string")
+          game.infos.tour = req.body.infos.tour;
       }
       game.dates.update = Date.now();
       //

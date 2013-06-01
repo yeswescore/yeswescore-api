@@ -233,7 +233,7 @@ DB.Definition.Game = {
   },
   teams: [ DB.Schema.Team ],
   stream: [ DB.Schema.StreamItem ],
-  options: {
+  infos: {
     type: { type: String, enum: [ "singles", "doubles" ] },
     subtype: { type: String, enum: [ "A", "B", "C", "D", "E", "F", "G", "H", "I" ] },
     sets: String,
@@ -586,16 +586,16 @@ DB.Model.Game.checkFields = function (game) {
     if (!ok)
       return "teams.players format";
   }
-  if (game.options && game.options.court &&
+  if (game.infos && game.infos.court &&
       ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11",
-       "A", "B", "C", "D", "E", "F", "" ].indexOf(game.options.court) === -1)
+       "A", "B", "C", "D", "E", "F", "" ].indexOf(game.infos.court) === -1)
     return "wrong court (1-11, A-F or empty)";
-  if (game.options && game.options.subtype &&
-      [ "A", "B", "C", "D", "E", "F", "G", "H", "I" ].indexOf(game.options.subtype) === -1)
+  if (game.infos && game.infos.subtype &&
+      [ "A", "B", "C", "D", "E", "F", "G", "H", "I" ].indexOf(game.infos.subtype) === -1)
     return "wrong subtype (A-F)";
-  if (game.options && game.options.surface &&
+  if (game.infos && game.infos.surface &&
       ["BP", "EP", "EPDM", "GAS", "GAZ", "MOQ", 
-       "NVTB", "PAR", "RES", "TB", "" ].indexOf(game.options.surface) === -1)
+       "NVTB", "PAR", "RES", "TB", "" ].indexOf(game.infos.surface) === -1)
     return "wrong surface (BP,EP,EPDM,GAS,GAZ,MOQ,NVTB,PAR,RES,TB or empty";
   return null;
 }

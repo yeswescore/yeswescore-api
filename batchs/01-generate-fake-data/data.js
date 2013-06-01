@@ -177,7 +177,7 @@ var generateGamesAsync = function () {
           },
           teams: [ ],
           stream: [ ],
-          options: {
+          infos: {
             type: "singles",
             subtype: [ "A", "B", "C", "D", "E", "F", "G", "H", "I" ].random(),
             sets: "",
@@ -194,27 +194,27 @@ var generateGamesAsync = function () {
           // status finished
           game.dates.end = generateFakeDateEnd();
           if (Math.random() > 0.5) {
-            game.options.sets = "6/"+Math.floor(Math.random() * 5)+";6/"+Math.floor(Math.random() * 5);
-            game.options.score = "2/0";
+            game.infos.sets = "6/"+Math.floor(Math.random() * 5)+";6/"+Math.floor(Math.random() * 5);
+            game.infos.score = "2/0";
           } else {
-            game.options.sets = Math.floor(Math.random() * 5)+"/6;"+Math.floor(Math.random() * 5)+"/6";
-            game.options.score = "0/2";
+            game.infos.sets = Math.floor(Math.random() * 5)+"/6;"+Math.floor(Math.random() * 5)+"/6";
+            game.infos.score = "0/2";
           }
         } else {
           // status ongoing
           if (Math.random() > 0.5) {
             // 2 set
             if (Math.random() > 0.5) {
-              game.options.sets = "6/"+Math.floor(Math.random() * 5)+";"+Math.floor(Math.random() * 5)+"/"+Math.floor(Math.random() * 5);
-              game.options.score = "1/0";
+              game.infos.sets = "6/"+Math.floor(Math.random() * 5)+";"+Math.floor(Math.random() * 5)+"/"+Math.floor(Math.random() * 5);
+              game.infos.score = "1/0";
             } else {
-              game.options.sets = Math.floor(Math.random() * 5)+"/6;"+Math.floor(Math.random() * 5)+"/"+Math.floor(Math.random() * 5);
-              game.options.score = "0/1";
+              game.infos.sets = Math.floor(Math.random() * 5)+"/6;"+Math.floor(Math.random() * 5)+"/"+Math.floor(Math.random() * 5);
+              game.infos.score = "0/1";
             }
           } else {
             // 1 set
-            game.options.sets = Math.floor(Math.random() * 5)+"/"+Math.floor(Math.random() * 5);
-            game.options.score = "0/0";
+            game.infos.sets = Math.floor(Math.random() * 5)+"/"+Math.floor(Math.random() * 5);
+            game.infos.score = "0/0";
           }
         }
         
