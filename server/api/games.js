@@ -79,7 +79,6 @@ app.get('/v1/games/', function(req, res){
     });
 });
 
-
 /**
  * Read a game
  * a bit complex due to "populate" option.
@@ -133,7 +132,6 @@ app.get('/v1/games/:id/stream/', function (req, res){
   var after = req.query.after || null;
   var lastid = req.query.lastid || null;
   
-  // searching player by id.
   var query = DB.Model.Game.findOne({_id:req.params.id, _deleted: false})
   query.exec(function (err, game) {
     if (err)
@@ -413,10 +411,9 @@ app.post('/v1/games/:id', express.bodyParser(), function(req, res){
  * WARNING WARNING WARNING
  * 
  * Body {
- *     type: "comment",   (default="comment")
- *     owner: { player: ObjectId, facebook: { id: "...", name: "..." } }
- *     data: { text: "..." }
- *   }
+ *   type: "comment",   (default="comment")
+ *   owner: { player: ObjectId, facebook: { id: "...", name: "..." } }
+ *   data: { text: "..." }
  * }
  */
 app.post('/v1/games/:id/stream/', express.bodyParser(), function(req, res){
