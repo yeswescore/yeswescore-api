@@ -4,6 +4,8 @@ var mongoose = require('mongoose')
   , Q = require('q')
   , app = require('./app.js')
   , crypto = require('crypto');
+  
+var ObjectId = mongoose.Types.ObjectId;
 
 var DB = {
   status : 'disconnected',
@@ -324,11 +326,15 @@ DB.Schema.Player.pre('save', function (next) {
   // player._searchableClubName
   // player.club.name
   var self = this;
+  console.log('*************** IS CLUB MODIFIED ? ' + this.isModified('club'));
   if (this.isModified('club')) {
+    console.log('club is modified => pushing on stack');
     this._wasModified.push('club');
     DB.Model.Club.findById(this.club.id, function (err, club) {
-      if (err)
+      if (err) {
+        app.log('player pre save; error ' + err, 'error');
         return next(); // FIXME: log.
+      }
       self.club.name = club.name;
       self._searchableClubName = club.name.searchable();
       next();
@@ -634,6 +640,10 @@ DB.Model.Game.updateTeamsPlayersAsync = function (game, teams) {
         var oldPlayerId = game.teams[teamIndex].players[playerIndex];
         if (playerid != oldPlayerId)
           game.markModified('teams');
+        if (typeof playerid === "string")
+          playerid = new ObjectId(playerid);
+        console.log('game ', game.toObject({ getters: true, virtuals: true }));
+        console.log('saving game.teams[teamIndex].players[..] = playerid ' + playerid);
         game.teams[teamIndex].players[playerIndex] = playerid;
       });
     });
