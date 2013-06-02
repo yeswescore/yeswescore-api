@@ -67,7 +67,7 @@ describe('dev:games', function(){
       done(/* FIXME */);
     });
   });
-  
+
   describe('create a single game without info, without token', function () {
     it('should be an error', function (done) {
       var options = {
@@ -102,7 +102,9 @@ describe('dev:games', function(){
           path: Conf["api.games"]+"?playerid="+randomPlayer._id+"&token="+randomPlayer.token
         };
         
-        var newGame = { /* missing teams info */  };
+        var newGame = { 
+          // missing teams info
+        };
         http.post(options, newGame, function (error) {
           assert.isError(error, "missing info => creating game should end in error");
           assert(error.error === "teams format", "error should be 'teams format'");
@@ -111,7 +113,7 @@ describe('dev:games', function(){
       });
     });
   });
-  
+
   describe('create a single game between 2 teams of anonymous players, then read it', function () {
     it('should create & give the game (not empty & valid)', function (done){
       // read a player
@@ -144,6 +146,51 @@ describe('dev:games', function(){
           assert(game.teams[0].players[0].rank === newGame.teams[0].players[0].rank, "rank");
           
           done();
+        });
+      });
+    });
+  });
+  
+  describe('create a single game between 2 existing players, then read it', function () {
+    it('should create & give the game (not empty & valid)', function (done){
+      // read a player
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.players"]+"random"
+      };
+      http.getJSON(options, function (randomPlayer) {
+        assert.isObject(randomPlayer, "random player must exist");
+      
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["documents.players"]+"random"
+        };
+        http.getJSON(options, function (randomPlayer2) {
+          assert.isObject(randomPlayer2, "random player 2 must exist");
+        
+          var options = {
+            host: Conf["http.host"],
+            port: Conf["http.port"],
+            path: Conf["api.games"]+"?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+          };
+          
+          var newGame = {
+            teams: [ { id: null, players: [ randomPlayer._id ] },
+                    { id: null, players: [ randomPlayer2._id ] } ]
+          };
+          http.post(options, newGame, function (game) {
+            assert.isGame(game, "game was correctly created");
+            assert(Array.isArray(game.teams) && game.teams.length === 2, "two teams");
+            assert(game.teams[0].players[0].name === randomPlayer.name, "first player is toto");
+            assert(game.teams[1].players[0].name === randomPlayer2.name, "second player is titi");
+            assert.isId(game.teams[0].players[0].id, "first player should have an id");
+            assert.isId(game.teams[1].players[0].id, "second player should have an id");
+            assert(typeof game.teams[0].players[0].email === "undefined", "should not display player personnal info as email");
+            
+            done();
+          });
         });
       });
     });
@@ -219,7 +266,7 @@ describe('dev:games', function(){
             city: "marck",
             pos: [ 42.4242, 43.4343 ],
           },
-          options: {
+          infos: {
             type: "singles",
             subtype: "C",
             sets: "0/0",
@@ -238,12 +285,12 @@ describe('dev:games', function(){
           assert(game.location.city === newGame.location.city, "city should be the same");
           assert(game.location.pos[0] === newGame.location.pos[0], "long should be the same");
           assert(game.location.pos[1] === newGame.location.pos[1], "lat should be the same");
-          assert(game.options.type === newGame.options.type, "type should be the same");
-          assert(game.options.subtype === newGame.options.subtype, "subtype should be the same");
-          assert(game.options.sets === newGame.options.sets, "sets should be the same");
-          assert(game.options.score === newGame.options.score, "score should be the same");
-          assert(game.options.court === newGame.options.court, "court should be the same");
-          assert(game.options.surface === newGame.options.surface, "surface should be the same");
+          assert(game.infos.type === newGame.infos.type, "type should be the same");
+          assert(game.infos.subtype === newGame.infos.subtype, "subtype should be the same");
+          assert(game.infos.sets === newGame.infos.sets, "sets should be the same");
+          assert(game.infos.score === newGame.infos.score, "score should be the same");
+          assert(game.infos.court === newGame.infos.court, "court should be the same");
+          assert(game.infos.surface === newGame.infos.surface, "surface should be the same");
           
           assert(game.status === newGame.status, "status should be the same " + game.status + " vs " + newGame.status);
           done();
@@ -270,13 +317,13 @@ describe('dev:games', function(){
         };
         
         var newGame = {
-          options: { score: "0/0" },
+          infos: { score: "0/0" },
           teams: [ { id: null, players: [ { name : "toto" } ] },
                    { id: null, players: [ { name : "titi" } ] } ]
         };
         http.post(options, newGame, function (game) {
           assert.isGame(game);
-          assert(game.options.score === newGame.options.score, "score should be the same");
+          assert(game.infos.score === newGame.infos.score, "score should be the same");
           assert(typeof game.dates.start === "undefined", "game shouldn't be started");
 
           var options = {
@@ -288,16 +335,16 @@ describe('dev:games', function(){
           var newScore = "15/0";
           var modifiedGame = game;
           game.status = "ongoing";
-          game.options.subtype = "B";
-          game.options.sets = "6/3";
-          game.options.score = newScore;
-          game.options.court = "3";
-          game.options.surface = "NVTB";
-          game.options.tour = "2nd tour";
+          game.infos.subtype = "B";
+          game.infos.sets = "6/3";
+          game.infos.score = newScore;
+          game.infos.court = "3";
+          game.infos.surface = "NVTB";
+          game.infos.tour = "2nd tour";
           
           http.post(options, game, function (game) {
             assert.isGame(game);
-            assert(game.options.score === newScore, "score should be updated");
+            assert(game.infos.score === newScore, "score should be updated");
             
             // reading the game from DB to be sure !
             var options = {
@@ -308,12 +355,12 @@ describe('dev:games', function(){
             http.getJSON(options, function (g) {
               assert.isGame(g);
               
-              assert(g.options.subtype === modifiedGame.options.subtype, "subtype should be updated in DB");
-              assert(g.options.sets === modifiedGame.options.sets, "sets should be updated in DB");
-              assert(g.options.score === modifiedGame.options.score, "score should be updated in DB");
-              assert(g.options.court === modifiedGame.options.court, "court should be updated in DB");
-              assert(g.options.surface === modifiedGame.options.surface, "surface should be updated in DB");
-              assert(g.options.tour === modifiedGame.options.tour, "tour should be updated in DB");
+              assert(g.infos.subtype === modifiedGame.infos.subtype, "subtype should be updated in DB");
+              assert(g.infos.sets === modifiedGame.infos.sets, "sets should be updated in DB");
+              assert(g.infos.score === modifiedGame.infos.score, "score should be updated in DB");
+              assert(g.infos.court === modifiedGame.infos.court, "court should be updated in DB");
+              assert(g.infos.surface === modifiedGame.infos.surface, "surface should be updated in DB");
+              assert(g.infos.tour === modifiedGame.infos.tour, "tour should be updated in DB");
               
               assert(g.status === modifiedGame.status, "status should be updated");
               assert(typeof g.dates.start !== "undefined", "game should be started (dates.start!== undefined)");
@@ -374,7 +421,7 @@ describe('dev:games', function(){
               if (unreferenced)
                 done();
               else
-                throw randomGame._id+" shoudn't be referenced in "+options.path;
+                throw randomGame._id+" shoudn't be referenced in "+infos.path;
             });
           });
         });
@@ -401,13 +448,13 @@ describe('dev:games', function(){
         
         var newGame = {
           status: "ongoing",
-          options: { score: "0/0" },
+          infos: { score: "0/0" },
           teams: [ { id: null, players: [ { name : "toto" } ] },
                    { id: null, players: [ { name : "titi" } ] } ]
         };
         http.post(options, newGame, function (game) {
           assert.isGame(game);
-          assert(game.options.score === newGame.options.score, "score should be the same");
+          assert(game.infos.score === newGame.infos.score, "score should be the same");
           assert(typeof game.dates.start !== "undefined", "game should be started");
 
           var options = {
@@ -495,6 +542,7 @@ describe('dev:games', function(){
     });
   });
   
+  /*
   describe('write a comment on a stream, using facebook auth', function () {
     it('should create a comment, size of stream +1 (not empty & valid)', function (done){
       // read a game
@@ -562,6 +610,7 @@ describe('dev:games', function(){
       });
     });
   });
+*/
   
   describe('write a comment on a stream, update it', function () {
     it('should create a comment, beeing updated', function (done){
@@ -721,13 +770,13 @@ describe('dev:games', function(){
         };
         
         var newGame = {
-          options: { score: "0/0" },
+          infos: { score: "0/0" },
           teams: [ { id: null, players: [ { name : "toto" } ] },
                    { id: null, players: [ { name : "titi" } ] } ]
         };
         http.post(options, newGame, function (game) {
           assert.isGame(game);
-          assert(game.options.score === newGame.options.score, "score should be the same");
+          assert(game.infos.score === newGame.infos.score, "score should be the same");
 
           var options = {
             host: Conf["http.host"],
