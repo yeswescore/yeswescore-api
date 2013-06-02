@@ -28,12 +28,14 @@ http.is404OK = function (options, f) {
 
 // 
 http.getJSON = function (options, f) {
-  // console.log('http: GET: ' + options.path);
+  //console.log('http: GET: ' + options.path);
   http.get(options, function (res) {
     var json = "";
     res.on("data", function (chunk) { json += chunk })
        .on("end", function () {
           try {
+            //console.log('http: GET: ' + options.path + ' result');
+            //console.log(json);
             var data = JSON.parse(json);
             f(data, res);
           } catch (e) {
@@ -44,7 +46,7 @@ http.getJSON = function (options, f) {
 };
 
 http.post = function (options, data, f) {
-  // console.log('http: GET: ' + options.path + ' data ' + JSON.stringify(data));
+  //console.log('http: POST: ' + options.path + ' data ' + JSON.stringify(data));
   // node default querystring.stringify doesn't handle nested objects.
   // we post using Content-Type: application/json.
   // If we used Content-Type: application/x-www-form-urlencoded
@@ -67,6 +69,8 @@ http.post = function (options, data, f) {
     res.on("data", function (chunk) { json += chunk })
        .on("end", function () {
           try {
+            //console.log('http: POST: ' + options.path + ' result');
+            //console.log(json);
             var data = JSON.parse(json);
             f(data, res);
           } catch (e) {
