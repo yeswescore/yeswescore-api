@@ -292,9 +292,6 @@ app.post('/v2/players/', express.bodyParser(), function(req, res){
  * }
  */
 app.post('/v2/players/:id', express.bodyParser(), function(req, res){
-  if (req.params.id !== req.query.playerid) {
-    return app.defaultError(res)("id differs");
-  }
   if (req.body.email && typeof req.body.email.address === "string")
     req.body.email.address = req.body.email.address.toLowerCase();
   var emailConfirmationRequired = false;
@@ -314,11 +311,19 @@ app.post('/v2/players/:id', express.bodyParser(), function(req, res){
         if (!authentifiedPlayer)
           throw "player not authenticated";
         return authentifiedPlayer;
-      })
+      }),
+      Q.fcall(function () {      
+          return DB.Model.findByIdAsync(DB.Model.Player, params.id);
+      })      
     ]
   ).then(function (qall) {
     var club = qall[0];
     var player = qall[1];
+    var playerowned = qall[2];
+    
+    if (playerowned.id != req.query.playerid && playerowned.owner != req.query.playerid)
+          throw "player not owned";      
+        
     // updating player
     var inlinedClub = (club) ? { id: club.id, name: club.name } : null;
     if (inlinedClub) {
