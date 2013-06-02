@@ -5,7 +5,7 @@ var DB = require("../db.js")
   
 var reportLogger = winston.loggers.get('report');
 
-app.get('/v1/report/clubs/:id/', function (req, res) {
+app.get('/v2/report/clubs/:id/', function (req, res) {
   DB.Model.Club.findById(req.params.id, function (err, club) {
     if (err || !club) {
       reportLogger.info('club,'+req.params.id+',error,'+req.ip);
@@ -20,7 +20,7 @@ app.get('/v1/report/clubs/:id/', function (req, res) {
   });
 });
 
-app.get('/v1/report/players/:id/', function (req, res) {
+app.get('/v2/report/players/:id/', function (req, res) {
   DB.Model.Player.findById(req.params.id, function (err, player) {
     if (err || !player) {
       reportLogger.info('player,'+req.params.id+',error,'+req.ip);
@@ -35,7 +35,7 @@ app.get('/v1/report/players/:id/', function (req, res) {
   });
 });
 
-app.get('/v1/report/games/:id/', function (req, res) {
+app.get('/v2/report/games/:id/', function (req, res) {
   DB.Model.Game.findById(req.params.id, function (err, game) {
     if (err || !game) {
       reportLogger.info('game,'+req.params.id+',error,'+req.ip);
@@ -50,7 +50,7 @@ app.get('/v1/report/games/:id/', function (req, res) {
   });
 });
 
-app.get('/v1/report/games/:id/stream/:streamid/', function (req, res) {
+app.get('/v2/report/games/:id/stream/:streamid/', function (req, res) {
   DB.Model.Game.findById(req.params.id, function (err, game) {
     if (err || !game) {
       reportLogger.info('streamItem,'+req.params.streamid+',error,'+req.ip);

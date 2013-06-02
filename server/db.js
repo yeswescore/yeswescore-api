@@ -669,7 +669,7 @@ DB.Model.Game.createOwnedPlayersAsync = function (teams, owner) {
       if (typeof player !== "string" &&
           typeof player.id !== "string") {
         //
-        // [FIXME] refactor this with POST /v1/players/
+        // [FIXME] refactor this with POST /v2/players/
         //
         // creating owned anonymous player
         (function createOwnedAnonymousPlayer(teamIndex, playerIndex) {

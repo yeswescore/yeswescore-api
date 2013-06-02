@@ -11,9 +11,9 @@ var DB = require("../db.js")
  * YUIDoc
  @class     getAutocomplete
  @type      Url
- @param     limit  [limit=5]               /v1/clubs/autocomplete/?limit=5
- @param     fields [fields=name,type,club] /v1/clubs/autocomplete/?fields=name
- @param     sort   [sort=name]             /v1/clubs/autocomplete/?sort=name
+ @param     limit  [limit=5]               /v2/clubs/autocomplete/?limit=5
+ @param     fields [fields=name,type,club] /v2/clubs/autocomplete/?fields=name
+ @param     sort   [sort=name]             /v2/clubs/autocomplete/?sort=name
  
  @return array(clubs)
  
@@ -21,17 +21,17 @@ var DB = require("../db.js")
  * Autocomplete search in clubs
  * 
  * Generic options:
- *  /v1/clubs/autocomplete/?limit=5               (default=5)
- *  /v1/clubs/autocomplete/?fields=name           (default=name,location.city)
- *  /v1/clubs/autocomplete/?sort=name             (default=name)
- *  /v1/clubs/autocomplete/?longitude=40.234      (default=undefined)
- *  /v1/clubs/autocomplete/?latitude=40.456       (default=undefined)
- *  /v1/clubs/autocomplete/?distance=20           (default=undefined)
+ *  /v2/clubs/autocomplete/?limit=5               (default=5)
+ *  /v2/clubs/autocomplete/?fields=name           (default=name,location.city)
+ *  /v2/clubs/autocomplete/?sort=name             (default=name)
+ *  /v2/clubs/autocomplete/?longitude=40.234      (default=undefined)
+ *  /v2/clubs/autocomplete/?latitude=40.456       (default=undefined)
+ *  /v2/clubs/autocomplete/?distance=20           (default=undefined)
  *
  * Specific options:
- *  /v1/clubs/autocomplete/?q=Charlotte (searched text)
+ *  /v2/clubs/autocomplete/?q=Charlotte (searched text)
 **/
-app.get('/v1/clubs/autocomplete/', function(req, res){
+app.get('/v2/clubs/autocomplete/', function(req, res){
   var fields = req.query.fields || "name,location.city";
   var limit = req.query.limit || 5;
   var sort = req.query.sort || "name";
@@ -65,9 +65,9 @@ app.get('/v1/clubs/autocomplete/', function(req, res){
  * Read a club
  * 
  * Generic options:
- *  /v1/clubs/?fields=name
+ *  /v2/clubs/?fields=name
  */
-app.get('/v1/clubs/:id', function(req, res){
+app.get('/v2/clubs/:id', function(req, res){
   var fields = req.query.fields;
   
   var query = DB.Model.Club.findById(req.params.id);
@@ -86,19 +86,19 @@ app.get('/v1/clubs/:id', function(req, res){
  * Read games of a club
  * 
  * Generic options:
- *  /v1/clubs/:id/games/?limit=5     (default=10)
- *  /v1/clubs/:id/games/?offset=0    (default=0)
- *  /v1/clubs/:id/games/?sort=name   (default=-dates.start)
+ *  /v2/clubs/:id/games/?limit=5     (default=10)
+ *  /v2/clubs/:id/games/?offset=0    (default=0)
+ *  /v2/clubs/:id/games/?sort=name   (default=-dates.start)
  * 
  * Specific options:
- *  /v1/clubs/:id/games/?status=ongoing   (default=created,ongoing,finished)
+ *  /v2/clubs/:id/games/?status=ongoing   (default=created,ongoing,finished)
  * 
  * NON STANDARD URL, used by facebook app
  * default behaviour is to include the stream
  * 
  * no params
  */
-app.get('/v1/clubs/:id/games/', function(req, res){
+app.get('/v2/clubs/:id/games/', function(req, res){
   var status = req.query.status || "created,ongoing,finished";
   var sort = req.query.sort || "-dates.start";
   var limit = req.query.limit || 10;
@@ -148,7 +148,7 @@ app.get('/v1/clubs/:id/games/', function(req, res){
  * 
  * FIXME: who can create a club? owner?
  */
-app.post('/v1/clubs/', express.bodyParser(), function(req, res){
+app.post('/v2/clubs/', express.bodyParser(), function(req, res){
   if (!req.body.name || !req.body.location || !req.body.location.city)
     return app.defaultError(res)("please provide club name & city");
   DB.Model.Club.findOne(

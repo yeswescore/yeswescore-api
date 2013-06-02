@@ -11,11 +11,11 @@ var DB = require("../db.js")
  * You must be authentified (?playerid=...&token=...)
  * 
  * 4 Parameters are required :
- * /v1/connections/fb/?playerid=...       player id
- * /v1/connections/fb/?token=...          player token
- * /v1/connections/fb/?access_token=...   facebook access_token
+ * /v2/connections/fb/?playerid=...       player id
+ * /v2/connections/fb/?token=...          player token
+ * /v2/connections/fb/?access_token=...   facebook access_token
  */
-app.get('/v1/facebook/login/', function(req, res){
+app.get('/v2/facebook/login/', function(req, res){
   var scheme = Conf.get("facebook.yws.scheme")
     , host = Conf.get("facebook.yws.host")
     , port = Conf.get("facebook.yws.port")
@@ -72,7 +72,7 @@ app.get('/v1/facebook/login/', function(req, res){
       player.connection.facebook.token = token;
       return Q.nfcall(player.save.bind(player));
     }).then(function () {
-      app.internalRedirect('/v1/players/:id')(
+      app.internalRedirect('/v2/players/:id')(
         {
           query: req.query,
           params: { id: player.id }

@@ -9,17 +9,17 @@ var DB = require("../db.js")
  * Read All Players
  * 
  * Generic options:
- *  /v1/players/?limit=10              (default=10)
- *  /v1/players/?offset=0              (default=0)
- *  /v1/players/?fields=name           (default=undefined)
- *  /v1/players/?longitude=40.234      (default=undefined)
- *  /v1/players/?latitude=40.456       (default=undefined)
- *  /v1/players/?distance=20           (default=undefined)
+ *  /v2/players/?limit=10              (default=10)
+ *  /v2/players/?offset=0              (default=0)
+ *  /v2/players/?fields=name           (default=undefined)
+ *  /v2/players/?longitude=40.234      (default=undefined)
+ *  /v2/players/?latitude=40.456       (default=undefined)
+ *  /v2/players/?distance=20           (default=undefined)
  *
  * Specific options:
- *  /v1/players/?club=:id   (filter with a club)
+ *  /v2/players/?club=:id   (filter with a club)
  */
-app.get('/v1/players/', function(req, res){
+app.get('/v2/players/', function(req, res){
   var limit = req.query.limit || 10;
   var offset = req.query.offset || 0;
   var club = req.query.club;
@@ -54,18 +54,18 @@ app.get('/v1/players/', function(req, res){
  * Autocomplete search in players
  * 
  * Generic options:
- *  /v1/players/autocomplete/?limit=5               (default=5)
- *  /v1/players/autocomplete/?fields=name           (default=name,type,club)
- *  /v1/players/autocomplete/?sort=name             (default=name)
- *  /v1/players/autocomplete/?longitude=40.234      (default=undefined)
- *  /v1/players/autocomplete/?latitude=40.456       (default=undefined)
- *  /v1/players/autocomplete/?distance=20           (default=undefined)
+ *  /v2/players/autocomplete/?limit=5               (default=5)
+ *  /v2/players/autocomplete/?fields=name           (default=name,type,club)
+ *  /v2/players/autocomplete/?sort=name             (default=name)
+ *  /v2/players/autocomplete/?longitude=40.234      (default=undefined)
+ *  /v2/players/autocomplete/?latitude=40.456       (default=undefined)
+ *  /v2/players/autocomplete/?distance=20           (default=undefined)
  *
  * Specific options:
- *  /v1/players/autocomplete/?q=Charlotte (searched text)
- *  /v1/players/autocomplete/?owner=:id   (autocomplete centered to an owner)
+ *  /v2/players/autocomplete/?q=Charlotte (searched text)
+ *  /v2/players/autocomplete/?owner=:id   (autocomplete centered to an owner)
  */
-app.get('/v1/players/autocomplete/', function(req, res){
+app.get('/v2/players/autocomplete/', function(req, res){
   var fields = req.query.fields || "name,type,club";
   var limit = req.query.limit || 5;
   var owner = req.query.owner;
@@ -107,11 +107,11 @@ app.get('/v1/players/autocomplete/', function(req, res){
  * Authentication provide password & token
  * 
  * Generic options:
- *  /v1/players/:id/?fields=name
+ *  /v2/players/:id/?fields=name
  *
  * Specific options:
  */
-app.get('/v1/players/:id', function(req, res){
+app.get('/v2/players/:id', function(req, res){
   var fields = req.query.fields;
   
   DB.isAuthenticatedAsync(req.query)
@@ -137,21 +137,21 @@ app.get('/v1/players/:id', function(req, res){
  * Read games of a player
  * 
  * Generic options:
- *  /v1/players/:id/games/?limit=5     (default=10)
- *  /v1/players/:id/games/?offset=0    (default=0)
- *  /v1/players/:id/games/?sort=name   (default=-dates.start)
+ *  /v2/players/:id/games/?limit=5     (default=10)
+ *  /v2/players/:id/games/?offset=0    (default=0)
+ *  /v2/players/:id/games/?sort=name   (default=-dates.start)
  * 
  * Specific options:
- *  /v1/players/:id/games/?owned=true  (default=undefined)
- *  /v1/players/:id/games/?status=ongoing   (default=created,ongoing,finished)
- *  /v1/players/:id/games/?populate=teams.players (default=teams.players)
+ *  /v2/players/:id/games/?owned=true  (default=undefined)
+ *  /v2/players/:id/games/?status=ongoing   (default=created,ongoing,finished)
+ *  /v2/players/:id/games/?populate=teams.players (default=teams.players)
  * 
  * owned=undefined games owned or played by the player
  * owned=true      games owned by the player
  * owned=false     games where the player plays
  * NON STANDARD URL
  */
-app.get('/v1/players/:id/games/', function(req, res){
+app.get('/v2/players/:id/games/', function(req, res){
   var status = req.query.status || "created,ongoing,finished";
   var sort = req.query.sort || "-dates.start";
   var limit = req.query.limit || 10;
@@ -213,7 +213,7 @@ app.get('/v1/players/:id/games/', function(req, res){
  *   type: String      (enum=default,owned default=default)
  * }
  */
-app.post('/v1/players/', express.bodyParser(), function(req, res){
+app.post('/v2/players/', express.bodyParser(), function(req, res){
   if (req.body.type &&
       DB.Definition.Player.type.enum.indexOf(req.body.type) === -1)
     return app.defaultError(res)("unknown type");
@@ -291,7 +291,7 @@ app.post('/v1/players/', express.bodyParser(), function(req, res){
  *   password: String  (default=undefined)
  * }
  */
-app.post('/v1/players/:id', express.bodyParser(), function(req, res){
+app.post('/v2/players/:id', express.bodyParser(), function(req, res){
   if (req.params.id !== req.query.playerid) {
     return app.defaultError(res)("id differs");
   }

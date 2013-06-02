@@ -13,7 +13,7 @@ var DB = require("../db.js")
  *   uncryptedPassword: ...      MANDATORY
  * }
  */
-app.post('/v1/auth/', express.bodyParser(), function(req, res){
+app.post('/v2/auth/', express.bodyParser(), function(req, res){
   var fields = req.query.fields;
   
   if (typeof req.body.email !== "object" || !req.body.email ||
@@ -27,7 +27,7 @@ app.post('/v1/auth/', express.bodyParser(), function(req, res){
   // creating player to hash password.
   var p = new DB.Model.Player();
   p.uncryptedPassword = req.body.uncryptedPassword.trim();
-  // app.log("/v1/auth: try to find "+req.body.email.address+" with password "+ p.password+ "uncrypted="+req.body.uncryptedPassword, 'error'); // SHOULD NOT BE USED IN PRODUCTION ENV.
+  // app.log("/v2/auth: try to find "+req.body.email.address+" with password "+ p.password+ "uncrypted="+req.body.uncryptedPassword, 'error'); // SHOULD NOT BE USED IN PRODUCTION ENV.
   //
   DB.Model.Player.findOne({
     'email.address': req.body.email.address,
@@ -35,7 +35,7 @@ app.post('/v1/auth/', express.bodyParser(), function(req, res){
   }, function (err, player) {
     if (err || !player)
       return app.defaultError(res)("authentication");
-    app.log("/v1/auth: found !", "error");
+    app.log("/v2/auth: found !", "error");
     res.send(JSON.stringifyModels(player, { unhide: [ "token" ] }));
   });
 });
@@ -47,7 +47,7 @@ app.post('/v1/auth/', express.bodyParser(), function(req, res){
  *   email: { address: ... },    MANDATORY
  * }
  */
-app.post('/v1/auth/resetPassword/', express.bodyParser(), function(req, res){
+app.post('/v2/auth/resetPassword/', express.bodyParser(), function(req, res){
   var fields = req.query.fields;
   
   if (typeof req.body.email !== "object" || !req.body.email ||
