@@ -89,7 +89,7 @@ app.get('/v2/games/', function(req, res){
  * Specific options:
  *  /v2/games/:id/?populate=teams.players
  */
-app.get('/v1/games/:id', function (req, res){
+app.get('/v2/games/:id', function (req, res){
   var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.end,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,teams.players.owner,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour";
   // populate option
   var populate = "teams.players";
