@@ -1,6 +1,7 @@
 var fs = require('fs')
   , exec = require('child_process').exec
-  , csv = require('csv');
+  , csv = require('csv')
+  , https = require('https');
 
 if (!fs.existsSync('../server/conf.js')) {
   console.log('ERROR: cannot find configuration file');
@@ -159,6 +160,15 @@ Q.nfcall(mongoClient.connect.bind(mongoClient), Conf.get('mongo.url'))
         simpleDeferred.reject();
       });
       return simpleDeferred.promise;
+    }).then(function () {
+      // on se fait plaisir ...
+      return sendEmailAsync("marcd@yeswescore.com", "YWSTATS", result.replace(/\n/g, "<br/>"));
+    }).then(function () {
+      // on se fait plaisir ...
+      return sendEmailAsync("marcm@yeswescore.com", "YWSTATS", result.replace(/\n/g, "<br/>"));
+    }).then(function () {
+      // on se fait plaisir ...
+      return sendEmailAsync("vincent@yeswescore.com", "YWSTATS", result.replace(/\n/g, "<br/>"));
     }).then(
        function () {         
          console.log("success");
@@ -175,18 +185,58 @@ Q.nfcall(mongoClient.connect.bind(mongoClient), Conf.get('mongo.url'))
    console.log('cannot connect to mongo');
  });
 
-//////////////////
-// MONGO STATS
-//////////////////
 
-// number of players created in the last 7 days
+ 
+// repris de email.js
+var sendEmailAsync = function (to, subject, message) {
+  console.log('EMAIL: sending email to ['+to+'] subject ['+subject+'] message ['+message+']');    
+  
+  var simpleDeferred = Q.defer();
 
-
-// number of players created in the last month
-
-
-
-//////////////////
-// stats log
-//////////////////
-
+  var data = {
+    "key": Conf.get("email.mandrill.key"),
+    "message": {
+      "html": message,
+      "subject": subject,
+      "from_email": Conf.get("email.from.email"),
+      "from_name": Conf.get("email.from.name"),
+      "to": [ { "email": to } ],
+      "auto_text": true,
+      "url_strip_qs": false,
+      "preserve_recipients": true
+    },
+    "async": true
+  };
+  data = JSON.stringify(data);
+      
+  var postOptions = {
+    host: Conf.get("email.mandrill.host"),
+    path: Conf.get("email.mandrill.path.messages.send"),
+    method : "POST",
+    headers : {
+      'Content-Type': 'application/json',
+      'Content-Length': data.length
+    }
+  };
+  
+  /*if (Conf.env === "DEV" && !Conf.get("email.send.confirmation")) {
+    console.log('EMAIL: simulating sending email to ' + to);
+    return;
+  }*/
+  
+  var req = https.request(postOptions, function(res) {
+    var answer = "";
+    res.on("data", function (chunk) { answer += chunk })
+        .on("end", function () {
+          console.log("EMAIL: email sended to "+to);
+          simpleDeferred.resolve();
+        });
+  });
+  req.on("error", function (e) {
+    simpleDeferred.reject();
+    console.log("EMAIL: "+e, "error");
+  });
+  req.write(data);
+  req.end();
+  return simpleDeferred.promise;
+};
