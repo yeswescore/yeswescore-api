@@ -119,7 +119,7 @@ Q.nfcall(mongoClient.connect.bind(mongoClient), Conf.get('mongo.url'))
       return;
     }).then(function () {
       // csv parsing.
-      return Q.nfcall(exec, "tail -10 " + Conf.get("logs.path") + "stats.log |cut -c 7- > /tmp/_tmpstats.txt");
+      return Q.nfcall(exec, "tail -10000 " + Conf.get("logs.path") + "stats.log |cut -c 7- > /tmp/_tmpstats.txt");
     }).then(function () {
       var simpleDeferred = Q.defer();
       
