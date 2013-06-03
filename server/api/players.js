@@ -322,7 +322,10 @@ app.post('/v2/players/:id', express.bodyParser(), function(req, res){
     var playerowned = qall[2];
     
     if (playerowned.id != req.query.playerid && playerowned.owner != req.query.playerid)
-          throw "player not owned";      
+      throw "player not owned";      
+    
+    if (playerowned.id != req.query.playerid)
+      player = playerowned;
         
     // updating player
     var inlinedClub = (club) ? { id: club.id, name: club.name } : null;
