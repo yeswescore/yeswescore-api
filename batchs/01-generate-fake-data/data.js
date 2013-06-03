@@ -271,6 +271,18 @@ var generateGamesAsync = function () {
       }
 
       DB.saveAsync(games).then(function (games) {
+        // for several games, choosing a startTeam
+        games.forEach(function (game, i) {
+          if (Math.random() < 0.5) {
+            if (Math.random() < 0.5) {
+              game.infos.startTeam = game.teams[0].id;
+            } else {
+              game.infos.startTeam = game.teams[1].id;              
+            }
+          }
+        });
+        return DB.saveAsync(games);
+      }).then(function (games) {
         games.forEach(function (game, i) {
           // adding games to players
           if (players[i*2].id !== game.teams[0].players[0])

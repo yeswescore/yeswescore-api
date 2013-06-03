@@ -297,7 +297,8 @@ assert.isGame = function (game) {
                                                 "A", "B", "C", "D", "E", "F", "" ] },
       surface: { _type: "undefined|enum", _enum: ["BP", "EP", "EPDM", "GAS", "GAZ", "MOQ", 
                                                   "NVTB", "PAR", "RES", "TB", "" ] },
-      tour: { _type: "undefined|string" }
+      tour: { _type: "undefined|string" },
+      startTeam: { _type: "undefined|id" }
     },
     teams: { _type: "[schema]", _check: function (team, i, teams) {
         assert(teams.length === 2, "isGame: game must have 2 teams");

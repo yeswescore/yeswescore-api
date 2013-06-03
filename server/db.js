@@ -244,7 +244,8 @@ DB.Definition.Game = {
                                   "A", "B", "C", "D", "E", "F", "" ] },
     surface: { type: String, enum: ["BP", "EP", "EPDM", "GAS", "GAZ", "MOQ", 
                                     "NVTB", "PAR", "RES", "TB", "" ] },
-    tour: String
+    tour: String,
+    startTeam: { type: Schema.Types.ObjectId },
   },
   // private 
   _deleted: { type: Boolean, default: false },  // FIXME: unused
