@@ -25,7 +25,6 @@ fi
 # are we in dev or in prod.
 if [ "$NODE_ENV" = "PROD" ]
 then
-  echo " You are in prod environment, are you sure you want to import ?"
   export NODE_ENV="prod"
   dbname="prod"
   logfile='/var/log/yeswescore-cron/finishing-games.log'
