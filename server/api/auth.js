@@ -51,12 +51,9 @@ app.post('/v2/auth/', express.bodyParser(), function(req, res){
 app.get('/v2/auth/registered/', function (req, res) {
   if (typeof req.query.email !== "string")
     return app.defaultError(res)("missing email");
-  DB.isAuthenticatedAsync(req.query)
-    .then(function (authentifiedPlayer) {
-      if (authentifiedPlayer === null)
-        throw "unauthorized";
-      return DB.Model.Player.isEmailRegisteredAsync(req.query.email.toLowerCase());
-    }).then(function (emailRegistered) {
+    
+  DB.Model.Player.isEmailRegisteredAsync(req.query.email.toLowerCase())
+  .then(function (emailRegistered) {
       res.send({'registered': emailRegistered || false});
     }, app.defaultError(res));
 });
