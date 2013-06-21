@@ -2,6 +2,14 @@ var Conf = require("../conf.js")
   , DB = require("../db.js")
   , Email = require("../email.js")
   , app = require("../app.js");
+  
+/*
+Nouvelle url :
+http://www.yeswescore.com/static/mail-cant-find-player.html
+http://www.yeswescore.com/static/mail-confirm.html
+http://www.yeswescore.com/static/mail-db-read-error.html
+http://www.yeswescore.com/static/mail-db-save-error.html
+*/
 
 app.get('/v2/email/confirm/', function (req, res) {
   if (typeof req.query.token !== "string" || !req.query.token)
