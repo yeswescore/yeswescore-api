@@ -156,7 +156,7 @@ app.get('/v2/players/:id/games/', function(req, res){
   var sort = req.query.sort || "-dates.start";
   var limit = req.query.limit || 10;
   var offset = req.query.offset || 0;
-  var fields = req.query.fields || "sport,owner,dates.creation,dates.start,dates.end,location.country,location.city,location.currentPos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.status,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam";
+  var fields = req.query.fields || "status,sport,owner,dates.creation,dates.start,dates.end,location.country,location.city,location.currentPos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.status,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam";
   var owned = null;
   owned = (req.query.owned === "true") ? true : owned;
   owned = (req.query.owned === "false") ? false : owned;
