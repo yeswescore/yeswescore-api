@@ -11,31 +11,31 @@ var DB = require("../db.js")
  * a bit complex due to "populate" option.
  * 
  * Generic options:
- *  /v1/games/?limit=10              (default=10)
- *  /v1/games/?offset=0              (default=0)
- *  /v1/games/?fields=name           (default=please check in the code)
- *  /v1/games/?sort=-dates.start     (default=-dates.start)
- *  /v1/games/?longitude=40.234      (default=undefined)
- *  /v1/games/?latitude=40.456       (default=undefined)
- *  /v1/games/?distance=20           (default=undefined)
+ *  /v2/games/?limit=30              (default=30)
+ *  /v2/games/?offset=0              (default=0)
+ *  /v2/games/?fields=name           (default=please check in the code)
+ *  /v2/games/?sort=-dates.start     (default=-dates.start)
+ *  /v2/games/?longitude=40.234      (default=undefined)
+ *  /v2/games/?latitude=40.456       (default=undefined)
+ *  /v2/games/?distance=20           (default=undefined)
  *
  * Specific options:
- *  /v1/games/?q=text                (Mandatory)
- *  /v1/games/?club=:id
- *  /v1/games/?populate=teams.players (default=teams.players)
- *  /v1/games/?status=finished        (default=created,ongoing,finished)
+ *  /v2/games/?q=text                (Mandatory)
+ *  /v2/games/?club=:id
+ *  /v2/games/?populate=teams.players (default=teams.players)
+ *  /v2/games/?status=finished        (default=created,ongoing,finished)
  * 
  * only query games with teams
  * auto-populate teams.players
  * 
  * fields filter works with populate : (...)?fields=teams.players.name
  */
-app.get('/v1/games/', function(req, res){
-  var limit = req.query.limit || 10;
+app.get('/v2/games/', function(req, res){
+  var limit = req.query.limit || 30;
   var offset = req.query.offset || 0;
   var text = req.query.q;
   var club = req.query.club || null;
-  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,options.type,options.subtype,options.sets,options.score,options.court,options.surface,options.tour";
+  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam";
   var sort = req.query.sort || "-dates.start";
   var status = req.query.status || "created,ongoing,finished";
   var longitude = req.query.longitude;
@@ -79,19 +79,18 @@ app.get('/v1/games/', function(req, res){
     });
 });
 
-
 /**
  * Read a game
  * a bit complex due to "populate" option.
  * 
  * Generic options:
- *  /v1/games/:id/?fields=name         (default: please check in the code)
+ *  /v2/games/:id/?fields=name         (default: please check in the code)
  *
  * Specific options:
- *  /v1/games/:id/?populate=teams.players
+ *  /v2/games/:id/?populate=teams.players
  */
-app.get('/v1/games/:id', function (req, res){
-  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.end,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,options.type,options.subtype,options.sets,options.score,options.court,options.surface,options.tour";
+app.get('/v2/games/:id', function (req, res){
+  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.end,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,teams.players.owner,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam";
   // populate option
   var populate = "teams.players";
   if (typeof req.query.populate !== "undefined")
@@ -119,21 +118,20 @@ app.get('/v1/games/:id', function (req, res){
  *   sorting item by date_creation.
  * 
  * Generic options:
- *  /v1/games/:id/stream/?limit=5       (default=10)
+ *  /v2/games/:id/stream/?limit=5       (default=10)
  *
  * Specific options:
- *  /v1/games/:id/stream/?after=date    ex: "16:01:2013" ou "16 janvier 2013" ou...
- *  /v1/games/:id/stream/?lastid=...    recherche ts les elements depuis tel ou tel id
+ *  /v2/games/:id/stream/?after=date    ex: "16:01:2013" ou "16 janvier 2013" ou...
+ *  /v2/games/:id/stream/?lastid=...    recherche ts les elements depuis tel ou tel id
  * 
  * WARNING: might be performance hits. We can't use $elemMatch (see below).
  * FIXME: solution: create a separate collection for the stream.
  */
-app.get('/v1/games/:id/stream/', function (req, res){
+app.get('/v2/games/:id/stream/', function (req, res){
   var limit = req.query.limit || 10;
   var after = req.query.after || null;
   var lastid = req.query.lastid || null;
   
-  // searching player by id.
   var query = DB.Model.Game.findOne({_id:req.params.id, _deleted: false})
   query.exec(function (err, game) {
     if (err)
@@ -249,19 +247,20 @@ app.get('/v1/games/:id/stream/', function (req, res){
  *       ]
  *     }
  *   ],
- *   options: {
+ *   infos: {
  *      subtype: String   (default="A")
  *      sets: String,     (default="")
  *      score: String,    (default="")
  *      court: String,    (default="")
  *      surface: String   (default="")
  *      tour: String      (default="")
+ *      startTeam: Int    (default=undefined) must be undefined, 0 or 1.
  *   }
  * }
  * 
- * result is a redirect to /v1/games/:newid
+ * result is a redirect to /v2/games/:newid
  */
-app.post('/v1/games/', express.bodyParser(), function (req, res) {
+app.post('/v2/games/', express.bodyParser(), function (req, res) {
   var err = DB.Model.Game.checkFields(req.body);
   if (err)
     return app.defaultError(res)(err);
@@ -273,8 +272,7 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
       // owned player are created
       // => creating game
       req.body.location = (req.body.location) ? req.body.location : {};
-      req.body.options = (req.body.options) ? req.body.options : {};
-        console.log('REQ BODY STATUS = ' + req.body.status);
+      req.body.infos = (req.body.infos) ? req.body.infos : {};
       var game = new DB.Model.Game({
         sport: req.body.sport || "tennis",
         owner: authentifiedPlayer.id,
@@ -289,21 +287,30 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
           { points: "", players: [] }
         ],
         stream: [],
-        options: {
+        infos: {
           type: "singles",
-          subtype: req.body.options.subtype || "A",
-          sets: req.body.options.sets || "",
-          score: req.body.options.score || "",
-          court: req.body.options.court || "",
-          surface: req.body.options.surface || "",
-          tour: req.body.options.tour || ""
+          subtype: req.body.infos.subtype || "A",
+          sets: req.body.infos.sets || "",
+          score: req.body.infos.score || "",
+          court: req.body.infos.court || "",
+          surface: req.body.infos.surface || "",
+          tour: req.body.infos.tour || ""
         }
       });
       return DB.Model.Game.updateTeamsAsync(game, req.body.teams);
     }).then(function saveAsync(game) {
       return DB.saveAsync(game);
+    }).then(function saveStartTeam(game) {
+      if (req.body.infos.startTeam) {
+        var startTeam = parseInt(req.body.infos.startTeam, 10);
+        if (startTeam === 0 || startTeam === 1) {
+          game.infos.startTeam = game.teams[startTeam].id;
+          return DB.saveAsync(game);
+        }
+      }
+      return game;
     }).then(function sendGame(game) {
-      app.internalRedirect('/v1/games/:id')(
+      app.internalRedirect('/v2/games/:id')(
         {
           query: { },
           params: { id: game.id }
@@ -343,9 +350,9 @@ app.post('/v1/games/', express.bodyParser(), function (req, res) {
  *   ]
  * }
  * 
- * result is a redirect to /v1/games/:newid
+ * result is a redirect to /v2/games/:newid
  */
-app.post('/v1/games/:id', express.bodyParser(), function(req, res){
+app.post('/v2/games/:id', express.bodyParser(), function(req, res){
   var err = DB.Model.Game.checkFields(req.body);
   if (err)
     return app.defaultError(res)(err);
@@ -372,29 +379,44 @@ app.post('/v1/games/:id', express.bodyParser(), function(req, res){
         if (typeof req.body.location.city === "string")
           game.location.city = req.body.location.city;
       } 
-      if (typeof req.body.options !== "undefined") {
-        if (typeof req.body.options.type === "string")
-          game.options.type = req.body.options.type;
-        if (typeof req.body.options.subtype === "string")
-          game.options.subtype = req.body.options.subtype;
-        if (typeof req.body.options.sets === "string")
-          game.options.sets = req.body.options.sets;
-        if (typeof req.body.options.score === "string")
-          game.options.score = req.body.options.score;
-        if (typeof req.body.options.court === "string")
-          game.options.court = req.body.options.court;
-        if (typeof req.body.options.surface === "string")
-          game.options.surface = req.body.options.surface;
-        if (typeof req.body.options.tour === "string")
-          game.options.tour = req.body.options.tour;
+      if (typeof req.body.infos !== "undefined") {
+        if (typeof req.body.infos.type === "string")
+          game.infos.type = req.body.infos.type;
+        if (typeof req.body.infos.subtype === "string")
+          game.infos.subtype = req.body.infos.subtype;
+        if (typeof req.body.infos.sets === "string")
+          game.infos.sets = req.body.infos.sets;
+        if (typeof req.body.infos.score === "string")
+          game.infos.score = req.body.infos.score;
+        if (typeof req.body.infos.court === "string")
+          game.infos.court = req.body.infos.court;
+        if (typeof req.body.infos.surface === "string")
+          game.infos.surface = req.body.infos.surface;
+        if (typeof req.body.infos.tour === "string")
+          game.infos.tour = req.body.infos.tour;
       }
       game.dates.update = Date.now();
       //
       return DB.Model.Game.updateTeamsAsync(game, req.body.teams);
     }).then(function update(game) {
       return DB.saveAsync(game);
+    }).then(function saveStartTeam(game) {
+      if (typeof req.body.infos !== "undefined" && 
+          req.body.infos.startTeam) {
+        var startTeam = parseInt(req.body.infos.startTeam, 10);
+        if (startTeam === 0 || startTeam === 1) {
+          game.infos.startTeam = game.teams[startTeam].id;
+          return DB.saveAsync(game);
+        }
+        if (req.body.infos.startTeam == game.teams[0].id ||
+            req.body.infos.startTeam == game.teams[1].id) {
+          game.infos.startTeam = req.body.infos.startTeam;
+          return DB.saveAsync(game);
+        }
+      }
+      return game;
     }).then(function sendGame(game) {
-      app.internalRedirect('/v1/games/:id')(
+      app.internalRedirect('/v2/games/:id')(
         {
           query: { },
           params: { id: game.id }
@@ -414,13 +436,12 @@ app.post('/v1/games/:id', express.bodyParser(), function(req, res){
  * WARNING WARNING WARNING
  * 
  * Body {
- *     type: "comment",   (default="comment")
- *     owner: { player: ObjectId, facebook: { id: "...", name: "..." } }
- *     data: { text: "..." }
- *   }
+ *   type: "comment",   (default="comment")
+ *   owner: { player: ObjectId, facebook: { id: "...", name: "..." } }
+ *   data: { text: "..." }
  * }
  */
-app.post('/v1/games/:id/stream/', express.bodyParser(), function(req, res){
+app.post('/v2/games/:id/stream/', express.bodyParser(), function(req, res){
   // input validation
   if (req.body.type !== "comment")
     return app.defaultError(res)("type must be comment");
@@ -484,7 +505,7 @@ app.post('/v1/games/:id/stream/', express.bodyParser(), function(req, res){
  * 
  * This code is not performant.
  */
-app.post('/v1/games/:id/stream/:streamid/', express.bodyParser(), function(req, res){
+app.post('/v2/games/:id/stream/:streamid/', express.bodyParser(), function(req, res){
   DB.isAuthenticatedAsync(req.query, { facebook: true })
     .then(function searchGame(authentifiedPlayer) {
       if (authentifiedPlayer === null)
@@ -530,11 +551,11 @@ app.post('/v1/games/:id/stream/:streamid/', express.bodyParser(), function(req, 
  *
  * You must be authentified
  * 
- * /v1/games/:id/?_method=delete
+ * /v2/games/:id/?_method=delete
  * 
  * FIXME: remove from player games.
  */
-app.delete('/v1/games/:id/', function (req, res) {
+app.delete('/v2/games/:id/', function (req, res) {
   DB.isAuthenticatedAsync(req.query)
     .then(function searchGame(authentifiedPlayer) {
       if (authentifiedPlayer === null)
@@ -561,11 +582,11 @@ app.delete('/v1/games/:id/', function (req, res) {
  *
  * You must be authentified
  * 
- * /v1/games/:id/?_method=delete
+ * /v2/games/:id/?_method=delete
  * 
  * FIXME: remove from player games.
  */
-app.delete('/v1/games/:id/stream/:streamid/', function (req, res) {
+app.delete('/v2/games/:id/stream/:streamid/', function (req, res) {
   DB.isAuthenticatedAsync(req.query)
     .then(function searchGame(authentifiedPlayer) {
       if (authentifiedPlayer === null)

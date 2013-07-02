@@ -13,7 +13,7 @@ var DB = require("../db.js")
  *   uncryptedPassword: ...      MANDATORY
  * }
  */
-app.post('/v1/auth/', express.bodyParser(), function(req, res){
+app.post('/v2/auth/', express.bodyParser(), function(req, res){
   var fields = req.query.fields;
   
   if (typeof req.body.email !== "object" || !req.body.email ||
@@ -23,10 +23,11 @@ app.post('/v1/auth/', express.bodyParser(), function(req, res){
   if (req.body.email.address.length === 0)
     return app.defaultError(res)("cannot login with empty email");
   // email should only manipulated lowercase
-  req.body.email.address = req.body.email.address.toLowerCase();
+  req.body.email.address = req.body.email.address.toLowerCase().trim();
   // creating player to hash password.
   var p = new DB.Model.Player();
-  p.uncryptedPassword = req.body.uncryptedPassword;
+  p.uncryptedPassword = req.body.uncryptedPassword.trim();
+  // app.log("/v2/auth: try to find "+req.body.email.address+" with password "+ p.password+ "uncrypted="+req.body.uncryptedPassword, 'error'); // SHOULD NOT BE USED IN PRODUCTION ENV.
   //
   DB.Model.Player.findOne({
     'email.address': req.body.email.address,
@@ -34,8 +35,27 @@ app.post('/v1/auth/', express.bodyParser(), function(req, res){
   }, function (err, player) {
     if (err || !player)
       return app.defaultError(res)("authentication");
+    app.log("/v2/auth: found !", "error");
     res.send(JSON.stringifyModels(player, { unhide: [ "token" ] }));
   });
+});
+
+/**
+ * Check if the email exist
+ * 
+ * You must be authentified
+ * 
+ * Specific options:
+ *  /v2/auth/registered/?email=...
+ */
+app.get('/v2/auth/registered/', function (req, res) {
+  if (typeof req.query.email !== "string")
+    return app.defaultError(res)("missing email");
+    
+  DB.Model.Player.isEmailRegisteredAsync(req.query.email.toLowerCase())
+  .then(function (emailRegistered) {
+      res.send({'registered': emailRegistered || false});
+    }, app.defaultError(res));
 });
 
 /**
@@ -45,7 +65,7 @@ app.post('/v1/auth/', express.bodyParser(), function(req, res){
  *   email: { address: ... },    MANDATORY
  * }
  */
-app.post('/v1/auth/resetPassword/', express.bodyParser(), function(req, res){
+app.post('/v2/auth/resetPassword/', express.bodyParser(), function(req, res){
   var fields = req.query.fields;
   
   if (typeof req.body.email !== "object" || !req.body.email ||
@@ -54,7 +74,7 @@ app.post('/v1/auth/resetPassword/', express.bodyParser(), function(req, res){
   if (req.body.email.address.length === 0)
     return app.defaultError(res)("empty email");
   // email should only manipulated lowercase
-  req.body.email.address = req.body.email.address.toLowerCase();
+  req.body.email.address = req.body.email.address.toLowerCase().trim();
   //
   DB.Model.Player.findOne({
     'email.address': req.body.email.address,

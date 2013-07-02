@@ -34,7 +34,7 @@ if (Conf.get("env") === "DEV") {
 }
 
 
-var routes = { /* "/v1/games/:id" : function (req, res) { ... } */ };
+var routes = { /* "/v2/games/:id" : function (req, res) { ... } */ };
 app.get = (function (oldGet) {
   return function () {
     if (typeof arguments[1] === "function")

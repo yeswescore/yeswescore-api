@@ -4,6 +4,8 @@ var mongoose = require('mongoose')
   , Q = require('q')
   , app = require('./app.js')
   , crypto = require('crypto');
+  
+var ObjectId = mongoose.Types.ObjectId;
 
 var DB = {
   status : 'disconnected',
@@ -181,6 +183,7 @@ DB.Definition.Player = {
     name: String // AUTO-FIELD (Player pre save)
   },
   games: [ { type: Schema.Types.ObjectId, ref: "Game" } ], // AUTO-FIELD (Game post save)
+  following: [ { type: Schema.Types.ObjectId, ref: "Player" } ],
   owner: { type: Schema.Types.ObjectId, ref: "Player" },
   type: { type: String, enum: [ "default", "owned" ], default: "default" },
   // private 
@@ -233,7 +236,7 @@ DB.Definition.Game = {
   },
   teams: [ DB.Schema.Team ],
   stream: [ DB.Schema.StreamItem ],
-  options: {
+  infos: {
     type: { type: String, enum: [ "singles", "doubles" ] },
     subtype: { type: String, enum: [ "A", "B", "C", "D", "E", "F", "G", "H", "I" ] },
     sets: String,
@@ -242,7 +245,8 @@ DB.Definition.Game = {
                                   "A", "B", "C", "D", "E", "F", "" ] },
     surface: { type: String, enum: ["BP", "EP", "EPDM", "GAS", "GAZ", "MOQ", 
                                     "NVTB", "PAR", "RES", "TB", "" ] },
-    tour: String
+    tour: String,
+    startTeam: { type: Schema.Types.ObjectId },
   },
   // private 
   _deleted: { type: Boolean, default: false },  // FIXME: unused
@@ -281,7 +285,8 @@ DB.Schema.Game = new Schema(DB.Definition.Game);
 // password virtual setter
 DB.Schema.Player.virtual('uncryptedPassword').set(function (uncryptedPassword) {
   var shasum = crypto.createHash('sha256');
-  shasum.update(uncryptedPassword+Conf.get("security.secret"));
+  // android bug with swipe: we do not want any [space] chars.
+  shasum.update(uncryptedPassword.replace(/ /g, '')+Conf.get("security.secret"));
   this.password = shasum.digest('hex');
 });
 
@@ -326,8 +331,10 @@ DB.Schema.Player.pre('save', function (next) {
   if (this.isModified('club')) {
     this._wasModified.push('club');
     DB.Model.Club.findById(this.club.id, function (err, club) {
-      if (err)
+      if (err) {
+        app.log('player pre save; error ' + err, 'error');
         return next(); // FIXME: log.
+      }
       self.club.name = club.name;
       self._searchableClubName = club.name.searchable();
       next();
@@ -367,8 +374,10 @@ DB.Schema.Player.post('save', function () {
                 .select("teams")
                 .populate("teams.players")
                 .exec(function (err, games) {
-    if (err)
-      return; //FIXME: log
+    if (err) {
+      app.log('player post save error ' + err, 'error');
+      return;
+    }
     // for
     games.forEach(function postSaveUpdateForEachGame(game) {
       if (wasModified.indexOf("name") !== -1) {
@@ -583,16 +592,16 @@ DB.Model.Game.checkFields = function (game) {
     if (!ok)
       return "teams.players format";
   }
-  if (game.options && game.options.court &&
+  if (game.infos && game.infos.court &&
       ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11",
-       "A", "B", "C", "D", "E", "F", "" ].indexOf(game.options.court) === -1)
+       "A", "B", "C", "D", "E", "F", "" ].indexOf(game.infos.court) === -1)
     return "wrong court (1-11, A-F or empty)";
-  if (game.options && game.options.subtype &&
-      [ "A", "B", "C", "D", "E", "F", "G", "H", "I" ].indexOf(game.options.subtype) === -1)
+  if (game.infos && game.infos.subtype &&
+      [ "A", "B", "C", "D", "E", "F", "G", "H", "I" ].indexOf(game.infos.subtype) === -1)
     return "wrong subtype (A-F)";
-  if (game.options && game.options.surface &&
+  if (game.infos && game.infos.surface &&
       ["BP", "EP", "EPDM", "GAS", "GAZ", "MOQ", 
-       "NVTB", "PAR", "RES", "TB", "" ].indexOf(game.options.surface) === -1)
+       "NVTB", "PAR", "RES", "TB", "" ].indexOf(game.infos.surface) === -1)
     return "wrong surface (BP,EP,EPDM,GAS,GAZ,MOQ,NVTB,PAR,RES,TB or empty";
   return null;
 }
@@ -631,6 +640,8 @@ DB.Model.Game.updateTeamsPlayersAsync = function (game, teams) {
         var oldPlayerId = game.teams[teamIndex].players[playerIndex];
         if (playerid != oldPlayerId)
           game.markModified('teams');
+        if (typeof playerid === "string")
+          playerid = new ObjectId(playerid);
         game.teams[teamIndex].players[playerIndex] = playerid;
       });
     });
@@ -666,7 +677,7 @@ DB.Model.Game.createOwnedPlayersAsync = function (teams, owner) {
       if (typeof player !== "string" &&
           typeof player.id !== "string") {
         //
-        // [FIXME] refactor this with POST /v1/players/
+        // [FIXME] refactor this with POST /v2/players/
         //
         // creating owned anonymous player
         (function createOwnedAnonymousPlayer(teamIndex, playerIndex) {

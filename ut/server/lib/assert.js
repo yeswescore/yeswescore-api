@@ -252,6 +252,10 @@ assert.isPlayerScheme = function (player, m) {
         assert.isId(value.id, "isPlayerScheme: club.id must be an id");
       }
     },
+    following: { _type: "[schema]", _check: function (playerId, i, games) {
+        assert.isId(playerId, "isPlayerScheme: following[*] must be id");
+      }
+    },
     type: { _type: "enum|undefined", _enum: [ "default", "owned" ] },
     games: { _type: "[schema]", _check: function (gameid, i, games) {
         assert.isId(gameid, "isPlayerScheme: games[*] must be id");
@@ -288,7 +292,7 @@ assert.isGame = function (game) {
       city: { _type: "string|undefined" },
       pos: { _type: "pos" }
     },
-    options: {
+    infos: {
       type: { _type: "enum", _enum: ["singles"] },
       subtype: { _type: "undefined|enum", _enum: [ "A", "B", "C", "D", "E", "F", "G", "H", "I" ] },
       sets: { _type: "undefined|string" },
@@ -297,7 +301,8 @@ assert.isGame = function (game) {
                                                 "A", "B", "C", "D", "E", "F", "" ] },
       surface: { _type: "undefined|enum", _enum: ["BP", "EP", "EPDM", "GAS", "GAZ", "MOQ", 
                                                   "NVTB", "PAR", "RES", "TB", "" ] },
-      tour: { _type: "undefined|string" }
+      tour: { _type: "undefined|string" },
+      startTeam: { _type: "undefined|id" }
     },
     teams: { _type: "[schema]", _check: function (team, i, teams) {
         assert(teams.length === 2, "isGame: game must have 2 teams");

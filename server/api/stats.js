@@ -3,7 +3,7 @@ var app = require("../app.js")
 
 var statsLogger = winston.loggers.get('stats');
 
-app.get('/v1/stats/', function (req, res) {
+app.get('/v2/stats/', function (req, res) {
   // we can't disable the prefix "info: " in winston.
   // maybe should fork this project & add options.nolevel
   //  in winston/lib/winston/common.js (low level format)

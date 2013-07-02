@@ -3,24 +3,24 @@ var Conf = require("../conf.js")
   , Email = require("../email.js")
   , app = require("../app.js");
 
-app.get('/v1/email/confirm/', function (req, res) {
+app.get('/v2/email/confirm/', function (req, res) {
   if (typeof req.query.token !== "string" || !req.query.token)
     return app.defaultError(res)("missing token");
   DB.Model.Player.findOne(
     { "email._token" : req.query.token },
     function (err, player) {
       if (err)
-        return res.redirect("http://www.yeswescore.com/#!mail-db-read-error/c1fj5");
+        return res.redirect("http://www.yeswescore.com/static/mail-db-read-error.html");
       if (!player) {
         // FIXME: redirect 301 vers une page d'erreur.
-        return res.redirect("http://www.yeswescore.com/#!mail-cant-find-player/c1gv2");
+        return res.redirect("http://www.yeswescore.com/static/mail-cant-find-player.html");
       }
       // changing email status
       player.email.status = "confirmed";
       player.save(function (err) {
         if (err)
-          return res.redirect("http://www.yeswescore.com/#!mail-db-save-error/c1kfo");
-        res.redirect("http://www.yeswescore.com/#!mail/cy9y");
+          return res.redirect("http://www.yeswescore.com/static/mail-db-save-error.html");
+        res.redirect("http://www.yeswescore.com/static/mail-confirm.html");
       });
   });
 });
@@ -28,7 +28,7 @@ app.get('/v1/email/confirm/', function (req, res) {
 if (Conf.env === "DEV") {
   // shortcut to test in DEV environment mailing features... 
   //  no UT yet :(
-  app.get('/v1/email/createFakePlayer/', function (req, res) {
+  app.get('/v2/email/createFakePlayer/', function (req, res) {
     if (typeof req.query.email !== "string" || !req.query.email)
       return app.defaultError(res)("missing email");
     req.query.email = req.query.email.toLowerCase();
@@ -51,7 +51,7 @@ if (Conf.env === "DEV") {
     });
   });
   
-  app.get('/v1/email/sendConfirmation/', function (req, res) {
+  app.get('/v2/email/sendConfirmation/', function (req, res) {
     if (typeof req.query.email !== "string" || !req.query.email)
       return app.defaultError(res)("missing email");
     req.query.email = req.query.email.toLowerCase();
@@ -73,7 +73,7 @@ if (Conf.env === "DEV") {
   });
   
   // hand unit test :)
-  app.get('/v1/email/sendPassword/', function (req, res) {
+  app.get('/v2/email/sendPassword/', function (req, res) {
     if (typeof req.query.email !== "string" || !req.query.email)
       return app.defaultError(res)("missing email");
     req.query.email = req.query.email.toLowerCase();
