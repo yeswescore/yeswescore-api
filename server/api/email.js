@@ -2,14 +2,6 @@ var Conf = require("../conf.js")
   , DB = require("../db.js")
   , Email = require("../email.js")
   , app = require("../app.js");
-  
-/*
-Nouvelle url :
-http://www.yeswescore.com/static/mail-cant-find-player.html
-http://www.yeswescore.com/static/mail-confirm.html
-http://www.yeswescore.com/static/mail-db-read-error.html
-http://www.yeswescore.com/static/mail-db-save-error.html
-*/
 
 app.get('/v2/email/confirm/', function (req, res) {
   if (typeof req.query.token !== "string" || !req.query.token)
@@ -18,17 +10,17 @@ app.get('/v2/email/confirm/', function (req, res) {
     { "email._token" : req.query.token },
     function (err, player) {
       if (err)
-        return res.redirect("http://www.yeswescore.com/#!mail-db-read-error/c1fj5");
+        return res.redirect("http://www.yeswescore.com/static/mail-db-read-error.html");
       if (!player) {
         // FIXME: redirect 301 vers une page d'erreur.
-        return res.redirect("http://www.yeswescore.com/#!mail-cant-find-player/c1gv2");
+        return res.redirect("http://www.yeswescore.com/static/mail-cant-find-player.html");
       }
       // changing email status
       player.email.status = "confirmed";
       player.save(function (err) {
         if (err)
-          return res.redirect("http://www.yeswescore.com/#!mail-db-save-error/c1kfo");
-        res.redirect("http://www.yeswescore.com/#!mail/cy9y");
+          return res.redirect("http://www.yeswescore.com/static/mail-db-save-error.html");
+        res.redirect("http://www.yeswescore.com/static/mail-confirm.html");
       });
   });
 });
