@@ -381,3 +381,68 @@ app.post('/v2/players/:id', express.bodyParser(), function(req, res){
     res.send(JSON.stringifyModels(player, { unhide: [ "token" ] }));
   }, app.defaultError(res));
 });
+
+app.post('/v2/players/:id/following/', express.bodyParser(), function(req, res) {
+  if (typeof req.body.id !== "string")
+    return app.defaultError(res)("missing id");
+  Q.all(
+    [
+      // doing 2 things in parallel
+      // 1-st : authentify the player
+      DB.isAuthenticatedAsync(req.query)
+        .then(function (authentifiedPlayer) {
+        if (!authentifiedPlayer)
+          throw "player not authenticated";
+        if (req.params.id != authentifiedPlayer.id)
+          throw "unauthorized";
+        return authentifiedPlayer;
+      }),
+      // find the player followed
+      Q.nfcall(DB.Model.Player.findById.bind(DB.Model.Player),
+               req.body.id)
+    ]
+  ).then(function (qall) {
+    var player = qall[0];
+    var following = qall[1];
+    
+    return Q.nfcall(DB.Model.Player.update.bind(DB.Model.Player),
+      { _id: player.id },
+      { $addToSet: { "following" : following.id } }, 
+      { multi: false });
+  }).then(function () {
+    res.send('{}');
+  }, app.defaultError(res));
+});
+  
+app.delete('/v2/players/:id/following/', express.bodyParser(), function(req, res) {
+  // fixme, this code should be shared with previous function.
+  if (typeof req.body.id !== "string")
+    return app.defaultError(res)("missing id");
+  Q.all(
+    [
+      // doing 2 things in parallel
+      // 1-st : authentify the player
+      DB.isAuthenticatedAsync(req.query)
+        .then(function (authentifiedPlayer) {
+        if (!authentifiedPlayer)
+          throw "player not authenticated";
+        if (req.params.id != authentifiedPlayer.id)
+          throw "unauthorized";
+        return authentifiedPlayer;
+      }),
+      // find the player followed
+      Q.nfcall(DB.Model.Player.findById.bind(DB.Model.Player),
+               req.body.id)
+    ]
+  ).then(function (qall) {
+    var player = qall[0];
+    var following = qall[1];
+    
+    return Q.nfcall(DB.Model.Player.update.bind(DB.Model.Player),
+      { _id: player.id },
+      { $pull: { "following" : following.id }}
+    );
+  }).then(function () {
+    res.send('{}');
+  }, app.defaultError(res));
+});

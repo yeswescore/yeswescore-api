@@ -252,6 +252,10 @@ assert.isPlayerScheme = function (player, m) {
         assert.isId(value.id, "isPlayerScheme: club.id must be an id");
       }
     },
+    following: { _type: "[schema]", _check: function (playerId, i, games) {
+        assert.isId(playerId, "isPlayerScheme: following[*] must be id");
+      }
+    },
     type: { _type: "enum|undefined", _enum: [ "default", "owned" ] },
     games: { _type: "[schema]", _check: function (gameid, i, games) {
         assert.isId(gameid, "isPlayerScheme: games[*] must be id");

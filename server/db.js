@@ -183,6 +183,7 @@ DB.Definition.Player = {
     name: String // AUTO-FIELD (Player pre save)
   },
   games: [ { type: Schema.Types.ObjectId, ref: "Game" } ], // AUTO-FIELD (Game post save)
+  following: [ { type: Schema.Types.ObjectId, ref: "Player" } ],
   owner: { type: Schema.Types.ObjectId, ref: "Player" },
   type: { type: String, enum: [ "default", "owned" ], default: "default" },
   // private 
