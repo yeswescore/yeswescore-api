@@ -616,7 +616,7 @@ describe('dev:players', function(){
           };
           
           http.is302OK(options, function (res) {
-            var successUrl = "http://www.yeswescore.com/#!mail/cy9y";
+            var successUrl = "http://www.yeswescore.com/static/mail-confirm.html";
             if (res.headers.location !== successUrl)
               throw "bad location, " + res.headers.location + " should be " + successUrl;
               

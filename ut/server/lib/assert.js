@@ -15,6 +15,7 @@ if (!Conf || Conf.get("email.send.confirmation"))
 
 var isObject = function (s) { return typeof s === "object" && s !== null };
 var isString = function (s) { return typeof s === "string" };
+var isBoolean = function(s) {return typeof s === "boolean"};
 var isHexa = function(s) { return s.match(/^[0-9a-f]+$/) };
 var isNumber = function(s) { 
   if (!String(s).match(/^[0-9\-\.]+$/))
@@ -42,6 +43,10 @@ assert.isObject = function (s, m) {
 
 assert.isString = function (s, m) {
   assert(isString(s), m);
+};
+
+assert.isBoolean = function (s, m) {
+  assert(isBoolean(s), m);
 };
 
 assert.isArray = function (s, m) {
@@ -155,6 +160,9 @@ assert.schema = function (schema, obj, msg) {
       case "date":
         assert.isDate(obj[k], msg + " field " + k + " should be an date");
         break;
+      case "boolean":
+        assert.isBoolean(obj[k], msg + " field " + k + " should be a boolean");
+        break;        
       case "array":
         assert.isArray(obj[k], msg + " field " + k + " should be an array");
         break;
@@ -285,7 +293,8 @@ assert.isGame = function (game) {
       creation: { _type: "date" },
       update:  { _type: "date|undefined" },
       start: { _type: "date|undefined" },
-      end: { _type: "date|undefined" }
+      end: { _type: "date|undefined" },
+      expected: { _type: "date|undefined" }
     },
     location: {
       country : { _type : "string|undefined" },
@@ -302,7 +311,8 @@ assert.isGame = function (game) {
       surface: { _type: "undefined|enum", _enum: ["BP", "EP", "EPDM", "GAS", "GAZ", "MOQ", 
                                                   "NVTB", "PAR", "RES", "TB", "" ] },
       tour: { _type: "undefined|string" },
-      startTeam: { _type: "undefined|id" }
+      startTeam: { _type: "undefined|id" },
+      official: { _type: "boolean" }
     },
     teams: { _type: "[schema]", _check: function (team, i, teams) {
         assert(teams.length === 2, "isGame: game must have 2 teams");

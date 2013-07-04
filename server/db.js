@@ -227,7 +227,8 @@ DB.Definition.Game = {
     creation: { type: Date, default: Date.now },
     update: { type: Date, default: Date.now },
     start: Date,
-    end: Date
+    end: Date,
+    expected: { type: Date } 
   },
   location : {
     country: String,
@@ -247,6 +248,7 @@ DB.Definition.Game = {
                                     "NVTB", "PAR", "RES", "TB", "" ] },
     tour: String,
     startTeam: { type: Schema.Types.ObjectId },
+    official: { type: Boolean, default: true }
   },
   // private 
   _deleted: { type: Boolean, default: false },  // FIXME: unused
@@ -603,6 +605,15 @@ DB.Model.Game.checkFields = function (game) {
       ["BP", "EP", "EPDM", "GAS", "GAZ", "MOQ", 
        "NVTB", "PAR", "RES", "TB", "" ].indexOf(game.infos.surface) === -1)
     return "wrong surface (BP,EP,EPDM,GAS,GAZ,MOQ,NVTB,PAR,RES,TB or empty";
+    
+  if (game.infos && game.infos.official &&
+      (typeof game.infos.official !== "boolean") )
+    return "wrong official ( true or false only )";
+    
+  if (game.dates && game.dates.expected &&
+      ( typeof game.dates.expected !== "date" ) )
+    return "wrong expected ( only date  )";        
+        
   return null;
 }
 

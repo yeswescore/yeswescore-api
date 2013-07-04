@@ -35,7 +35,7 @@ app.get('/v2/games/', function(req, res){
   var offset = req.query.offset || 0;
   var text = req.query.q;
   var club = req.query.club || null;
-  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam";
+  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,infos.expected";
   var sort = req.query.sort || "-dates.start";
   var status = req.query.status || "created,ongoing,finished";
   var longitude = req.query.longitude;
@@ -90,7 +90,7 @@ app.get('/v2/games/', function(req, res){
  *  /v2/games/:id/?populate=teams.players
  */
 app.get('/v2/games/:id', function (req, res){
-  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.end,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,teams.players.owner,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam";
+  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.end,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,teams.players.owner,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,infos.expected";
   // populate option
   var populate = "teams.players";
   if (typeof req.query.populate !== "undefined")
@@ -237,6 +237,9 @@ app.get('/v2/games/:id/stream/', function (req, res){
  *     country: String,         (default="")
  *     city: String,            (default="")
  *     pos: [ Number, Number ]  (default=[])
+ *   },
+ *   dates: {
+ *     expected: Date    (default=undefined)  
  *   }
  *   teams: [
  *     {
@@ -255,6 +258,7 @@ app.get('/v2/games/:id/stream/', function (req, res){
  *      surface: String   (default="")
  *      tour: String      (default="")
  *      startTeam: Int    (default=undefined) must be undefined, 0 or 1.
+ *		official: Boolean  (default=true)
  *   }
  * }
  * 
@@ -294,9 +298,17 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
           score: req.body.infos.score || "",
           court: req.body.infos.court || "",
           surface: req.body.infos.surface || "",
-          tour: req.body.infos.tour || ""
+          tour: req.body.infos.tour || "",
+          official: req.body.infos.official || "true"                 
         }
       });
+      
+      if (req.body.dates)
+         if (req.body.dates.expected)
+          if (typeof req.body.dates.expected === "date")
+            game.dates.expected = req.body.dates.expected;
+      
+      
       return DB.Model.Game.updateTeamsAsync(game, req.body.teams);
     }).then(function saveAsync(game) {
       return DB.saveAsync(game);
@@ -394,8 +406,18 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
           game.infos.surface = req.body.infos.surface;
         if (typeof req.body.infos.tour === "string")
           game.infos.tour = req.body.infos.tour;
+        if (typeof req.body.infos.official === "string")
+          game.infos.official = req.body.infos.official;         
+        if (typeof req.body.dates.expected === "date")
+          game.dates.expected = req.body.dates.expected;          
       }
       game.dates.update = Date.now();
+      
+      if (req.body.dates)
+         if (req.body.dates.expected)
+          if (typeof req.body.dates.expected === "date")
+            game.dates.expected = req.body.dates.expected;      
+      
       //
       return DB.Model.Game.updateTeamsAsync(game, req.body.teams);
     }).then(function update(game) {
