@@ -382,6 +382,15 @@ app.post('/v2/players/:id', express.bodyParser(), function(req, res){
   }, app.defaultError(res));
 });
 
+/**
+ * follow a player
+ * 
+ * You must be authentified (?playerid=...&token=...)
+ * 
+ * Body {
+ *   id: String,     (default=undefined)
+ * }
+ */
 app.post('/v2/players/:id/following/', express.bodyParser(), function(req, res) {
   if (typeof req.body.id !== "string")
     return app.defaultError(res)("missing id");
@@ -414,6 +423,16 @@ app.post('/v2/players/:id/following/', express.bodyParser(), function(req, res) 
   }, app.defaultError(res));
 });
   
+/**
+ * unfollow a player
+ * 
+ * You must be authentified (?playerid=...&token=...)
+ *  &_method=delete
+ * 
+ * Body {
+ *   id: String,     (default=undefined)
+ * }
+ */  
 app.delete('/v2/players/:id/following/', express.bodyParser(), function(req, res) {
   // fixme, this code should be shared with previous function.
   if (typeof req.body.id !== "string")
