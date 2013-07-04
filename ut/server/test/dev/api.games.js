@@ -373,7 +373,7 @@ describe('dev:games', function(){
               
               assert(g.status === modifiedGame.status, "status should be updated");
               assert(typeof g.dates.start !== "undefined", "game should be started (dates.start!== undefined)");
-              assert(typeof g.dates.expected === modifiedGame.dates.expected, "dates.expected should be updated in DB");  
+              assert(g.dates.expected === modifiedGame.dates.expected, "dates.expected should be updated in DB");  
                             
               done();
             });
