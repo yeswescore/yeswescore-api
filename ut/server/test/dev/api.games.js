@@ -296,7 +296,7 @@ describe('dev:games', function(){
           assert(game.infos.court === newGame.infos.court, "court should be the same");
           assert(game.infos.surface === newGame.infos.surface, "surface should be the same");
           assert(game.infos.official === newGame.infos.official, "official should be the same");
-          assert(game.dates.expected === newGame.dates.expected, "dates.expected should be the same");
+          assert(JSON.parse(JSON.stringify(game.dates.expected)) === newGame.dates.expected, "dates.expected should be the same");
                     
           assert(game.status === newGame.status, "status should be the same " + game.status + " vs " + newGame.status);
           done();
@@ -373,7 +373,7 @@ describe('dev:games', function(){
               
               assert(g.status === modifiedGame.status, "status should be updated");
               assert(typeof g.dates.start !== "undefined", "game should be started (dates.start!== undefined)");
-              assert(g.dates.expected === modifiedGame.dates.expected, "dates.expected should be updated in DB");  
+              assert(JSON.parse(JSON.stringify(game.dates.expected)) === modifiedGame.dates.expected, "dates.expected should be updated in DB");  
                             
               done();
             });
