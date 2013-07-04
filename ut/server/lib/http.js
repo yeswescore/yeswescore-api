@@ -34,8 +34,8 @@ http.getJSON = function (options, f) {
     res.on("data", function (chunk) { json += chunk })
        .on("end", function () {
           try {
-            //console.log('http: GET: ' + options.path + ' result');
-            //console.log(json);
+            console.log('http: GET: ' + options.path + ' result');
+            console.log(json);
             var data = JSON.parse(json);
             f(data, res);
           } catch (e) {
@@ -69,8 +69,8 @@ http.post = function (options, data, f) {
     res.on("data", function (chunk) { json += chunk })
        .on("end", function () {
           try {
-            //console.log('http: POST: ' + options.path + ' result');
-            //console.log(json);
+            console.log('http: POST: ' + options.path + ' result');
+            console.log(json);
             var data = JSON.parse(json);
             f(data, res);
           } catch (e) {

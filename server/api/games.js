@@ -35,7 +35,7 @@ app.get('/v2/games/', function(req, res){
   var offset = req.query.offset || 0;
   var text = req.query.q;
   var club = req.query.club || null;
-  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,infos.expected";
+  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official";
   var sort = req.query.sort || "-dates.start";
   var status = req.query.status || "created,ongoing,finished";
   var longitude = req.query.longitude;
@@ -90,7 +90,7 @@ app.get('/v2/games/', function(req, res){
  *  /v2/games/:id/?populate=teams.players
  */
 app.get('/v2/games/:id', function (req, res){
-  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.end,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,teams.players.owner,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,infos.expected";
+  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,teams.players.owner,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official";
   // populate option
   var populate = "teams.players";
   if (typeof req.query.populate !== "undefined")
@@ -298,13 +298,16 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
           score: req.body.infos.score || "",
           court: req.body.infos.court || "",
           surface: req.body.infos.surface || "",
-          tour: req.body.infos.tour || "",
-          official: req.body.infos.official || true                 
+          tour: req.body.infos.tour || ""          
         }
       });
       
       if (typeof req.body.infos.official === "boolean")
-        game.infos.official
+        game.infos.official = req.body.infos.official;
+        
+      if (req.body.dates) {
+       console.log(JSON.stringify(req.body)); 
+      }        
       
   	  if (req.body.dates && typeof req.body.dates.expected === "string")
         game.dates.expected = req.body.dates.expected;
@@ -408,14 +411,14 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
         if (typeof req.body.infos.tour === "string")
           game.infos.tour = req.body.infos.tour;
         if (typeof req.body.infos.official === "boolean")
-          game.infos.official = req.body.infos.official;         
-        if (typeof req.body.dates.expected === "date")
-          game.dates.expected = req.body.dates.expected;          
+          game.infos.official = req.body.infos.official;                
       }
       game.dates.update = Date.now();
       
-  	  if (req.body.dates && typeof req.body.dates.expected === "string")
+  	  if (req.body.dates && typeof req.body.dates.expected === "string") {
         game.dates.expected = req.body.dates.expected;   
+        console.log('req.body.dates.expected ' + req.body.dates.expected);
+      }
       
       //
       return DB.Model.Game.updateTeamsAsync(game, req.body.teams);
