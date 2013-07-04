@@ -303,10 +303,11 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
         }
       });
       
-      if (req.body.dates)
-         if (req.body.dates.expected)
-          if (typeof req.body.dates.expected === "date")
-            game.dates.expected = req.body.dates.expected;
+      if (typeof req.body.infos.official === "boolean")
+        game.infos.official
+      
+  	  if (req.body.dates && typeof req.body.dates.expected === "string")
+        game.dates.expected = req.body.dates.expected;
       
       
       return DB.Model.Game.updateTeamsAsync(game, req.body.teams);
@@ -406,17 +407,15 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
           game.infos.surface = req.body.infos.surface;
         if (typeof req.body.infos.tour === "string")
           game.infos.tour = req.body.infos.tour;
-        if (typeof req.body.infos.official === "string")
+        if (typeof req.body.infos.official === "boolean")
           game.infos.official = req.body.infos.official;         
         if (typeof req.body.dates.expected === "date")
           game.dates.expected = req.body.dates.expected;          
       }
       game.dates.update = Date.now();
       
-      if (req.body.dates)
-         if (req.body.dates.expected)
-          if (typeof req.body.dates.expected === "date")
-            game.dates.expected = req.body.dates.expected;      
+  	  if (req.body.dates && typeof req.body.dates.expected === "string")
+        game.dates.expected = req.body.dates.expected;   
       
       //
       return DB.Model.Game.updateTeamsAsync(game, req.body.teams);
