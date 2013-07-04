@@ -608,11 +608,7 @@ DB.Model.Game.checkFields = function (game) {
     
   if (game.infos && game.infos.official &&
       (typeof game.infos.official !== "boolean") )
-    return "wrong official ( true or false only )";
-    
-  if (game.dates && game.dates.expected &&
-      ( typeof game.dates.expected !== "date" ) )
-    return "wrong expected ( only date  )";        
+    return "wrong official ( true or false only )";       
         
   return null;
 }
