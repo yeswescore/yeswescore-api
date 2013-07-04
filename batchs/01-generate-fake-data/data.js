@@ -221,8 +221,8 @@ var generateGamesAsync = function () {
         }
         
         //expected : ["01/01/1970",Date.now()].random()
-        //if (Math.random()>0.5)
-        game.dates.expected = Date.now(); 
+        if (Math.random()>0.5)
+          game.dates.expected = Date.now(); 
         
         // generating players
         var player1 = players[i*2];
