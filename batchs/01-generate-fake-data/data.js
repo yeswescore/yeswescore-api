@@ -14,13 +14,13 @@ var generateFakeId = function () {
   return s
 }
 var generateFakeName = function () {
-  return [ "Garcia", "Blanc", "Serra", "Guisset", "Martinez", "Mas", "Pla", "Sola", "Lopez", "Torrès", "Gil", "Richard",
+  return [ "Garcia", "Blanc", "Serra", "Guisset", "Martinez", "Mas", "Pla", "Sola", "Lopez", "Tors", "Gil", "Richard",
            "Sanchez", "Simon", "Esteve", "Salvat", "Vidal", "Bertrand", "Bonnet", "Mestres", "Perez", "Batlle" ].random();
 }
 var generateFakeFirstName = function () {
-  return [ "Agathe","Aliénor","Alix","Ambre","Apolline","AthénaÃ¯s","Axelle","Camille","Capucine","Celeste","Charlotte",
-           "Chloé","Clarisse","Emma","Eva","Gabrielle","isaure","Jade","Juliette","leonore","Louise","Margaux","Mathilde",
-           "Maya","Romane","Rose","Roxane","Violette","Zélie","Zoé"].random();
+  return [ "Agathe","Alinor","Alix","Ambre","Apolline","AthnaÃ¯s","Axelle","Camille","Capucine","Celeste","Charlotte",
+           "ChloÃ©","Clarisse","Emma","Eva","Gabrielle","isaure","Jade","Juliette","leonore","Louise","Margaux","Mathilde",
+           "Maya","Romane","Rose","Roxane","Violette","ZÃ©lie","ZoÃ©"].random();
 }
 var generateFakeCity = function () {
   return [ "Bayeux", "Falaise", "Caen", "Honfleur", "Deauville", "Arromanches les Bains", "Lisieux", "Cabourg",
@@ -29,27 +29,27 @@ var generateFakeCity = function () {
 var generateFakeComment = function () {
   return [
    "Merci!",
-   "Je t'ai ajouté! :D",
+   "Je t'ai ajoutÃ©! :D",
    "Lol, c'te gros tocard.",
-   "j'arrive pas à faire venir Roger à mon Open 13 et ça me fout les boules.",
-   "C'est EXACTEMENT ça, Franchement pour dire ça faut vraiment être d'une mauvaise foi incomparable ou n'y rien connaitre au tennis. On peut ne pas aimer Federer mais ne pas reconnaitre qu'il fait le show...",
-   "Sous entendu : Désolé de cette interview de merde. je dois vite me retirer et crever très vite. Ciao. ",
-   "Haha on sent le mec frustré qui veut se démarquer de la masse en critiquant Federer alors que tout le monde l'adule. \
+   "j'arrive pas Ã  faire venir Roger Ã  mon Open 13 et Ã§a me fout les boules.",
+   "C'est EXACTEMENT Ã§a, Franchement pour dire Ã§a faut vraiment Ãªtre d'une mauvaise foi incomparable ou n'y rien connaitre au tennis. On peut ne pas aimer Federer mais ne pas reconnaitre qu'il fait le show...",
+   "Sous entendu : DÃ©solÃ© de cette interview de merde. je dois vite me retirer et crever trÃ¨s vite. Ciao. ",
+   "Haha on sent le mec frustrÃ© qui veut se dÃ©marquer de la masse en critiquant Federer alors que tout le monde l'adule. \
 \
 Ou alors c'est juste que pour lui, spectacle = faire le gorille et le clown sur le terrain... \
 \
-Et le \"s'il n'était pas numéro 3 on en parlerait pas autant\"   dans le genre \"j'ai aucun argument pour descendre Federer, donc j'en invente un bien débile\" \
+Et le \"s'il n'Ã©tait pas numÃ©ro 3 on en parlerait pas autant\"   dans le genre \"j'ai aucun argument pour descendre Federer, donc j'en invente un bien dÃ©bile\" \
 \
-Ah mais c'est sûr, si Federer n'avait pas gagné 17 GC, on n'en parlerait pas autant ! ",
-   "C'était pas lui qui disait que la victoire de Federer à Bercy était sa plus belle édition parce qu'il était fan et tout et tout ?",
-   "Ah ben comme ça on est fixé sur la venue de Federer à l'open 13 (bon y avait pas trop de suspens   ) ",
+Ah mais c'est sur, si Federer n'avait pas gagnÃ© 17 GC, on n'en parlerait pas autant ! ",
+   "C'Ã©tait pas lui qui disait que la victoire de Federer Ã  Bercy Ã©tait sa plus belle Ã©dition parce qu'il Ã©tait fan et tout et tout ?",
+   "Ah ben comme Ã§a on est fixÃ© sur la venue de Federer Ã  l'open 13 (bon y avait pas trop de suspens   ) ",
    "Enfin quelqu'un qui ose dire les vrais choses   \
 Lui c'est un vrai connaisseur  ",
-   "Jean-François Couillemolle.",
-   "Il a fait le bon choix le Caujolle, je préfère qu'il nous achète Berdych, Delpo et Tipsarevic plutôt que l'autre mannequin pour montres. Cela aurait été clairement mieux qu'il se débarasse aussi de Tsonga et Gasquet qui génèrent vraiment trop de vacarme dans les gradins (pour les remplacer par des joueurs moins chers et moins bruyants comme par exemple Cilic, Nishikori, Haas), mais on ne peut pas trop lui en vouloir, c'est du bon boulot pour JF.",
-   "Bah, vas-y, ramène Djokovic alors.  ",
+   "Jean-FranÃ§ois Couillemolle.",
+   "Il a fait le bon choix le Caujolle, je prÃ©fÃ¨re qu'il nous achÃ¨te Berdych, Delpo et Tipsarevic plutÃ´t que l'autre mannequin pour montres. Cela aurait Ã©tÃ© clairement mieux qu'il se dÃ©barasse aussi de Tsonga et Gasquet qui gÃ©nÃ¨rent vraiment trop de vacarme dans les gradins (pour les remplacer par des joueurs moins chers et moins bruyants comme par exemple Cilic, Nishikori, Haas), mais on ne peut pas trop lui en vouloir, c'est du bon boulot pour JF.",
+   "Bah, vas-y, ramÃ¨ne Djokovic alors.  ",
    "Enfin quelqu'un qui ose le critiquer. \
-    Bravo très bon article"
+    Bravo trÃ¨s bon article"
   ].random();
 }
 var generateFakeLocation = function () {
