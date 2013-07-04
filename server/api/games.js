@@ -299,7 +299,7 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
           court: req.body.infos.court || "",
           surface: req.body.infos.surface || "",
           tour: req.body.infos.tour || "",
-          official: req.body.infos.official || "true"                 
+          official: req.body.infos.official || true                 
         }
       });
       
