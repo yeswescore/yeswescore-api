@@ -606,8 +606,11 @@ DB.Model.Game.checkFields = function (game) {
        "NVTB", "PAR", "RES", "TB", "" ].indexOf(game.infos.surface) === -1)
     return "wrong surface (BP,EP,EPDM,GAS,GAZ,MOQ,NVTB,PAR,RES,TB or empty";
     
+  //console.log("game.infos.official",game.infos.official);
+  //console.log("typeof game.infos.official",typeof game.infos.official);
+    
   if (game.infos && game.infos.official &&
-      (typeof game.infos.official !== "boolean" || game.infos.official !== "true" || game.infos.official !== "false") )
+      (typeof game.infos.official !== "boolean" && game.infos.official !== "true" && game.infos.official !== "false") )
     return "wrong official ( true or false only )";       
         
   return null;
