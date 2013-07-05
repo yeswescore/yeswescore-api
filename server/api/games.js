@@ -311,10 +311,7 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
 	    game.infos.official = false;
 	  else 
 	    game.infos.official = true;
-        
-      //if (req.body.dates) {
-      // console.log(JSON.stringify(req.body)); 
-      //}  
+         
 	  console.log('games.js :game.infos.official',game.infos.official);
       
       
@@ -420,11 +417,15 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
         if (typeof req.body.infos.tour === "string")
           game.infos.tour = req.body.infos.tour;
 		  
-	    console.log('games.js :typeof req.body.infos.official',typeof req.body.infos.official);  
-		console.log('games.js :req.body.infos.official',req.body.infos.official);  		
-		
-        if (typeof req.body.infos.official === "boolean")
-          game.infos.official = req.body.infos.official;                
+		if (typeof req.body.infos.official === "boolean")
+		  game.infos.official = req.body.infos.official;
+		else if (typeof req.body.infos.official === "string" && req.body.infos.official === "false")	
+		  game.infos.official = false;
+		else 
+		  game.infos.official = true;
+			 
+		console.log('games.js :game.infos.official',game.infos.official);
+		  
       }
       game.dates.update = Date.now();
       
