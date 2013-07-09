@@ -187,7 +187,7 @@ var generateGamesAsync = function () {
                       "A", "B", "C", "D", "E", "F", "" ].random(),
             surface: ["BP", "EP", "EPDM", "GAS", "GAZ", "MOQ", 
                         "NVTB", "PAR", "RES", "TB", "" ].random(),
-            tour: [ "Poule", "consolante", "1er tour", "2nd tour" ].random(),
+            tour: [ "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"  ].random(),
             official : [true, false].random()
           }
         });
