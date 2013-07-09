@@ -26,7 +26,7 @@ then
   echo "you are in prod environment, you cannot delete"
   dbname="prod"
   # FIXME: security temporary disabled.
-  # exit 1
+  exit 1
 else
   port=`cat ../server/.port | head -1`
   dbname="dev"$port
