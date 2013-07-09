@@ -511,6 +511,10 @@ app.post('/v2/games/:id/stream/', express.bodyParser(), function(req, res){
       game.stream.push(streamItem);
       game.dates.update = Date.now();
       return DB.saveAsync(game);
+    }).then(function incr(game) {
+      return Q.nfcall(DB.Model.Game.findByIdAndUpdate.bind(DB.Model.Game),
+                      game.id,
+                      { $inc: { streamCommentsSize: 1 } });
     }).then(function sendGame(game) {
       if (game.stream.length === 0)
         throw "no streamItem added";
@@ -636,6 +640,11 @@ app.delete('/v2/games/:id/stream/:streamid/', function (req, res) {
         }
       }
       throw "no streamItem found";
+      return game;
+    }).then(function incr(game) {
+      return Q.nfcall(DB.Model.Game.findByIdAndUpdate.bind(DB.Model.Game),
+                      game.id,
+                      { $inc: { streamCommentsSize: -1 } });
     }).then(function () {
       res.send('{}'); // smallest json.
     }, app.defaultError(res));

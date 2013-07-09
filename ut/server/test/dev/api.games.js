@@ -614,6 +614,18 @@ describe('dev:games', function(){
     });
   });
   
+  var computeStreamCommentsSize = function (stream) {
+    assert(Array.isArray(stream));
+    
+    var i, cpt = 0;
+    for (i = 0; i < stream.length; ++i) {
+      if (stream[i].type === "comment" &&
+          stream[i]._deleted === false)
+        cpt++;
+    }
+    return cpt;
+  };
+  
   describe('write a comment on a stream', function () {
     it('should create a comment, size of stream +1 (not empty & valid)', function (done){
       // read a game
@@ -624,6 +636,7 @@ describe('dev:games', function(){
       };
       http.getJSON(options, function (randomGame) {
         assert.isObject(randomGame, "random game must exist");
+        assert(computeStreamCommentsSize(randomGame.stream) === randomGame.streamCommentsSize, 'game stream length & streamCommentsSize should be the same (1) ' + randomGame.stream.length + ' vs ' + randomGame.streamCommentsSize);
         
         // nb Element ds le stream.
         var nbElementInStream = randomGame.stream.length;
@@ -660,7 +673,17 @@ describe('dev:games', function(){
               assert(streamItem.id == s.id, "stream first obj should be s");
               assert(streamItem.owner.player.id == randomPlayer._id, "should be the good player");
               assert(streamItem.owner.player.name === randomPlayer.name, "player name");
-              done();
+              
+              var options = {
+                host: Conf["http.host"],
+                port: Conf["http.port"],
+                path: Conf["documents.games"]+randomGame._id
+              };
+              http.getJSON(options, function (game) {
+                assert.isObject(game, "game must exist");
+                assert(computeStreamCommentsSize(game.stream) === game.streamCommentsSize, 'game stream length & streamCommentsSize should be the same (2) ' + game.stream.length + ' vs ' + game.streamCommentsSize);
+                done();
+              });
             });
           });
         });
@@ -748,6 +771,7 @@ describe('dev:games', function(){
       };
       http.getJSON(options, function (randomGame) {
         assert.isObject(randomGame, "random game must exist");
+        assert(computeStreamCommentsSize(randomGame.stream) === randomGame.streamCommentsSize, 'game stream length & streamCommentsSize should be the same (1) ' + randomGame.stream.length + ' vs ' + randomGame.streamCommentsSize);
         
         // nb Element ds le stream.
         var nbElementInStream = randomGame.stream.length;
@@ -806,7 +830,16 @@ describe('dev:games', function(){
                 assert(stream.length == 1, "should be streamItem id in stream");
                 assert(stream[0].data.text == rndText, "should have text updated");
                 
-                done();
+                var options = {
+                  host: Conf["http.host"],
+                  port: Conf["http.port"],
+                  path: Conf["documents.games"]+randomGame._id
+                };
+                http.getJSON(options, function (game) {
+                  assert.isObject(game, "game must exist");
+                  assert(computeStreamCommentsSize(game.stream) === game.streamCommentsSize, 'game stream length & streamCommentsSize should be the same (2) ' + game.stream.length + ' vs ' + game.streamCommentsSize);
+                  done();
+                });
               });
             });
           });
@@ -965,6 +998,7 @@ describe('dev:games', function(){
       };
       http.getJSON(options, function (randomGame) {
         assert.isObject(randomGame, "random game must exist");
+        assert(computeStreamCommentsSize(randomGame.stream) === randomGame.streamCommentsSize, 'game stream length & streamCommentsSize should be the same (1) ' + randomGame.stream.length + ' vs ' + randomGame.streamCommentsSize);
         
         // nb Element ds le stream.
         var nbElementInStream = randomGame.stream.length;
@@ -1012,7 +1046,16 @@ describe('dev:games', function(){
                   assert(streamItem.id != s.id);
                 });
                 
-                done();
+                var options = {
+                  host: Conf["http.host"],
+                  port: Conf["http.port"],
+                  path: Conf["documents.games"]+randomGame._id
+                };
+                http.getJSON(options, function (game) {
+                  assert.isObject(game, "game must exist");
+                  assert(computeStreamCommentsSize(game.stream) === game.streamCommentsSize, 'game stream length & streamCommentsSize should be the same (2) ' + game.stream.length + ' vs ' + game.streamCommentsSize);
+                  done();
+                });
               });
             });
           });

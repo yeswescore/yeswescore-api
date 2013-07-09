@@ -323,6 +323,7 @@ assert.isGame = function (game) {
         assert.isStreamComment(streamItem);
       }
     },
+    streamCommentsSize: { _type: "number|undefined" }
   }, game, "isGame: ");
 };
 
