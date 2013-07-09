@@ -301,18 +301,11 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
           tour: req.body.infos.tour || ""          
         }
       });
-      
       if (typeof req.body.infos.official === "boolean")
         game.infos.official = req.body.infos.official;
-        
-      if (req.body.dates) {
-       console.log(JSON.stringify(req.body)); 
-      }        
-      
-  	  if (req.body.dates && typeof req.body.dates.expected === "string")
+      if (req.body.dates && typeof req.body.dates.expected === "string")
         game.dates.expected = req.body.dates.expected;
-      
-      
+      //
       return DB.Model.Game.updateTeamsAsync(game, req.body.teams);
     }).then(function saveAsync(game) {
       return DB.saveAsync(game);
@@ -414,12 +407,8 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
           game.infos.official = req.body.infos.official;                
       }
       game.dates.update = Date.now();
-      
-  	  if (req.body.dates && typeof req.body.dates.expected === "string") {
-        game.dates.expected = req.body.dates.expected;   
-        console.log('req.body.dates.expected ' + req.body.dates.expected);
-      }
-      
+      if (req.body.dates && typeof req.body.dates.expected === "string")
+        game.dates.expected = req.body.dates.expected;
       //
       return DB.Model.Game.updateTeamsAsync(game, req.body.teams);
     }).then(function update(game) {
