@@ -277,7 +277,7 @@ describe('dev:games', function(){
             court: "10",
             surface: "GAZ",
             tour: "1er tour",
-            official: false
+            official: "false" // jquery poste du texte et non un boolean
           },
           status: "ongoing",
           teams: [ { id: null, players: [ { name : "toto" } ] },
@@ -295,7 +295,7 @@ describe('dev:games', function(){
           assert(game.infos.score === newGame.infos.score, "score should be the same");
           assert(game.infos.court === newGame.infos.court, "court should be the same");
           assert(game.infos.surface === newGame.infos.surface, "surface should be the same");
-          assert(game.infos.official === newGame.infos.official, "official should be the same");
+          assert(game.infos.official === false, "official should be the same (1) ");
           assert(JSON.parse(JSON.stringify(newGame.dates.expected)) === game.dates.expected, "dates.expected should be the same");
                     
           assert(game.status === newGame.status, "status should be the same " + game.status + " vs " + newGame.status);
