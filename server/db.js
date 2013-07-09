@@ -237,6 +237,7 @@ DB.Definition.Game = {
   },
   teams: [ DB.Schema.Team ],
   stream: [ DB.Schema.StreamItem ],
+  streamCommentsSize: { type: Number, default: 0 },
   infos: {
     type: { type: String, enum: [ "singles", "doubles" ] },
     subtype: { type: String, enum: [ "A", "B", "C", "D", "E", "F", "G", "H", "I" ] },
