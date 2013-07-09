@@ -258,7 +258,7 @@ app.get('/v2/games/:id/stream/', function (req, res){
  *      surface: String   (default="")
  *      tour: String      (default="")
  *      startTeam: Int    (default=undefined) must be undefined, 0 or 1.
- *		official: Boolean  (default=true)
+ *      official: Boolean  (default=true)
  *   }
  * }
  * 
@@ -302,8 +302,8 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
         }
       });
       //
-      if (typeof req.body.infos.official === "boolean")
-        game.infos.official = req.body.infos.official;   
+      if (typeof req.body.infos.official === "string")
+        game.infos.official = (req.body.infos.official === "true");
       if (req.body.dates && typeof req.body.dates.expected === "string")
         game.dates.expected = req.body.dates.expected;
       //
@@ -404,8 +404,8 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
           game.infos.surface = req.body.infos.surface;
         if (typeof req.body.infos.tour === "string")
           game.infos.tour = req.body.infos.tour;
-        if (typeof req.body.infos.official === "boolean")
-          game.infos.official = req.body.infos.official;
+        if (typeof req.body.infos.official === "string")
+          game.infos.official = (req.body.infos.official === "true");
       }
       game.dates.update = Date.now();
       if (req.body.dates && typeof req.body.dates.expected === "string")
