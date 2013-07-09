@@ -301,8 +301,9 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
           tour: req.body.infos.tour || ""          
         }
       });
+      //
       if (typeof req.body.infos.official === "boolean")
-        game.infos.official = req.body.infos.official;
+        game.infos.official = req.body.infos.official;   
       if (req.body.dates && typeof req.body.dates.expected === "string")
         game.dates.expected = req.body.dates.expected;
       //
@@ -404,7 +405,7 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
         if (typeof req.body.infos.tour === "string")
           game.infos.tour = req.body.infos.tour;
         if (typeof req.body.infos.official === "boolean")
-          game.infos.official = req.body.infos.official;                
+          game.infos.official = req.body.infos.official;
       }
       game.dates.update = Date.now();
       if (req.body.dates && typeof req.body.dates.expected === "string")
