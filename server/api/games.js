@@ -258,7 +258,7 @@ app.get('/v2/games/:id/stream/', function (req, res){
  *      surface: String   (default="")
  *      tour: String      (default="")
  *      startTeam: Int    (default=undefined) must be undefined, 0 or 1.
- *		official: Boolean  (default=true)
+ *      official: Boolean  (default=true)
  *   }
  * }
  * 
@@ -301,18 +301,12 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
           tour: req.body.infos.tour || ""          
         }
       });
-      
-	  //FIXME
-      if (typeof req.body.infos.official === "boolean")
-        game.infos.official = req.body.infos.official;
-	  else if (typeof req.body.infos.official === "string" && req.body.infos.official === "false")	
-	    game.infos.official = false;
-	  else 
-	    game.infos.official = true;
-         
-  	  if (req.body.dates && typeof req.body.dates.expected === "string")
+      //
+      if (typeof req.body.infos.official === "string")
+        game.infos.official = (req.body.infos.official === "true");
+      if (req.body.dates && typeof req.body.dates.expected === "string")
         game.dates.expected = req.body.dates.expected;
-      
+      //
       return DB.Model.Game.updateTeamsAsync(game, req.body.teams);
     }).then(function saveAsync(game) {
       return DB.saveAsync(game);
@@ -410,23 +404,12 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
           game.infos.surface = req.body.infos.surface;
         if (typeof req.body.infos.tour === "string")
           game.infos.tour = req.body.infos.tour;
-		  
-		//FIXME
-		if (typeof req.body.infos.official === "boolean")
-		  game.infos.official = req.body.infos.official;
-		else if (typeof req.body.infos.official === "string" && req.body.infos.official === "false")	
-		  game.infos.official = false;
-		else 
-		  game.infos.official = true;
-		  
+        if (typeof req.body.infos.official === "string")
+          game.infos.official = (req.body.infos.official === "true");
       }
       game.dates.update = Date.now();
-      
-  	  if (req.body.dates && typeof req.body.dates.expected === "string") {
-        game.dates.expected = req.body.dates.expected;   
-        console.log('req.body.dates.expected ' + req.body.dates.expected);
-      }
-      
+      if (req.body.dates && typeof req.body.dates.expected === "string")
+        game.dates.expected = req.body.dates.expected;
       //
       return DB.Model.Game.updateTeamsAsync(game, req.body.teams);
     }).then(function update(game) {
@@ -518,6 +501,10 @@ app.post('/v2/games/:id/stream/', express.bodyParser(), function(req, res){
       game.stream.push(streamItem);
       game.dates.update = Date.now();
       return DB.saveAsync(game);
+    }).then(function incr(game) {
+      return Q.nfcall(DB.Model.Game.findByIdAndUpdate.bind(DB.Model.Game),
+                      game.id,
+                      { $inc: { streamCommentsSize: 1 } });
     }).then(function sendGame(game) {
       if (game.stream.length === 0)
         throw "no streamItem added";
@@ -643,6 +630,11 @@ app.delete('/v2/games/:id/stream/:streamid/', function (req, res) {
         }
       }
       throw "no streamItem found";
+      return game;
+    }).then(function incr(game) {
+      return Q.nfcall(DB.Model.Game.findByIdAndUpdate.bind(DB.Model.Game),
+                      game.id,
+                      { $inc: { streamCommentsSize: -1 } });
     }).then(function () {
       res.send('{}'); // smallest json.
     }, app.defaultError(res));

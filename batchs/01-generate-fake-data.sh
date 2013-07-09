@@ -26,7 +26,7 @@ then
   echo " You are in prod environment, you cannot generate"
   export NODE_ENV="PROD"
   # FIXME: security temporary disabled.
-  # exit 1
+  exit 1
 else
   export NODE_ENV="DEV"
   port=`cat ../server/.port | head -1`

@@ -272,7 +272,9 @@ var generateGamesAsync = function () {
           }
           game.stream.push(comment);
         }
-        
+        //
+        game.streamCommentsSize = game.stream.length;
+        //
         games.push(game);
       }
 
