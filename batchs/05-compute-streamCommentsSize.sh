@@ -25,12 +25,12 @@ if [ "$NODE_ENV" = "PROD" ]
 then
   echo " You are in prod environment, you cannot generate"
   export NODE_ENV="PROD"
-  # FIXME: security temporary disabled.
-  # exit 1
+  logfile='/var/log/yeswescore-cron/compute-streamCommentsSize.log'
 else
   export NODE_ENV="DEV"
   port=`cat ../server/.port | head -1`
   export YESWESCORE_PORT=$port
+  logfile='/home/'$USER'/tmp/yeswescore-cron/compute-streamCommentsSize.log'
 fi
 
-./05-compute-streamCommentsSize/compute.js
+./05-compute-streamCommentsSize/compute.js 2>&1 | tee $logfile
