@@ -148,12 +148,21 @@ DB.Definition.Club = {
 DB.Definition.Player = {
   name: String,
   location: {
-    currentPos: { type: [Number], index: '2d'}
+    currentPos: { type: [Number], index: '2d'},
+    city: String,
+    address: String,
+    zip: String    
   },
   dates : {
     creation: { type: Date, default: Date.now },
-    update: { type: Date, default: Date.now }
+    update: { type: Date, default: Date.now },
+    birth: { type: Date }
   },
+  push: {
+  	platform: { type: String, enum: [ "android", "ios", "wp8", "bb" ] },
+  	token: { type: String }
+  },
+  gender: { type: String, enum: [ "man", "woman" ] },
   email: {
     address: { type: String, unique: true, sparse: true },
     // internal features of the email. 

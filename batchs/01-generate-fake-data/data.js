@@ -61,6 +61,13 @@ var generateFakeDateCreation = function () {
   var secAgo = 3600 * 2 + Math.floor(Math.random() * 3600);
   return new Date(new Date().getTime() - secAgo * 1000).toISO();
 }
+
+var generateFakeDateBirth = function () {
+  // date entre il y a 2 et 3 h
+  var secAgo = 3600 * 2 + Math.floor(Math.random() * 3600);
+  return new Date(new Date().getTime() - secAgo * 100000000).toISO();
+}
+
 var generateFakeDateEnd = function () {
   // date entre il y a 0 et 1 h
   var secAgo = Math.floor(Math.random() * 3600);
@@ -114,8 +121,19 @@ var generatePlayersAsync = function () {
         return new DB.Model.Player({
             name: generateFakeFirstName() + " " + generateFakeName(),
             location: {
-              currentPos: generateFakeLocation()
+              currentPos: generateFakeLocation(),
+              city: generateFakeCity(),
+              address: "random adress " + Math.random(),
+        	  zip: "zip"+Math.random()
             },
+            dates: {
+              birth : generateFakeDateBirth()
+            },
+            push: {
+              platform : [ "android", "ios", "wp8", "bb" ].random(),
+              token :  generateFakeId()
+            },
+            gender : [ "man", "woman" ].random(),
             rank: "15/2",
             club: clubInfo,
             games: [],

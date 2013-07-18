@@ -243,14 +243,32 @@ app.post('/v2/players/', express.bodyParser(), function(req, res){
     var inlinedClub = (club) ? { id: club.id, name: club.name } : null;
     var player = new DB.Model.Player({
         name: req.body.name || "",
-        location : { currentPos: req.body.location.currentPos || [] },
+        location : { 
+          currentPos: req.body.location.currentPos || [],
+          city: req.body.location.city || "",
+          address: req.body.location.address || "",
+          zip: req.body.location.zip || ""          
+        },      
         rank: req.body.rank || "",
-        idlicense: req.body.idlicense || "",
+        idlicense: req.body.idlicense || "",        
         club: inlinedClub, // will be undefined !
         type: req.body.type || "default"
     });
     // language
     player.languageSafe = req.body.language || Conf.get("default.language");
+    //birth
+    if (req.body.dates && typeof req.body.dates.birth === "date") {
+      player.dates.birth = req.body.dates.birth;
+    }    
+    //gender
+    if (req.body.gender && typeof req.body.gender === "string") {
+      player.gender = req.body.gender;
+    }
+    //push
+    if (req.body.push && typeof req.body.push.token === "string" && typeof req.body.push.platform === "string") {
+      player.push.platform = req.body.push.platform;
+      player.push.token = req.body.push.token;      
+    }        
     // email
     if (req.body.email && typeof req.body.email.address === "string") {
       // registering email.
@@ -332,20 +350,41 @@ app.post('/v2/players/:id', express.bodyParser(), function(req, res){
     if (inlinedClub) {
       player["club"] = inlinedClub;
     }
-    ["name", "rank", "idlicense"].forEach(function (o) {
+    ["name", "rank", "idlicense", "gender"].forEach(function (o) {
       if (typeof req.body[o] !== "undefined")
         player[o] = req.body[o];
     });
     // language
     if (typeof req.body.language !== "undefined")
       player.languageSafe = req.body.language;
-    // position
-    if (req.body.location && req.body.location.currentPos)
-      player.location = { currentPos : req.body.location.currentPos };
+    // location
+    if (req.body.location) {
+      player.location = {};     
+      if (req.body.location.currentPos)
+        player.location.currentPos = req.body.location.currentPos;
+      //city  
+      if (req.body.location.city)
+        player.location.city = req.body.location.city;
+      //city  
+      if (req.body.location.address)
+        player.location.address = req.body.location.address;
+      //city  
+      if (req.body.location.zip)
+        player.location.zip = req.body.location.zip;  
+    }                       
     // password
     if (req.body.uncryptedPassword)
       player.uncryptedPassword = req.body.uncryptedPassword;
     player.dates.update = Date.now();
+    //birth
+    if (req.body.dates && typeof req.body.dates.birth === "date") {
+      player.dates.birth = req.body.dates.birth;
+    }    
+    //push
+    if (req.body.push && typeof req.body.push.token === "string" && typeof req.body.push.platform === "string") {
+      player.push.platform = req.body.push.platform;
+      player.push.token = req.body.push.token;      
+    }      
     // email
     if (req.body.email && typeof req.body.email.address === "string")
     {
