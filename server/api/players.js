@@ -23,7 +23,7 @@ app.get('/v2/players/', function(req, res){
   var limit = req.query.limit || 10;
   var offset = req.query.offset || 0;
   var club = req.query.club;
-  var fields = req.query.fields;
+  var fields = req.query.fields || "following,idlicense,language,name,type,rank,type,games,dates.creation,location.currentPos,id,gender,dates.birth,push.platform,club.id,club.name,email.address,token";
   var longitude = req.query.longitude;
   var latitude = req.query.latitude;
   var distance = req.query.distance;
@@ -112,7 +112,8 @@ app.get('/v2/players/autocomplete/', function(req, res){
  * Specific options:
  */
 app.get('/v2/players/:id', function(req, res){
-  var fields = req.query.fields;
+
+  var fields = req.query.fields || "following,idlicense,language,name,type,rank,type,games,dates.creation,location.currentPos,id,gender,dates.birth,push.platform,club.id,club.name,email.address,token";
   
   DB.isAuthenticatedAsync(req.query)
     .then(function (authentifiedPlayer) {
@@ -210,6 +211,9 @@ app.get('/v2/players/:id/games/', function(req, res){
  *   language: String  (default=cf configuration)
  *   idlicense: String (default="")
  *   club: { id:..., name:... }  (default=null, name: is ignored)
+ *   location : { city:String,address:String,zip:String }
+ *   gender
+ *   push : { platform:enum,token:String } 
  *   type: String      (enum=default,owned default=default)
  * }
  */
@@ -257,7 +261,7 @@ app.post('/v2/players/', express.bodyParser(), function(req, res){
     // language
     player.languageSafe = req.body.language || Conf.get("default.language");
     //birth
-    if (req.body.dates && typeof req.body.dates.birth === "date") {
+    if (req.body.dates && typeof req.body.dates.birth === "string") {
       player.dates.birth = req.body.dates.birth;
     }    
     //gender
@@ -377,7 +381,7 @@ app.post('/v2/players/:id', express.bodyParser(), function(req, res){
       player.uncryptedPassword = req.body.uncryptedPassword;
     player.dates.update = Date.now();
     //birth
-    if (req.body.dates && typeof req.body.dates.birth === "date") {
+    if (req.body.dates && typeof req.body.dates.birth === "string") {
       player.dates.birth = req.body.dates.birth;
     }    
     //push
