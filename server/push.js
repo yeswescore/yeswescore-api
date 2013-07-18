@@ -55,6 +55,8 @@ var Push = {
 	this._auth = new Buffer(this._key + ":" + this._secret, "utf8").toString("base64");
 
 	var path = "/api/device_tokens/" + device_id;
+	
+	app.log("PUSH: registerDevice "+path+' avec '+this._key+' '+this._secret);
 
 	if (data) {
 		// Registration with optional data
@@ -104,6 +106,8 @@ var Push = {
 				"User-Agent": "node-urban-airship/0.2"
 			}
 		};
+
+   app.log('PUSH https_opts '+https_opts);		
 
 	// We don't necessarily send data
 	if (request_data instanceof Function) {
@@ -156,27 +160,27 @@ var Push = {
 				}
 				catch (ex) {
 					callback(ex);
-					app.log("PUSH: "+ex, "error");
+					app.log("PUSH: "+ex, "error 1");
             		pushLogger.error(ex);		
 				}
 			}
 			else {
 				callback(new Error(response_data));
-				app.log("PUSH: "+new Error(response_data), "error");
+				app.log("PUSH: "+new Error(response_data), "error 2");
             	pushLogger.error(new Error(response_data));				
 			}
 		});
 
 		response.on("error", function(error) {
 			callback(error);
-			app.log("PUSH: "+error, "error");
+			app.log("PUSH: "+error, "error 3");
             pushLogger.error(e);
 		});
 	});
 
 	request.on("error", function(error) {
 		callback(error);
-		app.log("PUSH: "+error, "error");
+		app.log("PUSH: "+error, "error 4");
         pushLogger.error(e);
 	});
 

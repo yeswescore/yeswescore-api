@@ -19,6 +19,7 @@ require('./api/players.js');
 require('./api/stats.js');
 require('./api/admin.js');
 require('./api/report.js');
+require('./api/push.js');
 
 // mongoose parameters
 mongoose.connection.on('error', function () { DB.status = 'disconnected' });
