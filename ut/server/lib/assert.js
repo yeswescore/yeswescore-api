@@ -349,7 +349,7 @@ assert.isGame = function (game) {
       } 
     },
     stream: { _type: "undefined|[schema]", _check: function (streamItem, i, stream) {
-        assert.isStreamComment(streamItem);
+        assert.isStreamItem(streamItem);
       }
     },
     streamCommentsSize: { _type: "number|undefined" }
@@ -399,11 +399,11 @@ assert.isStreamObject = function (o, m) {
 
 assert.isStreamItem = function (comment) {
   assert.isStreamObject(comment, "must be a stream object");
-  assert(comment.type === "comment" || comment.type === "image", "isStreamComment: streamObject.type must === comment or image");
+  assert(comment.type === "comment" || comment.type === "image", "isStreamItem: streamObject.type must === comment or image");
   if (comment.type === "comment")
-    assert.isString(comment.data.text, "isStreamComment: streamObject.data.text must be a string");
+    assert.isString(comment.data.text, "isStreamItem: streamObject.data.text must be a string");
   if (comment.type === "image")
-    assert.isString(comment.data.image, "isStreamComment: streamObject.data.text must be a string");
+    assert.isString(comment.data.image, "isStreamItem: streamObject.data.text must be a string");
 };
 
 assert.isError = function (error, m) {

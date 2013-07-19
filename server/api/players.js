@@ -23,7 +23,7 @@ app.get('/v2/players/', function(req, res){
   var limit = req.query.limit || 10;
   var offset = req.query.offset || 0;
   var club = req.query.club;
-  var fields = req.query.fields || "following,idlicense,language,name,type,rank,type,games,dates.creation,location.currentPos,id,gender,dates.birth,push.platform,club.id,club.name,email.address,token";
+  var fields = req.query.fields || "following,idlicense,language,name,type,rank,type,games,dates.creation,location.currentPos,id,gender,dates.birth,push.platform,club.id,club.name,email.address,token,profile";
   var longitude = req.query.longitude;
   var latitude = req.query.latitude;
   var distance = req.query.distance;
@@ -113,7 +113,7 @@ app.get('/v2/players/autocomplete/', function(req, res){
  */
 app.get('/v2/players/:id', function(req, res){
 
-  var fields = req.query.fields || "following,idlicense,language,name,type,rank,type,games,dates.creation,location.currentPos,id,gender,dates.birth,push.platform,club.id,club.name,email.address,token";
+  var fields = req.query.fields || "following,idlicense,language,name,type,rank,type,games,dates.creation,location.currentPos,id,gender,dates.birth,push.platform,club.id,club.name,email.address,token,profile";
   
   DB.isAuthenticatedAsync(req.query)
     .then(function (authentifiedPlayer) {

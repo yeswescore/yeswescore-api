@@ -659,7 +659,7 @@ describe('dev:games', function(){
             path: Conf["api.games"]+randomGame._id+"/stream/?playerid="+randomPlayer._id+"&token="+randomPlayer.token
           };
           http.post(options, streamObj, function (s) {
-            assert.isStreamComment(s);
+            assert.isStreamItem(s);
             // reading game from DB
             var options = {
               host: Conf["http.host"],
@@ -738,7 +738,7 @@ describe('dev:games', function(){
             path: Conf["api.games"]+randomGame._id+"/stream/?fbid="+fbid+"&token="+fbtoken
           };
           http.post(options, streamObj, function (s) {
-            assert.isStreamComment(s);
+            assert.isStreamItem(s);
             // reading game from DB
             var options = {
               host: Conf["http.host"],
@@ -794,7 +794,7 @@ describe('dev:games', function(){
             path: Conf["api.games"]+randomGame._id+"/stream/?playerid="+randomPlayer._id+"&token="+randomPlayer.token
           };
           http.post(options, streamObj, function (s) {
-            assert.isStreamComment(s);
+            assert.isStreamItem(s);
             assert.isId(s.id);
             
             var streamId = s.id;
@@ -811,7 +811,7 @@ describe('dev:games', function(){
               path: Conf["api.games"]+randomGame._id+"/stream/"+s.id+"/?playerid="+randomPlayer._id+"&token="+randomPlayer.token
             };
             http.post(options, streamObj, function (s) {
-              assert.isStreamComment(s);
+              assert.isStreamItem(s);
               assert(s.data.text == rndText, "text should be updated");
             
               // reading game from DB
@@ -1021,7 +1021,7 @@ describe('dev:games', function(){
             path: Conf["api.games"]+randomGame._id+"/stream/?playerid="+randomPlayer._id+"&token="+randomPlayer.token
           };
           http.post(options, streamObj, function (s) {
-            assert.isStreamComment(s);
+            assert.isStreamItem(s);
             assert.isId(s.id);
             
             // deleting

@@ -159,7 +159,7 @@ describe('dev:report', function(){
             path: Conf["api.games"]+randomGame._id+"/stream/?playerid="+randomPlayer._id+"&token="+randomPlayer.token
           };
           http.post(options, streamObj, function (s) {
-            assert.isStreamComment(s);
+            assert.isStreamItem(s);
             assert.isId(s.id);
             
             // report the streamItem
