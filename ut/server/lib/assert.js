@@ -283,6 +283,23 @@ assert.isPlayerWithToken = function (player) {
   assert.isId(player.token, "isPlayerWithToken: token must be an hexa string");
 };
 
+assert.isFile = function (file) {
+  assert.schema({
+    id : { _type: "string" },
+    owner : { _type: "id" },
+    dates: {
+      creation: { _type: "date" }
+    },
+    path: { _type: "string" },
+    mimeType: { _type: "enum", _enum: ["image/jpeg"] },
+    bytes: { _type: "number" },
+    metadata: { _type: "undefined|check", _check: function (metadata) {
+        assert.isObject(metadata, "isFile: metadata must be an object");
+      }
+    }
+  }, file, "isFile ");
+};
+
 assert.isGame = function (game) {
   assert.schema({
     id : { _type: "id" },
