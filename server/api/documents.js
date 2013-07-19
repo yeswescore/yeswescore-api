@@ -62,4 +62,15 @@ if (Conf.env === "DEV") {
       res.send(JSON.stringify(club));
     });
   });
+  
+  app.get('/documents/files/:id', function (req, res) {
+    DB.Model.File.findOne({_id:req.params.id})
+                 .exec(function (err, file) {
+      if (err)
+        return app.defaultError(res)(err);
+      if (file === null)
+        return app.defaultError(res)("no file found");
+      res.send(JSON.stringify(file));
+    });
+  });
 };
