@@ -154,4 +154,45 @@ var image = { data:
       });
     });
   });
+  
+  describe('upload jpeg', function(){
+    it('should exist on disk, model readable & good size', function (done){
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.players"]+"random"
+      };
+      
+      http.getJSON(options, function (randomplayer) {
+        assert.isObject(randomplayer, "random player must exist");
+        
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["api.files"] + "?"
+                                  + "mimeType=image/jpeg&"
+                                  + "playerid="+randomplayer._id+"&token="+randomplayer.token
+        };
+        
+        http.post(options, image, function (file) {
+          assert.isFile(file);
+          assert.isString(file.path);
+          
+          // on regarde si l'image est accessible en http
+          var options = { 
+            host: Conf["http.host"],
+            port: Conf["http.port"],
+            path: Conf["api.files"] + file.id
+          }
+          http.getJSON(options, function (model) {
+            assert.isFile(model)
+            assert(model.id == file.id);
+            assert(model.bytes == 2921, "size should be 2921");
+            
+            done();
+          });
+        });
+      });
+    });
+  });
 });

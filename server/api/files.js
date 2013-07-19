@@ -5,7 +5,32 @@ var DB = require("../db.js")
   , Q = require("q")
   , mkdirp = require('mkdirp')
   , fs = require('fs');  
+
+/**
+ * Read a file object
+ * 
+ * Generic options:
+ *  /v2/files/:id/?fields=name
+ */
+app.get('/v2/files/:id', function(req, res){
+  var fields = req.query.fields;
   
+  DB.isAuthenticatedAsync(req.query)
+    .then(function (authentifiedPlayer) {
+      var query = DB.Model.File.findById(req.params.id);
+      if (fields)
+         query.select(fields.replace(/,/g, " "))
+      query.exec(function (err, file) {
+        if (err)
+          return app.defaultError(res)(err);
+        if (file === null)
+          return app.defaultError(res)("no file found");
+        res.send(JSON.stringifyModels(file));
+      });
+    },
+    app.defaultError(res, "authentication error"));
+});
+
 /**
  * High level api used to POST a picture
  * 
