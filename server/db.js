@@ -260,6 +260,20 @@ DB.Definition.Game = {
   _searchablePlayersClubsIds: [ Schema.Types.ObjectId ],  // AUTO-FIELD (Player post save) ASYNC
   _searchablePlayersClubsNames: [ String ]                // AUTO-FIELD (Player post save) ASYNC
 };
+DB.Definition.File = {
+  _id: { type: String },
+  owner: { type: Schema.Types.ObjectId, ref: "Player" },
+  dates : {
+    creation: { type: Date, default: Date.now }
+  },
+  path: { type: String },
+  mimeType: { type: String, enum: [ "image/jpeg" ], default: "image/jpeg" },
+  bytes: { type: Number, default: 0 },
+  metadata: Schema.Types.Mixed, // { usage: "profil/streamitem/...", id: }
+  // private
+  _deleted: { type: Boolean, default: false },  // FIXME: unused
+  _reported: { type: Boolean, default: false }, // FIXME: unused
+}
 
 // SETTERS
 DB.Definition.Game.status.set = function (status) {
@@ -284,6 +298,7 @@ DB.Definition.Game.status.set = function (status) {
 DB.Schema.Club = new Schema(DB.Definition.Club);
 DB.Schema.Player = new Schema(DB.Definition.Player);
 DB.Schema.Game = new Schema(DB.Definition.Game);
+DB.Schema.File = new Schema(DB.Definition.File);
 
 // password virtual setter
 DB.Schema.Player.virtual('uncryptedPassword').set(function (uncryptedPassword) {
@@ -544,7 +559,7 @@ for (var schemaName in DB.Schema) {
 DB.Model.Club = mongoose.model("Club", DB.Schema.Club);
 DB.Model.Player = mongoose.model("Player", DB.Schema.Player);
 DB.Model.Game = mongoose.model("Game", DB.Schema.Game);
-
+DB.Model.File = mongoose.model("File", DB.Schema.File);
 
 DB.Model.Player.isEmailRegisteredAsync = function (email) {
   return Q.nfcall(
@@ -725,6 +740,26 @@ DB.Model.Game.createOwnedPlayersAsync = function (teams, owner) {
     }
   }
   return Q.all(promises);
+};
+
+// 51e8fd31cba93e9f5d-000023 => 51/e8/fd/31/51e8fd31cba93e9f5d-000023
+DB.Model.File.idTypeToPathInfos = function (id, type) {
+  // we will need a switch here (type)
+  var ext = ".jpeg";
+  var directory = id.substr(0, 10).match(/.{1,2}/g).join("/");
+  var filename = id + ext;
+  var path = directory + "/" + filename;
+  return {
+    directory: directory,
+    filename: filename,
+    path: path
+  }
+};
+
+DB.Model.File.checksum = function (buffer) {
+  return crypto.createHash('sha256')
+               .update(buffer)
+               .digest('hex');
 };
 
 DB.Model.findByIdAsync = function (model, id) {

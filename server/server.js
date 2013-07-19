@@ -14,6 +14,7 @@ require('./api/clubs.js');
 require('./api/facebook.js');
 require('./api/documents.js');
 require('./api/email.js');
+require('./api/files.js');
 require('./api/games.js');
 require('./api/players.js');
 require('./api/stats.js');
