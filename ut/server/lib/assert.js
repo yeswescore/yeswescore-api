@@ -260,6 +260,9 @@ assert.isPlayerScheme = function (player, m) {
         assert.isId(value.id, "isPlayerScheme: club.id must be an id");
       }
     },
+    profile: {
+      image: { _type: "string|undefined" },
+    },
     following: { _type: "[schema]", _check: function (playerId, i, games) {
         assert.isId(playerId, "isPlayerScheme: following[*] must be id");
       }
@@ -385,12 +388,14 @@ assert.isStreamObject = function (o, m) {
   }, o, "isStreamObject ");
 };
 
-assert.isStreamComment = function (comment) {
+assert.isStreamItem = function (comment) {
   assert.isStreamObject(comment, "must be a stream object");
-  assert(comment.type === "comment", "isStreamComment: streamObject.type must === comment");
-  assert.isString(comment.data.text, "isStreamComment: streamObject.data.text must be a string");
+  assert(comment.type === "comment" || comment.type === "image", "isStreamComment: streamObject.type must === comment or image");
+  if (comment.type === "comment")
+    assert.isString(comment.data.text, "isStreamComment: streamObject.data.text must be a string");
+  if (comment.type === "image")
+    assert.isString(comment.data.image, "isStreamComment: streamObject.data.text must be a string");
 };
-
 
 assert.isError = function (error, m) {
   assert.isObject(error, "error must be an object");

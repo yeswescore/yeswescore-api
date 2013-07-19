@@ -182,6 +182,9 @@ DB.Definition.Player = {
     id: { type: Schema.Types.ObjectId, ref: "Club" },
     name: String // AUTO-FIELD (Player pre save)
   },
+  profile: {
+    image: { type: String, ref: "File" }
+  },
   games: [ { type: Schema.Types.ObjectId, ref: "Game" } ], // AUTO-FIELD (Game post save)
   following: [ { type: Schema.Types.ObjectId, ref: "Player" } ],
   owner: { type: Schema.Types.ObjectId, ref: "Player" },
@@ -205,7 +208,7 @@ DB.Definition.StreamItem = {
     creation: { type: Date, default: Date.now },
     update: { type: Date, default: Date.now }
   },
-  type: { type: String, enum: [ "comment" ] },
+  type: { type: String, enum: [ "comment", "image" ] },
   owner: {
     player: { type: Schema.Types.ObjectId, ref: "Player" },
     facebook: { id: String, name: String }

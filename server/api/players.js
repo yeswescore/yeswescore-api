@@ -207,6 +207,7 @@ app.get('/v2/players/:id/games/', function(req, res){
  *   email: { 
  *     address: String,    (default="")
  *   },
+ *   image: String     (default=undefined)
  *   language: String  (default=cf configuration)
  *   idlicense: String (default="")
  *   club: { id:..., name:... }  (default=null, name: is ignored)
@@ -221,6 +222,7 @@ app.post('/v2/players/', express.bodyParser(), function(req, res){
   // preprocessing req.body.
   req.body.location = (req.body.location) ? req.body.location : {};
   req.body.email = (req.body.email) ? req.body.email : {};
+  req.body.profile = (req.body.profile) ? req.body.profile : {};
   if (req.body.email && typeof req.body.email.address === "string")
     req.body.email.address = req.body.email.address.toLowerCase();
   
@@ -261,6 +263,10 @@ app.post('/v2/players/', express.bodyParser(), function(req, res){
       player.email._dates._created = Date.now();
       // sending token by email.
       emailConfirmationRequired = true;
+    }
+    // profile
+    if (req.body.profile && typeof req.body.profile.image === "string") {
+      player.profile = { image: req.body.profile.image };
     }
     // password
     if (req.body.uncryptedPassword)
@@ -372,6 +378,10 @@ app.post('/v2/players/:id', express.bodyParser(), function(req, res){
           emailConfirmationRequired = true;
         }
       }
+    }
+    // profile
+    if (req.body.profile && typeof req.body.profile.image === "string") {
+      player.profile = { image: req.body.profile.image };
     }
     // saving player
     return DB.saveAsync(player);

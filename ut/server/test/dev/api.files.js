@@ -6,25 +6,7 @@ if (Conf.env !== "DEV")
   process.exit(0);
 
 describe('dev:files', function(){
-  describe('upload jpeg', function(){
-    it('should exist on disk, be accessible by http', function (done){
-      var options = {
-        host: Conf["http.host"],
-        port: Conf["http.port"],
-        path: Conf["documents.players"]+"random"
-      };
-      
-      http.getJSON(options, function (randomplayer) {
-        assert.isObject(randomplayer, "random player must exist");
-        
-        var options = {
-          host: Conf["http.host"],
-          port: Conf["http.port"],
-          path: Conf["api.files"] + "?"
-                                  + "mimeType=image/jpeg&"
-                                  + "playerid="+randomplayer._id+"&token="+randomplayer.token
-        };
-        var image = { data: 
+var image = { data: 
           "data:image/jpeg;base64,/9j/4QAYRXhpZgAASUkqAAgAAAAAAAAAAAAAAP/sABFEdWNreQABAAQAAABkAAD/4QMraHR0c" + "DovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3pOVGN6a" +
           "2M5ZCI/PiA8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIiB4OnhtcHRrPSJBZG9iZSBYTVAgQ29yZSA1LjMtY" + "zAxMSA2Ni4xNDU2NjEsIDIwMTIvMDIvMDYtMTQ6NTY6MjcgICAgICAgICI+IDxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL" +
           "3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+IDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiIHhtb" +
@@ -64,6 +46,26 @@ describe('dev:files', function(){
           "Zj8RHP+qG3snYfupd6/13rFccAZdQPhCBwtx02n+XY/mIw1lsKDmt2RsVOc83VdnWpBcVS3Mm5TuYp4iQ7h6/g2rFm3IdQBU" +
           "VWUTSTIAmOYCgI9eVHUg7Dzcp4HoPVuglhMNcLm7Fy1qFW9oNsurMn1ayGQVKxZiZSCqCSZAAkx/9k="
         };
+  
+  describe('upload jpeg', function(){
+    it('should exist on disk, be accessible by http', function (done){
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.players"]+"random"
+      };
+      
+      http.getJSON(options, function (randomplayer) {
+        assert.isObject(randomplayer, "random player must exist");
+        
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["api.files"] + "?"
+                                  + "mimeType=image/jpeg&"
+                                  + "playerid="+randomplayer._id+"&token="+randomplayer.token
+        };
+        
         http.post(options, image, function (file) {
           assert.isFile(file);
           assert.isString(file.path);
@@ -75,6 +77,79 @@ describe('dev:files', function(){
             path: "/static/files/" + file.path
           }
           http.is200OK(options, done);
+        });
+      });
+    });
+  });
+  
+  describe('upload jpeg, save in player profile', function(){
+    it('should exist on disk, be accessible by http, & saved in player profile ', function (done){
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.players"]+"random"
+      };
+      
+      http.getJSON(options, function (randomplayer) {
+        assert.isObject(randomplayer, "random player must exist");
+        
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["api.files"] + "?"
+                                  + "mimeType=image/jpeg&"
+                                  + "playerid="+randomplayer._id+"&token="+randomplayer.token
+        };
+        
+        http.post(options, image, function (file) {
+          assert.isFile(file);
+          assert.isString(file.path);
+          
+          // on regarde si l'image est accessible en http
+          var options = { 
+            host: Conf["http.host"],
+            port: Conf["http.port"],
+            path: "/static/files/" + file.path
+          }
+          http.is200OK(options, function () {
+            // read the player
+            var options = {
+              host: Conf["http.host"],
+              port: Conf["http.port"],
+              path: Conf["api.players"]+randomplayer._id
+            };
+            http.getJSON(options, function (player) {
+              assert.isPlayer(player, "must be a player");
+              
+              // assign picture to player profile
+              player.profile = { image : file.id };
+              
+              // save the player
+              var options = {
+                host: Conf["http.host"],
+                port: Conf["http.port"],
+                path: Conf["api.players"]+player.id+"/?playerid="+player.id+"&token="+randomplayer.token
+              };
+              
+              http.post(options, player, function (modifiedPlayer) {
+                assert.isPlayerWithToken(modifiedPlayer, "must be a player");
+                assert(modifiedPlayer.profile.image === file.id, "profile image must have been saved");
+                 
+                // read from api again
+                var options = {
+                  host: Conf["http.host"],
+                  port: Conf["http.port"],
+                  path: Conf["api.players"]+randomplayer._id
+                };
+                http.getJSON(options, function (player) {
+                  assert.isPlayer(player, "must be a player");
+                  
+                  assert(player.profile.image === file.id, "profile image must have been saved (2)");
+                  done();
+                });
+              });
+            });
+          });
         });
       });
     });
