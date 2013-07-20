@@ -3,7 +3,7 @@ var Conf = require("../conf.js")
   , Push = require("../push.js")
   , app = require("../app.js");
 
-TEST_DEVICE = "test",
+TEST_DEVICE = "2e86eb31-b552-4c4b-a02f-f7d532f550c4",
 
 app.get('/v2/push/broadcast/', function (req, res) {
 
@@ -22,10 +22,17 @@ app.get('/v2/push/broadcast/', function (req, res) {
 
 });
   
-app.get('/v2/push/register/', function (req, res) {
+app.get('/v2/push/send/', function (req, res) {
+  
+  /*
+  ios
+  {"aps": {"alert": "Test", "sound": "boum"}, "device_tokens": ["5456465456465654654456465"]}
+  */
+  
+  var payload = {"android": {"alert": "Salut c'est un test"}, "apids": [TEST_DEVICE]};
 
-  Push.registerDevice(TEST_DEVICE, function(error) {
-    //return app.defaultError(res)(error);
+  Push.pushNotification("/api/push/", payload, function(error) {
+		//self.emit("finished", error, "pushNotification")
   });
   
   res.send('register send');
