@@ -381,8 +381,10 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
       return game;
     }).then(function updateFields(game) {
       // updatable simple fields
-      if (typeof req.body.status !== "undefined")
-        game.status = req.body.status;
+      if (typeof req.body.status !== "undefined") {
+        game.status = req.body.status;       
+        // change status if finished or started on envoie notification
+      }
       if (typeof req.body.location !== "undefined") {
         if (typeof req.body.location.country === "string")
           game.location.country = req.body.location.country;
