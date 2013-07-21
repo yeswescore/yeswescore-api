@@ -137,11 +137,11 @@ app.get('/v2/players/:id', function(req, res){
 
 /**
  * Read players with push.token who follow a player
- * only server can do this !!
+ * only server can do this !! no v2 before
  *
  * Specific options:
  */
-app.get('/v2/players/push/:id', function(req, res){
+app.get('/players/push/:id', function(req, res){
 
   var fields = req.query.fields || "name,type,push.platform,push.token"; 
   var id = req.params.id;
@@ -154,11 +154,10 @@ app.get('/v2/players/push/:id', function(req, res){
       .find({
         $and: [
           { 'following': id },
-          //{ $or: [ {type: "default"}, {type: "owned", owner: owner} ] }
         ]
       });
       
-    //query.where('push.token');
+    query.where('push.token').exists();    
     
     query.select(fields.replace(/,/g, " "))
       .sort(sort.replace(/,/g, " "))

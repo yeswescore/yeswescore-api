@@ -1,11 +1,13 @@
-var https = require("https")
-  , Conf = require("./conf.js")
+var Conf = require("./conf.js")
+  , http = require('http')
+  , https = require('https')
   , DB = require("./db.js")
   , app = require("./app.js")
   , Resources = require("./strings/resources.js")
   , winston = require("winston");
 
 var pushLogger = winston.loggers.get('push');
+TEST_DEVICE = "2e86eb31-b552-4c4b-a02f-f7d532f550c4";
   
 // using urbanairship
 // cf. https://github.com/cojohn/node-urban-airship/blob/master/lib/urban-airship.js
@@ -15,6 +17,65 @@ var Push = {
   _key : Conf.get("push.urbanairship.key"),
   _secret : Conf.get("push.urbanairship.secret"),
   _master : Conf.get("push.urbanairship.master"),
+  
+
+   sendPushs : function(err,playerid,msg) {
+   
+   var that = this;
+   
+	http.get({
+       host: Conf.get('http.host'),
+       port: Conf.get('http.port'),
+       path: "/players/push/" +playerid 
+     }, function(res){
+	    var data = '';
+	
+	    res.on('data', function (chunk){
+	        data += chunk;
+	    });
+	
+	    //get followers
+	    res.on('end',function(){
+	      var followers = JSON.parse(data);
+	      
+	      var android=false;
+	      var android_tab=[];
+	      var ios=false;
+	      var ios_tab=[];
+	        
+	      followers.forEach(function (follower) {
+	        app.log( follower.name+' '+follower.push.token+' '+follower.push.platform );          
+
+			if (follower.push.platform.indexOf('android')!=-1) {
+			  android=true;
+			  android_tab.push(follower.push.token);
+			}
+
+			if (follower.push.platform.indexOf('ios')!=-1) {
+			  ios=true;
+			  ios_tab.push(follower.push.token);
+			}
+						
+			if (android == true)
+			{
+			  var payload = {"android": {"alert": msg}, "apids": android_tab};	
+			  that.pushNotification("/api/push/", payload, function(error) {
+			    app.log(error);
+			  });			
+			}
+			
+			if (ios == true)
+			{
+			  var payload = {"aps": {"alert": msg}, "device_tokens": ios_tab};	
+			  that.pushNotification("/api/push/", payload, function(error) {
+			    app.log(error);
+			  });			
+			}
+						
+		  });		          
+	    });
+	 });      
+   }, 
 
 /**
  * Gets the number of devices tokens authenticated with the application.
