@@ -19,64 +19,137 @@ var Push = {
   _master : Conf.get("push.urbanairship.master"),
   
 
-   sendPushs : function(err,playerid,msg) {
+   sendPushs : function(err,push) {   
+     var that = this;
+     var msg = "";    
    
-   var that = this;
+     if (push.status.indexOf('ongoing')!=-1) {
+       //if never start
+       //if (push.dates.start==="")
+       //{
+	     msg = Resources.getString(push.language, "game.push.started");
+	     msg = msg.replace(/%PLAYER1%/g, push.player.name);
+         if (typeof push.opponent.name === "undefined")	      
+	       msg = msg.replace(/%PLAYER2%/g, push.opponent.name);
+         if (typeof push.opponent.rank === "undefined")     	       
+	       msg = msg.replace(/%RANK2%/g, push.opponent.rank);
+	   //}              
+     }
+
+     else if (push.status.indexOf('created')!=-1) {
+       msg = Resources.getString(push.language, "game.push.created");      
+       msg = msg.replace(/%PLAYER1%/g, push.player.name); 
+       if (typeof push.opponent.name === "undefined")
+         msg = msg.replace(/%PLAYER2%/g, push.opponent.name);
+       if (typeof push.opponent.rank === "undefined")
+         msg = msg.replace(/%RANK2%/g, push.opponent.rank);      
+       msg = msg.replace(/%DATE%/g, push.dates.create);                  
+     }
+
+     else if (push.status.indexOf('finished')!=-1) {   
+     
+       app.log('state finished win:'+push.win);
+       
+       if (push.win==="1")
+       {
+         msg = Resources.getString(push.language, "game.push.finished.win");
+         msg = msg.replace(/%PLAYER1%/g, push.player.name);
+         if (typeof push.opponent.name === "undefined")          
+           msg = msg.replace(/%PLAYER2%/g, push.opponent.name);
+         if (typeof push.opponent.rank === "undefined")           
+           msg = msg.replace(/%RANK2%/g, push.opponent.rank);
+         msg = msg.replace(/%SCORE%/g, push.score);
+       }
+       else 
+       {
+         msg = Resources.getString(push.language, "game.push.finished.loose");
+         msg = msg.replace(/%PLAYER1%/g, push.player.name); 
+         if (typeof push.opponent.name === "undefined")            
+           msg = msg.replace(/%PLAYER2%/g, push.opponent.name);
+         if (typeof push.opponent.rank === "undefined")            
+           msg = msg.replace(/%RANK2%/g, push.opponent.rank);
+         msg = msg.replace(/%SCORE%/g, push.score);      
+       }       
+     }
+     
+     app.log('push.js '+push.status+' msg:'+msg);   
    
-	http.get({
-       host: Conf.get('http.host'),
-       port: Conf.get('http.port'),
-       path: "/players/push/" +playerid 
-     }, function(res){
-	    var data = '';
+     if (msg!=="") {
+	   http.get({
+         host: Conf.get('http.host'),
+         port: Conf.get('http.port'),
+         path: "/players/push/" +push.player.id 
+       }, function(res){
+	     var data = '';
 	
-	    res.on('data', function (chunk){
+	     res.on('data', function (chunk){
 	        data += chunk;
-	    });
+	     });
 	
-	    //get followers
-	    res.on('end',function(){
-	      var followers = JSON.parse(data);
+	     //get followers
+	     res.on('end',function(){
+	       var followers = JSON.parse(data);
 	      
-	      var android=false;
-	      var android_tab=[];
-	      var ios=false;
-	      var ios_tab=[];
+	       var android=false;
+	       var android_tab=[];
+	       var ios=false;
+	       var ios_tab=[];
 	        
-	      followers.forEach(function (follower) {
-	        app.log( follower.name+' '+follower.push.token+' '+follower.push.platform );          
+	       followers.forEach(function (follower) {
+	         app.log( follower.name+' '+follower.push.token+' '+follower.push.platform );          
 
-			if (follower.push.platform.indexOf('android')!=-1) {
-			  android=true;
-			  android_tab.push(follower.push.token);
-			}
+			 if (follower.push.platform.indexOf('android')!=-1) {
+			   android=true;
+			   android_tab.push(follower.push.token);
+			 }
 
-			if (follower.push.platform.indexOf('ios')!=-1) {
-			  ios=true;
-			  ios_tab.push(follower.push.token);
-			}
+			 if (follower.push.platform.indexOf('ios')!=-1) {
+			   ios=true;
+			   ios_tab.push(follower.push.token);
+			 }
 						
-			if (android == true)
-			{
-			  var payload = {"android": {"alert": msg}, "apids": android_tab};	
-			  that.pushNotification("/api/push/", payload, function(error) {
-			    app.log(error);
-			  });			
-			}
+			 if (android == true)
+			 {
+			   app.log('test envoi android');
+			 
+			   var payload = {"android": {"alert": msg}, "apids": android_tab};	
+			   that.pushNotification("/api/push/", payload, function(error) {
+			     app.log(error);
+			   });			
+			 }
 			
-			if (ios == true)
-			{
-			  var payload = {"aps": {"alert": msg}, "device_tokens": ios_tab};	
-			  that.pushNotification("/api/push/", payload, function(error) {
-			    app.log(error);
-			  });			
-			}
-						
+			 if (ios == true)
+			 {
+			   app.log('test envoi ios');
+			   
+			   var payload = {"aps": {"alert": msg}, "device_tokens": ios_tab};	
+			   that.pushNotification("/api/push/", payload, function(error) {
+			     app.log(error);
+			   });			
+			 }						
 		  });		          
 	    });
-	 });      
+	   });
+	 }      
    }, 
 
+  getIndexWinningTeam: function (score) {
+    if (typeof score !== "string")
+      return null;
+    var scoreDetails = score.split("/");
+    if (scoreDetails.length !== 2)
+      return null;
+    var scoreTeamA = parseInt(scoreDetails[0], 10);
+    var scoreTeamB = parseInt(scoreDetails[1], 10)
+    if (scoreTeamA == NaN || scoreTeamB == NaN)
+      return null;
+    if (scoreTeamA == scoreTeamB)
+      return -1; // draw
+    if (scoreTeamA < scoreTeamB)
+      return 1; // team B is winning
+    return 0; // team A is winning
+  },
+  
 /**
  * Gets the number of devices tokens authenticated with the application.
  *
