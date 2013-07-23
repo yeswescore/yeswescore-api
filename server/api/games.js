@@ -374,6 +374,7 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
     , dates: {create:"",start:""}
     , official:""
     , score:""
+    , sets:""
     , win:"0"
   };
   if (err)
@@ -429,19 +430,20 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
             push.opponent.name = game.teams[1].players[0].name;
             push.opponent.rank = game.teams[1].players[0].rank;
             push.score = game.infos.score;
+            push.sets = game.infos.sets;            
             if (Push.getIndexWinningTeam(push.score)==0)
-              push.win = "1";
+              push.win = "0";
             else if (Push.getIndexWinningTeam(push.score)==1)
-              push.win = "0";            
+              push.win = "1";            
           }
           else {
             push.opponent.name = game.teams[0].players[0].name;
             push.opponent.rank = game.teams[0].players[0].rank; 
             push.score = game.infos.score;
             if (Push.getIndexWinningTeam(push.score)==0)
-              push.win = "0";
+              push.win = "1";
             else if (Push.getIndexWinningTeam(push.score)==1)
-              push.win = "1";                                    
+              push.win = "0";                                    
           }
           
           //push.dates.create = Date.now();

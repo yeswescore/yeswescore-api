@@ -58,7 +58,7 @@ var Push = {
            msg = msg.replace(/%PLAYER2%/g, push.opponent.name);
          if (typeof push.opponent.rank === "undefined")           
            msg = msg.replace(/%RANK2%/g, push.opponent.rank);
-         msg = msg.replace(/%SCORE%/g, push.score);
+         msg = msg.replace(/%SCORE%/g, push.sets);
        }
        else 
        {
@@ -68,7 +68,7 @@ var Push = {
            msg = msg.replace(/%PLAYER2%/g, push.opponent.name);
          if (typeof push.opponent.rank === "undefined")            
            msg = msg.replace(/%RANK2%/g, push.opponent.rank);
-         msg = msg.replace(/%SCORE%/g, push.score);      
+         msg = msg.replace(/%SCORE%/g, push.sets);      
        }       
      }
      
