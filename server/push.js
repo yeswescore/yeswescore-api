@@ -29,9 +29,9 @@ var Push = {
        //{
 	     msg = Resources.getString(push.language, "game.push.started");
 	     msg = msg.replace(/%PLAYER1%/g, push.player.name);
-         if (typeof push.opponent.name === "undefined")	      
+         if (typeof push.opponent.name !== "undefined")	      
 	       msg = msg.replace(/%PLAYER2%/g, push.opponent.name);
-         if (typeof push.opponent.rank === "undefined")     	       
+         if (typeof push.opponent.rank !== "undefined")     	       
 	       msg = msg.replace(/%RANK2%/g, push.opponent.rank);
 	   //}              
      }
@@ -39,9 +39,9 @@ var Push = {
      else if (push.status.indexOf('created')!=-1) {
        msg = Resources.getString(push.language, "game.push.created");      
        msg = msg.replace(/%PLAYER1%/g, push.player.name); 
-       if (typeof push.opponent.name === "undefined")
+       if (typeof push.opponent.name !== "undefined")
          msg = msg.replace(/%PLAYER2%/g, push.opponent.name);
-       if (typeof push.opponent.rank === "undefined")
+       if (typeof push.opponent.rank !== "undefined")
          msg = msg.replace(/%RANK2%/g, push.opponent.rank);      
        msg = msg.replace(/%DATE%/g, push.dates.create);                  
      }
@@ -54,9 +54,9 @@ var Push = {
        {
          msg = Resources.getString(push.language, "game.push.finished.win");
          msg = msg.replace(/%PLAYER1%/g, push.player.name);
-         if (typeof push.opponent.name === "undefined")          
+         if (typeof push.opponent.name !== "undefined")          
            msg = msg.replace(/%PLAYER2%/g, push.opponent.name);
-         if (typeof push.opponent.rank === "undefined")           
+         if (typeof push.opponent.rank !== "undefined")           
            msg = msg.replace(/%RANK2%/g, push.opponent.rank);
          msg = msg.replace(/%SCORE%/g, push.sets);
        }
@@ -64,21 +64,21 @@ var Push = {
        {
          msg = Resources.getString(push.language, "game.push.finished.loose");
          msg = msg.replace(/%PLAYER1%/g, push.player.name); 
-         if (typeof push.opponent.name === "undefined")            
+         if (typeof push.opponent.name !== "undefined")            
            msg = msg.replace(/%PLAYER2%/g, push.opponent.name);
-         if (typeof push.opponent.rank === "undefined")            
+         if (typeof push.opponent.rank !== "undefined")            
            msg = msg.replace(/%RANK2%/g, push.opponent.rank);
          msg = msg.replace(/%SCORE%/g, push.sets);      
        }       
      }
      
-     app.log('push.js '+push.status+' msg:'+msg);   
+     app.log(' msg:'+msg);   
    
      if (msg!=="") {
 	   http.get({
          host: Conf.get('http.host'),
          port: Conf.get('http.port'),
-         path: "/players/push/" +push.player.id 
+         path: "/players/" +push.player.id+ "/push" 
        }, function(res){
 	     var data = '';
 	
@@ -110,8 +110,6 @@ var Push = {
 						
 			 if (android == true)
 			 {
-			   app.log('test envoi android');
-			 
 			   var payload = {"android": {"alert": msg}, "apids": android_tab};	
 			   that.pushNotification("/api/push/", payload, function(error) {
 			     app.log(error);
@@ -120,8 +118,6 @@ var Push = {
 			
 			 if (ios == true)
 			 {
-			   app.log('test envoi ios');
-			   
 			   var payload = {"aps": {"alert": msg}, "device_tokens": ios_tab};	
 			   that.pushNotification("/api/push/", payload, function(error) {
 			     app.log(error);
@@ -225,7 +221,7 @@ var Push = {
  */
   _transport : function(path, method, request_data, callback) {
   
-    app.log('PUSH: sending notification path ['+path+'] method ['+method+'] request_data ['+request_data+']');
+    //app.log('PUSH: sending notification path ['+path+'] method ['+method+'] request_data ['+request_data+']');
   
 	var self = this,
 		rd = "",
@@ -240,8 +236,7 @@ var Push = {
 				"User-Agent": "node-urban-airship/0.2"
 			}
 		};
-
-   app.log('PUSH https_opts '+https_opts);		
+	
 
 	// We don't necessarily send data
 	if (request_data instanceof Function) {
@@ -289,7 +284,7 @@ var Push = {
 							callback(null, response_data);
 					}
 					
-					app.log("PUSH: notification sended "+response_data);
+					app.log("PUSH: notification sended ");
             		pushLogger.info(response_data);
 				}
 				catch (ex) {

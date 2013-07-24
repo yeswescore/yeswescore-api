@@ -141,7 +141,7 @@ app.get('/v2/players/:id', function(req, res){
  *
  * Specific options:
  */
-app.get('/players/push/:id', function(req, res){
+app.get('/players/:id/push', function(req, res){
 
   var fields = req.query.fields || "name,type,push.platform,push.token"; 
   var id = req.params.id;

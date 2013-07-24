@@ -365,6 +365,7 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
  * result is a redirect to /v2/games/:newid
  */
 app.post('/v2/games/:id', express.bodyParser(), function(req, res){
+  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,streamCommentsSize";
   var err = DB.Model.Game.checkFields(req.body);
   var push = {
     player: {name:"",id:""}
@@ -388,8 +389,12 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
       push.player.id = authentifiedPlayer.id;
       push.player.name = authentifiedPlayer.name;     
 
-      return Q.nfcall(DB.Model.Game.findOne.bind(DB.Model.Game),
-                      {_id:req.params.id, _deleted: false});
+	  var query = DB.Model.Game.findOne({_id:req.params.id, _deleted: false});
+	  query.populate("teams.players", fields["teams.players"]);
+	  return Q.nfcall(query.exec.bind(query));
+      //return Q.nfcall(DB.Model.Game.findOne.bind(DB.Model.Game),
+      //               {_id:req.params.id, _deleted: false});
+                      
     }).then(function checkGameOwner(game) {
       if (game === null)
         throw "no game found";
@@ -432,18 +437,18 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
             push.score = game.infos.score;
             push.sets = game.infos.sets;            
             if (Push.getIndexWinningTeam(push.score)==0)
-              push.win = "0";
+              push.win = "1";
             else if (Push.getIndexWinningTeam(push.score)==1)
-              push.win = "1";            
+              push.win = "0";            
           }
           else {
             push.opponent.name = game.teams[0].players[0].name;
             push.opponent.rank = game.teams[0].players[0].rank; 
             push.score = game.infos.score;
             if (Push.getIndexWinningTeam(push.score)==0)
-              push.win = "1";
+              push.win = "0";
             else if (Push.getIndexWinningTeam(push.score)==1)
-              push.win = "0";                                    
+              push.win = "1";                                    
           }
           
           //push.dates.create = Date.now();
@@ -478,19 +483,14 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
       return game;
     }).then(function sendGame(game) {
       
-      app.log('push  status:'+push.status+' official:'+push.official+' score:'+push.score
-  		+' player:'+push.player.name+' opponent:'+push.opponent.name
-  		+ ' game.teams1.players0.name:' + game.teams[1].players[0].name
-  		+ ' game.teams1.players0.id:' + game.teams[1].players[0].id      		
-  		+ ' game.status:' + game.status   		
-  		+ ' push.win:' + push.win ); 
-      
       //push notification
-      if (push.official === "true") {
+      //if finished, we don't push
+      if (push.official === "true" && push.status!=="finished") {
         if (typeof req.body.status !== "undefined") {
           //if only new status
           if (push.status !== req.body.status) {
             // change status if finished,created or started, we send notification to followers
+            // send new status
 			push.status = req.body.status;
 		    Push.sendPushs(null,push);   		  
           }          
