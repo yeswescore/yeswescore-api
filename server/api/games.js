@@ -2,6 +2,8 @@ var DB = require("../db.js")
   , express = require("express")
   , app = require("../app.js")
   , Q = require("q")
+  , Push = require("../push.js")  
+  , Resources = require("../strings/resources.js")
   , mongoose = require("mongoose")
   , ObjectId = mongoose.Types.ObjectId;
 
@@ -363,7 +365,19 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
  * result is a redirect to /v2/games/:newid
  */
 app.post('/v2/games/:id', express.bodyParser(), function(req, res){
+  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,streamCommentsSize";
   var err = DB.Model.Game.checkFields(req.body);
+  var push = {
+    player: {name:"",id:""}
+    , opponent: {name:"",rank:""}
+    , language:""
+    , status:""
+    , dates: {create:"",start:""}
+    , official:""
+    , score:""
+    , sets:""
+    , win:"0"
+  };
   if (err)
     return app.defaultError(res)(err);
   // check player is authenticated
@@ -371,8 +385,16 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
     .then(function searchGame(authentifiedPlayer) {
       if (authentifiedPlayer === null)
         throw "unauthorized";
-      return Q.nfcall(DB.Model.Game.findOne.bind(DB.Model.Game),
-                      {_id:req.params.id, _deleted: false});
+      push.language = authentifiedPlayer.language;
+      push.player.id = authentifiedPlayer.id;
+      push.player.name = authentifiedPlayer.name;     
+
+	  var query = DB.Model.Game.findOne({_id:req.params.id, _deleted: false});
+	  query.populate("teams.players", fields["teams.players"]);
+	  return Q.nfcall(query.exec.bind(query));
+      //return Q.nfcall(DB.Model.Game.findOne.bind(DB.Model.Game),
+      //               {_id:req.params.id, _deleted: false});
+                      
     }).then(function checkGameOwner(game) {
       if (game === null)
         throw "no game found";
@@ -381,8 +403,10 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
       return game;
     }).then(function updateFields(game) {
       // updatable simple fields
-      if (typeof req.body.status !== "undefined")
-        game.status = req.body.status;
+      if (typeof req.body.status !== "undefined") {
+        push.status = game.status;
+        game.status = req.body.status;               
+      }
       if (typeof req.body.location !== "undefined") {
         if (typeof req.body.location.country === "string")
           game.location.country = req.body.location.country;
@@ -404,8 +428,36 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
           game.infos.surface = req.body.infos.surface;
         if (typeof req.body.infos.tour === "string")
           game.infos.tour = req.body.infos.tour;
-        if (typeof req.body.infos.official === "string")
+        if (typeof req.body.infos.official === "string") {
           game.infos.official = (req.body.infos.official === "true");
+          push.official = req.body.infos.official;          
+          if ( game.teams[0].players[0].id === push.player.id ) {           
+            push.opponent.name = game.teams[1].players[0].name;
+            push.opponent.rank = game.teams[1].players[0].rank;
+            push.score = game.infos.score;
+            push.sets = game.infos.sets;            
+            if (Push.getIndexWinningTeam(push.score)==0)
+              push.win = "1";
+            else if (Push.getIndexWinningTeam(push.score)==1)
+              push.win = "0";            
+          }
+          else {
+            push.opponent.name = game.teams[0].players[0].name;
+            push.opponent.rank = game.teams[0].players[0].rank; 
+            push.score = game.infos.score;
+            if (Push.getIndexWinningTeam(push.score)==0)
+              push.win = "0";
+            else if (Push.getIndexWinningTeam(push.score)==1)
+              push.win = "1";                                    
+          }
+          
+          //push.dates.create = Date.now();
+          if (typeof game.dates.start === "undefined") {
+            push.dates.start = "";
+          }
+          else
+            push.dates.start = game.dates.start; 
+        }
       }
       game.dates.update = Date.now();
       if (req.body.dates && typeof req.body.dates.expected === "string")
@@ -430,12 +482,28 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
       }
       return game;
     }).then(function sendGame(game) {
-      app.internalRedirect('/v2/games/:id')(
-        {
-          query: { },
-          params: { id: game.id }
-        },
-        res);
+      
+      //push notification
+      //if finished, we don't push
+      if (push.official === "true" && push.status!=="finished") {
+        if (typeof req.body.status !== "undefined") {
+          //if only new status
+          if (push.status !== req.body.status) {
+            // change status if finished,created or started, we send notification to followers
+            // send new status
+			push.status = req.body.status;
+		    Push.sendPushs(null,push);   		  
+          }          
+        }
+      }
+    
+     app.internalRedirect('/v2/games/:id')(
+     {
+       query: { },
+       params: { id: game.id }
+     },
+     res);
+        
     }, app.defaultError(res));
 });
 
