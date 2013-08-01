@@ -74,8 +74,7 @@ app.post('/v2/files/', express.bodyParser(), function(req, res){
       var checksum = DB.Model.File.checksum(buffer);
 
       file = new DB.Model.File({
-        // custom unpredictable random id
-        _id: checksum + "-" +  req.query.playerid,
+        _id: checksum + "-" +  req.query.playerid + "-" + Math.round(Math.random() * 1000),
         owner: req.query.playerid,
         mimeType: "image/jpeg",
         bytes: buffer.length,
