@@ -525,8 +525,8 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
  */
 app.post('/v2/games/:id/stream/', express.bodyParser(), function(req, res){
   // input validation
-  if (req.body.type !== "comment")
-    return app.defaultError(res)("type must be comment");
+  if (req.body.type !== "comment" || req.body.type !== "image")
+    return app.defaultError(res)("type must be comment or image");
   if (req.query.fbid) {
     if (!req.body.owner || !req.body.owner.facebook)
       return app.defaultError(res)("missing owner.facebook");
@@ -552,7 +552,7 @@ app.post('/v2/games/:id/stream/', express.bodyParser(), function(req, res){
       //   - how can we get the new _id with $push api ? (need to read using slice -1 ? might be race conditions :(
       //   - seems to be a bug: no _id is created in mongo :(
       var streamItem = {};
-      streamItem.type = "comment";
+      streamItem.type = req.body.type;
       if (req.query.playerid) {
         streamItem.owner = { player: req.query.playerid };
       } else {
