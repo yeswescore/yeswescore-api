@@ -566,6 +566,9 @@ app.post('/v2/games/:id/stream/', express.bodyParser(), function(req, res){
       // adding text
       if (req.body.data && req.body.data.text)
         streamItem.data = { text: req.body.data.text };
+      else if (req.body.data && req.body.data.id)
+        streamItem.data = { id: req.body.data.id };
+        
       game.stream.push(streamItem);
       game.dates.update = Date.now();
       return DB.saveAsync(game);
