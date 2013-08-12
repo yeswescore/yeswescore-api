@@ -525,7 +525,7 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
  */
 app.post('/v2/games/:id/stream/', express.bodyParser(), function(req, res){
   // input validation
-  if (req.body.type !== "comment" || req.body.type !== "image")
+  if (req.body.type !== "comment" && req.body.type !== "image")
     return app.defaultError(res)("type must be comment or image");
   if (req.query.fbid) {
     if (!req.body.owner || !req.body.owner.facebook)
