@@ -570,9 +570,16 @@ app.post('/v2/games/:id/stream/', express.bodyParser(), function(req, res){
       game.dates.update = Date.now();
       return DB.saveAsync(game);
     }).then(function incr(game) {
-      return Q.nfcall(DB.Model.Game.findByIdAndUpdate.bind(DB.Model.Game),
+      if (req.body.type === "comment") {
+        return Q.nfcall(DB.Model.Game.findByIdAndUpdate.bind(DB.Model.Game),
                       game.id,
                       { $inc: { streamCommentsSize: 1 } });
+      }
+      else if (req.body.type === "image") {
+        return Q.nfcall(DB.Model.Game.findByIdAndUpdate.bind(DB.Model.Game),
+                      game.id,
+                      { $inc: { streamImagesSize: 1 } });
+      }      
     }).then(function sendGame(game) {
       if (game.stream.length === 0)
         throw "no streamItem added";
