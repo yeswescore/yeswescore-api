@@ -33,4 +33,4 @@ else
   logfile='/home/'$USER'/tmp/yeswescore-cron/compute-streamImagesSize.log'
 fi
 
-./05-compute-streamImagesSize/compute.js 2>&1 | tee $logfile
+./06-compute-streamImagesSize/compute.js 2>&1 | tee $logfile
