@@ -92,7 +92,7 @@ app.get('/v2/games/', function(req, res){
  *  /v2/games/:id/?populate=teams.players
  */
 app.get('/v2/games/:id', function (req, res){
-  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,teams.players.owner,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,streamCommentsSize";
+  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,teams.players.owner,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,streamCommentsSize,streamImagesSize";
   // populate option
   var populate = "teams.players";
   if (typeof req.query.populate !== "undefined")
@@ -365,7 +365,7 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
  * result is a redirect to /v2/games/:newid
  */
 app.post('/v2/games/:id', express.bodyParser(), function(req, res){
-  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,streamCommentsSize";
+  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,streamCommentsSize,streamImagesSize";
   var err = DB.Model.Game.checkFields(req.body);
   var push = {
     player: {name:"",id:""}
@@ -710,9 +710,26 @@ app.delete('/v2/games/:id/stream/:streamid/', function (req, res) {
       throw "no streamItem found";
       return game;
     }).then(function incr(game) {
-      return Q.nfcall(DB.Model.Game.findByIdAndUpdate.bind(DB.Model.Game),
+      
+      var streamid = req.params.streamid
+        , l = game.stream.length, isComment = true;
+        
+      for (var i = 0; i < l; ++i) {
+        if (game.stream[i]._id == streamid) {
+          if (game.stream[i].type === "image")
+            isComment=false;
+        }
+      }
+      
+      if (isComment==true)
+        return Q.nfcall(DB.Model.Game.findByIdAndUpdate.bind(DB.Model.Game),
                       game.id,
                       { $inc: { streamCommentsSize: -1 } });
+      else 
+        return Q.nfcall(DB.Model.Game.findByIdAndUpdate.bind(DB.Model.Game),
+                      game.id,
+                      { $inc: { streamImagesSize: -1 } });      
+                      
     }).then(function () {
       res.send('{}'); // smallest json.
     }, app.defaultError(res));
