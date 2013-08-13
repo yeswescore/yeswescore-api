@@ -352,7 +352,8 @@ assert.isGame = function (game) {
         assert.isStreamItem(streamItem);
       }
     },
-    streamCommentsSize: { _type: "number|undefined" }
+    streamCommentsSize: { _type: "number|undefined" },
+    streamImagesSize: { _type: "number|undefined" }    
   }, game, "isGame: ");
 };
 
