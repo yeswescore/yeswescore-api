@@ -563,10 +563,12 @@ app.post('/v2/games/:id/stream/', express.bodyParser(), function(req, res){
           }
         };
       }
-      // adding text
-      if (req.body.data && req.body.data.text)
+      // adding data
+      if (req.body.type === "comment" &&
+          req.body.data && req.body.data.text)
         streamItem.data = { text: req.body.data.text };
-      else if (req.body.data && req.body.data.id)
+      if (req.body.type === "image" &&
+          req.body.data && req.body.data.id)
         streamItem.data = { id: req.body.data.id };
         
       game.stream.push(streamItem);
@@ -577,12 +579,11 @@ app.post('/v2/games/:id/stream/', express.bodyParser(), function(req, res){
         return Q.nfcall(DB.Model.Game.findByIdAndUpdate.bind(DB.Model.Game),
                       game.id,
                       { $inc: { streamCommentsSize: 1 } });
-      }
-      else if (req.body.type === "image") {
+      } else {
         return Q.nfcall(DB.Model.Game.findByIdAndUpdate.bind(DB.Model.Game),
                       game.id,
                       { $inc: { streamImagesSize: 1 } });
-      }      
+      }
     }).then(function sendGame(game) {
       if (game.stream.length === 0)
         throw "no streamItem added";

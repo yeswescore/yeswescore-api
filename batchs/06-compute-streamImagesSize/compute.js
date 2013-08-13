@@ -30,21 +30,21 @@ function start() {
   var idToSize = {};
   var stream = DB.Model.Game.find({}).stream();
   stream.on("data", function (game) {
-    var cachedCommentsSize = game.streamImagesSize;
-    var realCommentsSize = 0;
-    if (realCommentsSize !== cachedCommentsSize) {
+    var cachedImagesSize = game.streamImagesSize;
+    var realImagesSize = 0;
+    if (realImagesSize !== cachedImagesSize || cachedImagesSize === 0) {
       console.log(
         /*'KO',*/
         game.id,
-        cachedCommentsSize,
-        realCommentsSize);
-      idToSize[game.id] = realCommentsSize;
+        cachedImagesSize,
+        realImagesSize);
+      idToSize[game.id] = realImagesSize;
     }/* else {
       console.log(
         'OK',
         game.id,
-        cachedCommentsSize,
-        realCommentsSize);
+        cachedImagesSize,
+        realImagesSize);
     }*/
   }).on("error", function (err) {
     console.log("error " + err);
