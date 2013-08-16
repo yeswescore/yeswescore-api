@@ -44,9 +44,10 @@ app.get('/v2/files/:id', function(req, res){
  * Specific options (metadata):
  *  /v2/files/?width=400            (px)
  *  /v2/files/?height=200           (px)
- *  /v2/files/?orientation=portrait (default=undefined,portrait,landscape)
- *  /v2/files/?longitude=40.234      (default=undefined)
- *  /v2/files/?latitude=40.456       (default=undefined)
+ *  /v2/files/?orientation=portrait (default=undefined;portrait,landscape)
+ *  /v2/files/?longitude=40.234     (default=undefined)
+ *  /v2/files/?latitude=40.456      (default=undefined)
+ *  /v2/files/?format=binary        (defaut=binary;binary,dataURI)
  * 
  * data posted should be the data=data-uri (base64 jpeg) 
  *
@@ -54,8 +55,12 @@ app.get('/v2/files/:id', function(req, res){
  *        we might use a checksum over the id to restrict access
  */
 app.post('/v2/files/', express.bodyParser(), function(req, res){
-  if (typeof req.body.data !== "string")
-    return app.defaultError(res)("missing data");
+  var format = req.query.format || "binary";
+  
+  if (format !== "dataURI" && format !== "binary")
+    return app.defaultError(res)("unknown format");
+  if (format === "dataURI" && typeof req.body.data !== "string")
+    return app.defaultError(res)("missing data (dataURI)");
   if (!req.query.mimeType ||
       DB.Definition.File.mimeType.enum.indexOf(req.query.mimeType) === -1)
     return app.defaultError(res)("unknown mimeType");
@@ -68,16 +73,24 @@ app.post('/v2/files/', express.bodyParser(), function(req, res){
         if (!authentifiedPlayer)
           throw "player not authenticated";
         return 
-    }).then(function () {
-      var data = req.body.data.replace(/^data:image\/\w+;base64,/, "");
-      buffer = new Buffer(data, 'base64');
+    }).then(function getData() {
+      if (format === "dataURI") {
+        var data = req.body.data.replace(/^data:image\/\w+;base64,/, "");
+        return new Buffer(data, 'base64');
+      }
+      // binary stream, need to read the file to get the data.
+      return Q.nfcall(
+        fs.readFile.bind(fs),
+        req.files.file.path);
+    }).then(function (buf) {
+      buffer = buf;
       var checksum = DB.Model.File.checksum(buffer);
-
+      
       file = new DB.Model.File({
         _id: checksum + "-" +  req.query.playerid + "-" + Math.round(Math.random() * 1000),
         owner: req.query.playerid,
         mimeType: "image/jpeg",
-        bytes: buffer.length,
+        bytes: buffer.length, // should be <=> to bytes: req.files.file.size,
         metadata: { }
       });
       // computing path
@@ -96,12 +109,10 @@ app.post('/v2/files/', express.bodyParser(), function(req, res){
           parseFloat(req.query.latitude)
         ];
       return DB.saveAsync(file);
-    }).then(function () {
-      // creating directory on disk
+    }).then(function createDirectory() {
       var directory = Conf.get("files.path")+pathInfos.directory;
       return Q.nfcall(mkdirp, directory);
-    }).then(function () {
-      // creating file
+    }).then(function writeFileToDisk() {
       return Q.nfcall(
         fs.writeFile.bind(fs),
         Conf.get("files.path")+pathInfos.path,
