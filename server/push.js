@@ -118,7 +118,7 @@ var Push = {
 			
 			 if (ios == true)
 			 {
-			   var payload = {"aps": {"alert": msg}, "device_tokens": ios_tab};	
+			   var payload = {"aps": {"alert": msg,"sound":"default"}, "device_tokens": ios_tab};	
 			   that.pushNotification("/api/push/", payload, function(error) {
 			     app.log(error);
 			   });			
