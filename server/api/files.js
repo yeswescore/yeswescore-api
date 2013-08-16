@@ -59,6 +59,8 @@ app.post('/v2/files/', express.bodyParser(), function(req, res){
   
   if (format !== "dataURI" && format !== "binary")
     return app.defaultError(res)("unknown format");
+  if (format === "binary" && req.files.file === "undefined")
+    return app.defaultError(res)("missing file");
   if (format === "dataURI" && typeof req.body.data !== "string")
     return app.defaultError(res)("missing data (dataURI)");
   if (!req.query.mimeType ||
