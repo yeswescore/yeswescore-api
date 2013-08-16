@@ -361,15 +361,20 @@ DB.Schema.Player.pre('save', function (next) {
   var self = this;
   if (this.isModified('club')) {
     this._wasModified.push('club');
-    DB.Model.Club.findById(this.club.id, function (err, club) {
-      if (err) {
-        app.log('player pre save; error ' + err, 'error');
-        return next(); // FIXME: log.
-      }
-      self.club.name = club.name;
-      self._searchableClubName = club.name.searchable();
-      next();
-    });
+    if (this.club && typeof this.club.id !== "undefined") { // WTF.. on this test.
+      // club has been added / modified
+      DB.Model.Club.findById(this.club.id, function (err, club) {
+        if (err) {
+          app.log('player pre save; error ' + err, 'error');
+          return next(); // FIXME: log.
+        }
+        self.club.name = club.name;
+        self._searchableClubName = club.name.searchable();
+        next();
+      });
+    } else {
+      next(); // club has been removed. => nothing. 
+    }
   } else {
     next();
   }

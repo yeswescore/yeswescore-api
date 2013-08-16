@@ -284,7 +284,6 @@ app.post('/v2/players/', express.bodyParser(), function(req, res){
     return null;
   }).then(function (club) {
     // creating a new player
-    var inlinedClub = (club) ? { id: club.id, name: club.name } : null;
     var player = new DB.Model.Player({
         name: req.body.name || "",
         location : { 
@@ -295,9 +294,11 @@ app.post('/v2/players/', express.bodyParser(), function(req, res){
         },      
         rank: req.body.rank || "",
         idlicense: req.body.idlicense || "",        
-        club: inlinedClub, // will be undefined !
         type: req.body.type || "default"
     });
+    // club
+    if (club)
+      player.club = { id: club.id, name: club.name };
     // language
     player.languageSafe = req.body.language || Conf.get("default.language");
     //birth
@@ -394,14 +395,24 @@ app.post('/v2/players/:id', express.bodyParser(), function(req, res){
       player = playerowned;
         
     // updating player
-    var inlinedClub = (club) ? { id: club.id, name: club.name } : null;
-    if (inlinedClub) {
-      player["club"] = inlinedClub;
-    }
     ["name", "rank", "idlicense", "gender"].forEach(function (o) {
       if (typeof req.body[o] !== "undefined")
         player[o] = req.body[o];
     });
+    // club
+    if (club && club.id)
+      player.club = { id: club.id, name: club.name };
+    // Warning, we need to compare the old player model to the incoming data
+    // because in mongo, the field is suppressed (undefined), & in incoming data, the field is = ""
+    //   if we don't compare, Player.pre('save') will detect isModified('club') => true
+    //    => _wasModified('club') => hook on every game of the player => performances hits.
+    if (player.club && player.club.id &&
+        req.body.club && req.body.club.id === "") {
+      // hack: mapping "" => to undefined.
+      var undefined = (function () { })();
+      player.club.id = undefined;
+      player.club.name = undefined;
+    }
     // language
     if (typeof req.body.language !== "undefined")
       player.languageSafe = req.body.language;
