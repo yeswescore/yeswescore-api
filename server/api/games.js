@@ -2,6 +2,8 @@ var DB = require("../db.js")
   , express = require("express")
   , app = require("../app.js")
   , Q = require("q")
+  , Push = require("../push.js")  
+  , Resources = require("../strings/resources.js")
   , mongoose = require("mongoose")
   , ObjectId = mongoose.Types.ObjectId;
 
@@ -35,7 +37,7 @@ app.get('/v2/games/', function(req, res){
   var offset = req.query.offset || 0;
   var text = req.query.q;
   var club = req.query.club || null;
-  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam";
+  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,streamCommentsSize,streamImagesSize";
   var sort = req.query.sort || "-dates.start";
   var status = req.query.status || "created,ongoing,finished";
   var longitude = req.query.longitude;
@@ -90,7 +92,7 @@ app.get('/v2/games/', function(req, res){
  *  /v2/games/:id/?populate=teams.players
  */
 app.get('/v2/games/:id', function (req, res){
-  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.end,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,teams.players.owner,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam";
+  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,teams.players.owner,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,streamCommentsSize,streamImagesSize";
   // populate option
   var populate = "teams.players";
   if (typeof req.query.populate !== "undefined")
@@ -237,6 +239,9 @@ app.get('/v2/games/:id/stream/', function (req, res){
  *     country: String,         (default="")
  *     city: String,            (default="")
  *     pos: [ Number, Number ]  (default=[])
+ *   },
+ *   dates: {
+ *     expected: Date    (default=undefined)  
  *   }
  *   teams: [
  *     {
@@ -255,6 +260,7 @@ app.get('/v2/games/:id/stream/', function (req, res){
  *      surface: String   (default="")
  *      tour: String      (default="")
  *      startTeam: Int    (default=undefined) must be undefined, 0 or 1.
+ *      official: Boolean  (default=true)
  *   }
  * }
  * 
@@ -294,9 +300,15 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
           score: req.body.infos.score || "",
           court: req.body.infos.court || "",
           surface: req.body.infos.surface || "",
-          tour: req.body.infos.tour || ""
+          tour: req.body.infos.tour || ""          
         }
       });
+      //
+      if (typeof req.body.infos.official === "string")
+        game.infos.official = (req.body.infos.official === "true");
+      if (req.body.dates && typeof req.body.dates.expected === "string")
+        game.dates.expected = req.body.dates.expected;
+      //
       return DB.Model.Game.updateTeamsAsync(game, req.body.teams);
     }).then(function saveAsync(game) {
       return DB.saveAsync(game);
@@ -353,7 +365,19 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
  * result is a redirect to /v2/games/:newid
  */
 app.post('/v2/games/:id', express.bodyParser(), function(req, res){
+  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,streamCommentsSize,streamImagesSize";
   var err = DB.Model.Game.checkFields(req.body);
+  var push = {
+    player: {name:"",id:""}
+    , opponent: {name:"",rank:""}
+    , language:""
+    , status:""
+    , dates: {create:"",start:""}
+    , official:""
+    , score:""
+    , sets:""
+    , win:"0"
+  };
   if (err)
     return app.defaultError(res)(err);
   // check player is authenticated
@@ -361,8 +385,16 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
     .then(function searchGame(authentifiedPlayer) {
       if (authentifiedPlayer === null)
         throw "unauthorized";
-      return Q.nfcall(DB.Model.Game.findOne.bind(DB.Model.Game),
-                      {_id:req.params.id, _deleted: false});
+      push.language = authentifiedPlayer.language;
+      push.player.id = authentifiedPlayer.id;
+      push.player.name = authentifiedPlayer.name;     
+
+	  var query = DB.Model.Game.findOne({_id:req.params.id, _deleted: false});
+	  query.populate("teams.players", fields["teams.players"]);
+	  return Q.nfcall(query.exec.bind(query));
+      //return Q.nfcall(DB.Model.Game.findOne.bind(DB.Model.Game),
+      //               {_id:req.params.id, _deleted: false});
+                      
     }).then(function checkGameOwner(game) {
       if (game === null)
         throw "no game found";
@@ -371,8 +403,10 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
       return game;
     }).then(function updateFields(game) {
       // updatable simple fields
-      if (typeof req.body.status !== "undefined")
-        game.status = req.body.status;
+      if (typeof req.body.status !== "undefined") {
+        push.status = game.status;
+        game.status = req.body.status;               
+      }
       if (typeof req.body.location !== "undefined") {
         if (typeof req.body.location.country === "string")
           game.location.country = req.body.location.country;
@@ -394,8 +428,40 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
           game.infos.surface = req.body.infos.surface;
         if (typeof req.body.infos.tour === "string")
           game.infos.tour = req.body.infos.tour;
+        if (typeof req.body.infos.official === "string") {
+          game.infos.official = (req.body.infos.official === "true");
+          push.official = req.body.infos.official;          
+          if ( game.teams[0].players[0].id === push.player.id ) {           
+            push.opponent.name = game.teams[1].players[0].name;
+            push.opponent.rank = game.teams[1].players[0].rank;
+            push.score = game.infos.score;
+            push.sets = game.infos.sets;            
+            if (Push.getIndexWinningTeam(push.score)==0)
+              push.win = "1";
+            else if (Push.getIndexWinningTeam(push.score)==1)
+              push.win = "0";            
+          }
+          else {
+            push.opponent.name = game.teams[0].players[0].name;
+            push.opponent.rank = game.teams[0].players[0].rank; 
+            push.score = game.infos.score;
+            if (Push.getIndexWinningTeam(push.score)==0)
+              push.win = "0";
+            else if (Push.getIndexWinningTeam(push.score)==1)
+              push.win = "1";                                    
+          }
+          
+          //push.dates.create = Date.now();
+          if (typeof game.dates.start === "undefined") {
+            push.dates.start = "";
+          }
+          else
+            push.dates.start = game.dates.start; 
+        }
       }
       game.dates.update = Date.now();
+      if (req.body.dates && typeof req.body.dates.expected === "string")
+        game.dates.expected = req.body.dates.expected;
       //
       return DB.Model.Game.updateTeamsAsync(game, req.body.teams);
     }).then(function update(game) {
@@ -416,12 +482,28 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
       }
       return game;
     }).then(function sendGame(game) {
-      app.internalRedirect('/v2/games/:id')(
-        {
-          query: { },
-          params: { id: game.id }
-        },
-        res);
+      
+      //push notification
+      //if finished, we don't push
+      if (push.official === "true" && push.status!=="finished") {
+        if (typeof req.body.status !== "undefined") {
+          //if only new status
+          if (push.status !== req.body.status) {
+            // change status if finished,created or started, we send notification to followers
+            // send new status
+			push.status = req.body.status;
+		    Push.sendPushs(null,push);   		  
+          }          
+        }
+      }
+    
+     app.internalRedirect('/v2/games/:id')(
+     {
+       query: { },
+       params: { id: game.id }
+     },
+     res);
+        
     }, app.defaultError(res));
 });
 
@@ -443,8 +525,8 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
  */
 app.post('/v2/games/:id/stream/', express.bodyParser(), function(req, res){
   // input validation
-  if (req.body.type !== "comment")
-    return app.defaultError(res)("type must be comment");
+  if (req.body.type !== "comment" && req.body.type !== "image")
+    return app.defaultError(res)("type must be comment or image "+req.body.type);
   if (req.query.fbid) {
     if (!req.body.owner || !req.body.owner.facebook)
       return app.defaultError(res)("missing owner.facebook");
@@ -470,7 +552,7 @@ app.post('/v2/games/:id/stream/', express.bodyParser(), function(req, res){
       //   - how can we get the new _id with $push api ? (need to read using slice -1 ? might be race conditions :(
       //   - seems to be a bug: no _id is created in mongo :(
       var streamItem = {};
-      streamItem.type = "comment";
+      streamItem.type = req.body.type;
       if (req.query.playerid) {
         streamItem.owner = { player: req.query.playerid };
       } else {
@@ -481,12 +563,27 @@ app.post('/v2/games/:id/stream/', express.bodyParser(), function(req, res){
           }
         };
       }
-      // adding text
-      if (req.body.data && req.body.data.text)
+      // adding data
+      if (req.body.type === "comment" &&
+          req.body.data && req.body.data.text)
         streamItem.data = { text: req.body.data.text };
+      if (req.body.type === "image" &&
+          req.body.data && req.body.data.id)
+        streamItem.data = { id: req.body.data.id };
+        
       game.stream.push(streamItem);
       game.dates.update = Date.now();
       return DB.saveAsync(game);
+    }).then(function incr(game) {
+      if (req.body.type === "comment") {
+        return Q.nfcall(DB.Model.Game.findByIdAndUpdate.bind(DB.Model.Game),
+                      game.id,
+                      { $inc: { streamCommentsSize: 1 } });
+      } else {
+        return Q.nfcall(DB.Model.Game.findByIdAndUpdate.bind(DB.Model.Game),
+                      game.id,
+                      { $inc: { streamImagesSize: 1 } });
+      }
     }).then(function sendGame(game) {
       if (game.stream.length === 0)
         throw "no streamItem added";
@@ -612,6 +709,28 @@ app.delete('/v2/games/:id/stream/:streamid/', function (req, res) {
         }
       }
       throw "no streamItem found";
+      return game;
+    }).then(function incr(game) {
+      
+      var streamid = req.params.streamid
+        , l = game.stream.length, isComment = true;
+        
+      for (var i = 0; i < l; ++i) {
+        if (game.stream[i]._id == streamid) {
+          if (game.stream[i].type === "image")
+            isComment=false;
+        }
+      }
+      
+      if (isComment==true)
+        return Q.nfcall(DB.Model.Game.findByIdAndUpdate.bind(DB.Model.Game),
+                      game.id,
+                      { $inc: { streamCommentsSize: -1 } });
+      else 
+        return Q.nfcall(DB.Model.Game.findByIdAndUpdate.bind(DB.Model.Game),
+                      game.id,
+                      { $inc: { streamImagesSize: -1 } });      
+                      
     }).then(function () {
       res.send('{}'); // smallest json.
     }, app.defaultError(res));

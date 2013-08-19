@@ -447,8 +447,8 @@ describe('dev:players', function(){
     });
   });
   
-  describe('update a player (name,rank,password,club)', function () {
-    it('should modify the player (name,rank,password,club)', function (done) {
+  describe('update a player (name,rank,password,club,gender,push,birth)', function () {
+    it('should modify the player (name,rank,password,club,gender,push,birth)', function (done) {
       var options = {
         host: Conf["http.host"],
         port: Conf["http.port"],
@@ -474,6 +474,15 @@ describe('dev:players', function(){
           var name = "name"+now +rnd();
           var rank = "rank"+now +rnd();
           var clubid = randomClub._id;
+          //
+          var city = "Bayeux"+Math.random();
+          var address =  "random adress " + Math.random();
+          var zip = "zip"+Math.random();
+          var gender = (randomPlayer.gender == "man") ? "woman" : "man";
+          var birth = new Date();
+          var push_platform = "android";
+          var push_token = randomPlayer._id; 
+          //
           var uncryptedPassword = "password"+now +rnd();
           var language = (randomPlayer.language == "fr") ? "en" : "fr";
           
@@ -481,10 +490,17 @@ describe('dev:players', function(){
             id: playerid,
             name: name,
             rank: rank,
+            gender: gender,
             uncryptedPassword: uncryptedPassword,
             club: { id: clubid },
+            dates: { birth : birth },
+            push: { platform : push_platform, token : push_token },
+            location : { city : city, address: address, zip : zip },            
             language: language
           };
+          
+          console.log(modifiedPlayer);
+          
           // saving
           var options = {
             host: Conf["http.host"],
@@ -498,6 +514,17 @@ describe('dev:players', function(){
             assert(modifiedPlayer.rank === player.rank, "must have same rank");
             assert(modifiedPlayer.club.id === player.club.id, "must have same club");
             assert(modifiedPlayer.language === player.language, "must have same language");
+            
+            assert(modifiedPlayer.gender === player.gender, "must have same gender");            
+            assert(JSON.parse(JSON.stringify(modifiedPlayer.dates.birth)) === player.dates.birth, "must have same birth"); 
+            
+            assert(modifiedPlayer.push.platform === player.push.platform, "must have same push platform");
+            assert(modifiedPlayer.push.token === player.push.token, "must have same push token");
+
+            assert(modifiedPlayer.location.city === player.location.city, "must have same location city");
+            assert(modifiedPlayer.location.address === player.location.address, "must have same location address");
+            assert(modifiedPlayer.location.zip === player.location.zip, "must have same location zip");            
+                        
             // the password shouldn't be the same !
             assert(typeof player.password === "undefined", "must have no password");
             assert(typeof player.uncryptedPassword === "undefined", "can't have uncryptedPassword");
@@ -518,8 +545,31 @@ describe('dev:players', function(){
               assert(modifiedPlayer.language === player.language, "must have same language");
               assert(typeof player.uncryptedPassword === "undefined", "can't have uncryptedPassword");
               
+	          assert(modifiedPlayer.gender === player.gender, "must have same gender");            
+	          //badformat assert(modifiedPlayer.dates.birth === player.dates.birth, "must have same birth");
+              assert(JSON.parse(JSON.stringify(modifiedPlayer.dates.birth)) === player.dates.birth, "must have same birth"); 	          
+	          assert(modifiedPlayer.push.platform === player.push.platform, "must have same push platform");
+                         
+              
+            });
+            
+            //verify documents
+            var options = {
+              host: Conf["http.host"],
+              port: Conf["http.port"],
+              path: Conf["documents.players"]+player.id
+            };
+            
+            http.getJSON(options, function (docPlayer) {
+              assert.isObject(docPlayer);
+              assert(modifiedPlayer.push.token === docPlayer.push.token, "doc must have same push token");	
+	          assert(modifiedPlayer.location.city === docPlayer.location.city, "doc must have same location city");
+	          assert(modifiedPlayer.location.address === docPlayer.location.address, "doc must have same location address");
+	          assert(modifiedPlayer.location.zip === docPlayer.location.zip, "doc must have same location zip"); 
+            
               done();
             });
+            
           });
         });
       });
@@ -616,7 +666,7 @@ describe('dev:players', function(){
           };
           
           http.is302OK(options, function (res) {
-            var successUrl = "http://www.yeswescore.com/#!mail/cy9y";
+            var successUrl = "http://www.yeswescore.com/static/mail-confirm.html";
             if (res.headers.location !== successUrl)
               throw "bad location, " + res.headers.location + " should be " + successUrl;
               

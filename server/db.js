@@ -148,11 +148,23 @@ DB.Definition.Club = {
 DB.Definition.Player = {
   name: String,
   location: {
-    currentPos: { type: [Number], index: '2d'}
+    currentPos: { type: [Number], index: '2d'},
+    city: String,
+    address: String,
+    zip: String    
   },
   dates : {
     creation: { type: Date, default: Date.now },
-    update: { type: Date, default: Date.now }
+    update: { type: Date, default: Date.now },
+    birth: { type: Date }
+  },
+  push: {
+    platform: { type: String, enum: [ "android", "ios", "wp8", "bb" ] },
+    token: { type: String }
+  },
+  gender: { type: String, enum: [ "", "man", "woman" ] },
+  profile: {
+    image: { type: String, ref: "File" }
   },
   email: {
     address: { type: String, unique: true, sparse: true },
@@ -205,7 +217,7 @@ DB.Definition.StreamItem = {
     creation: { type: Date, default: Date.now },
     update: { type: Date, default: Date.now }
   },
-  type: { type: String, enum: [ "comment" ] },
+  type: { type: String, enum: [ "comment", "image" ] },
   owner: {
     player: { type: Schema.Types.ObjectId, ref: "Player" },
     facebook: { id: String, name: String }
@@ -227,7 +239,8 @@ DB.Definition.Game = {
     creation: { type: Date, default: Date.now },
     update: { type: Date, default: Date.now },
     start: Date,
-    end: Date
+    end: Date,
+    expected: { type: Date } 
   },
   location : {
     country: String,
@@ -236,6 +249,8 @@ DB.Definition.Game = {
   },
   teams: [ DB.Schema.Team ],
   stream: [ DB.Schema.StreamItem ],
+  streamCommentsSize: { type: Number, default: 0 },
+  streamImagesSize: { type: Number, default: 0 },
   infos: {
     type: { type: String, enum: [ "singles", "doubles" ] },
     subtype: { type: String, enum: [ "A", "B", "C", "D", "E", "F", "G", "H", "I" ] },
@@ -247,6 +262,7 @@ DB.Definition.Game = {
                                     "NVTB", "PAR", "RES", "TB", "" ] },
     tour: String,
     startTeam: { type: Schema.Types.ObjectId },
+    official: { type: Boolean, default: true }
   },
   // private 
   _deleted: { type: Boolean, default: false },  // FIXME: unused
@@ -256,6 +272,20 @@ DB.Definition.Game = {
   _searchablePlayersNames: [ String ],                    // AUTO-FIELD (Player post save) ASYNC
   _searchablePlayersClubsIds: [ Schema.Types.ObjectId ],  // AUTO-FIELD (Player post save) ASYNC
   _searchablePlayersClubsNames: [ String ]                // AUTO-FIELD (Player post save) ASYNC
+};
+DB.Definition.File = {
+  _id: { type: String },
+  owner: { type: Schema.Types.ObjectId, ref: "Player" },
+  dates : {
+    creation: { type: Date, default: Date.now }
+  },
+  path: { type: String },
+  mimeType: { type: String, enum: [ "image/jpeg" ], default: "image/jpeg" },
+  bytes: { type: Number, default: 0 },
+  metadata: Schema.Types.Mixed, // { usage: "profil/streamitem/...", id: }
+  // private
+  _deleted: { type: Boolean, default: false },  // FIXME: unused
+  _reported: { type: Boolean, default: false }, // FIXME: unused
 };
 
 // SETTERS
@@ -281,6 +311,7 @@ DB.Definition.Game.status.set = function (status) {
 DB.Schema.Club = new Schema(DB.Definition.Club);
 DB.Schema.Player = new Schema(DB.Definition.Player);
 DB.Schema.Game = new Schema(DB.Definition.Game);
+DB.Schema.File = new Schema(DB.Definition.File);
 
 // password virtual setter
 DB.Schema.Player.virtual('uncryptedPassword').set(function (uncryptedPassword) {
@@ -330,15 +361,20 @@ DB.Schema.Player.pre('save', function (next) {
   var self = this;
   if (this.isModified('club')) {
     this._wasModified.push('club');
-    DB.Model.Club.findById(this.club.id, function (err, club) {
-      if (err) {
-        app.log('player pre save; error ' + err, 'error');
-        return next(); // FIXME: log.
-      }
-      self.club.name = club.name;
-      self._searchableClubName = club.name.searchable();
-      next();
-    });
+    if (this.club && typeof this.club.id !== "undefined") { // WTF.. on this test.
+      // club has been added / modified
+      DB.Model.Club.findById(this.club.id, function (err, club) {
+        if (err) {
+          app.log('player pre save; error ' + err, 'error');
+          return next(); // FIXME: log.
+        }
+        self.club.name = club.name;
+        self._searchableClubName = club.name.searchable();
+        next();
+      });
+    } else {
+      next(); // club has been removed. => nothing. 
+    }
   } else {
     next();
   }
@@ -541,7 +577,7 @@ for (var schemaName in DB.Schema) {
 DB.Model.Club = mongoose.model("Club", DB.Schema.Club);
 DB.Model.Player = mongoose.model("Player", DB.Schema.Player);
 DB.Model.Game = mongoose.model("Game", DB.Schema.Game);
-
+DB.Model.File = mongoose.model("File", DB.Schema.File);
 
 DB.Model.Player.isEmailRegisteredAsync = function (email) {
   return Q.nfcall(
@@ -603,6 +639,14 @@ DB.Model.Game.checkFields = function (game) {
       ["BP", "EP", "EPDM", "GAS", "GAZ", "MOQ", 
        "NVTB", "PAR", "RES", "TB", "" ].indexOf(game.infos.surface) === -1)
     return "wrong surface (BP,EP,EPDM,GAS,GAZ,MOQ,NVTB,PAR,RES,TB or empty";
+    
+  //console.log("game.infos.official",game.infos.official);
+  //console.log("typeof game.infos.official",typeof game.infos.official);
+    
+  if (game.infos && game.infos.official &&
+      (typeof game.infos.official !== "boolean" && game.infos.official !== "true" && game.infos.official !== "false") )
+    return "wrong official ( true or false only )";       
+        
   return null;
 }
 
@@ -714,6 +758,26 @@ DB.Model.Game.createOwnedPlayersAsync = function (teams, owner) {
     }
   }
   return Q.all(promises);
+};
+
+// 51e8fd31cba93e9f5d-000023 => 51/e8/fd/31/51e8fd31cba93e9f5d-000023
+DB.Model.File.idTypeToPathInfos = function (id, type) {
+  // we will need a switch here (type)
+  var ext = ".jpeg";
+  var directory = id.substr(0, 10).match(/.{1,2}/g).join("/");
+  var filename = id + ext;
+  var path = directory + "/" + filename;
+  return {
+    directory: directory,
+    filename: filename,
+    path: path
+  }
+};
+
+DB.Model.File.checksum = function (buffer) {
+  return crypto.createHash('sha256')
+               .update(buffer)
+               .digest('hex');
 };
 
 DB.Model.findByIdAsync = function (model, id) {

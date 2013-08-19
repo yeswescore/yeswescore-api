@@ -179,6 +179,8 @@ var winstonStream = {
 };
 app.use(express.logger({stream:winstonStream}));
 
+app.use('/static', express.static(Conf.get("static.path")));
+
 // default Content-Type
 app.use(function (req, res, next) {
   res.type('application/json; charset=utf-8');

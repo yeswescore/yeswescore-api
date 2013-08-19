@@ -15,6 +15,7 @@ if (!Conf || Conf.get("email.send.confirmation"))
 
 var isObject = function (s) { return typeof s === "object" && s !== null };
 var isString = function (s) { return typeof s === "string" };
+var isBoolean = function(s) {return typeof s === "boolean"};
 var isHexa = function(s) { return s.match(/^[0-9a-f]+$/) };
 var isNumber = function(s) { 
   if (!String(s).match(/^[0-9\-\.]+$/))
@@ -42,6 +43,10 @@ assert.isObject = function (s, m) {
 
 assert.isString = function (s, m) {
   assert(isString(s), m);
+};
+
+assert.isBoolean = function (s, m) {
+  assert(isBoolean(s), m);
 };
 
 assert.isArray = function (s, m) {
@@ -155,6 +160,9 @@ assert.schema = function (schema, obj, msg) {
       case "date":
         assert.isDate(obj[k], msg + " field " + k + " should be an date");
         break;
+      case "boolean":
+        assert.isBoolean(obj[k], msg + " field " + k + " should be a boolean");
+        break;        
       case "array":
         assert.isArray(obj[k], msg + " field " + k + " should be an array");
         break;
@@ -226,12 +234,21 @@ assert.isPlayerScheme = function (player, m) {
     id: { _type: "id" },
     name: { _type: "string|undefined" },
     location: {
-      currentPos: { _type: "array|undefined" }
+      currentPos: { _type: "array|undefined" },
+      city: { _type: "string|undefined" },
+      address: { _type: "string|undefined" },
+      zip: { _type: "string|undefined" }         
     },
     dates: {
       creation: { _type: "date" },
-      update: { _type: "date" }
+      update: { _type: "date|undefined" },
+      birth: { _type: "date|undefined" }      
     },
+	push: {
+	  platform: { _type: "enum|undefined", _enum: [ "android", "ios", "wp8", "bb" ] },
+	  token: { _type: "string|undefined" }
+	},
+	gender: { _type: "enum|undefined", _enum: [ "man", "woman" ] },    
     email: {
       address: { _type: "string|undefined" },
       status: { _type: "enum|undefined", _enum: [ "pending-confirmation", "confirmed" ] }
@@ -251,6 +268,9 @@ assert.isPlayerScheme = function (player, m) {
         assert(typeof value === "object", "isPlayerScheme: club must be null or object");
         assert.isId(value.id, "isPlayerScheme: club.id must be an id");
       }
+    },
+    profile: {
+      image: { _type: "string|undefined" },
     },
     following: { _type: "[schema]", _check: function (playerId, i, games) {
         assert.isId(playerId, "isPlayerScheme: following[*] must be id");
@@ -275,6 +295,23 @@ assert.isPlayerWithToken = function (player) {
   assert.isId(player.token, "isPlayerWithToken: token must be an hexa string");
 };
 
+assert.isFile = function (file) {
+  assert.schema({
+    id : { _type: "string" },
+    owner : { _type: "id" },
+    dates: {
+      creation: { _type: "date" }
+    },
+    path: { _type: "string" },
+    mimeType: { _type: "enum", _enum: ["image/jpeg"] },
+    bytes: { _type: "number" },
+    metadata: { _type: "undefined|check", _check: function (metadata) {
+        assert.isObject(metadata, "isFile: metadata must be an object");
+      }
+    }
+  }, file, "isFile ");
+};
+
 assert.isGame = function (game) {
   assert.schema({
     id : { _type: "id" },
@@ -285,7 +322,8 @@ assert.isGame = function (game) {
       creation: { _type: "date" },
       update:  { _type: "date|undefined" },
       start: { _type: "date|undefined" },
-      end: { _type: "date|undefined" }
+      end: { _type: "date|undefined" },
+      expected: { _type: "date|undefined" }
     },
     location: {
       country : { _type : "string|undefined" },
@@ -302,7 +340,8 @@ assert.isGame = function (game) {
       surface: { _type: "undefined|enum", _enum: ["BP", "EP", "EPDM", "GAS", "GAZ", "MOQ", 
                                                   "NVTB", "PAR", "RES", "TB", "" ] },
       tour: { _type: "undefined|string" },
-      startTeam: { _type: "undefined|id" }
+      startTeam: { _type: "undefined|id" },
+      official: { _type: "boolean" }
     },
     teams: { _type: "[schema]", _check: function (team, i, teams) {
         assert(teams.length === 2, "isGame: game must have 2 teams");
@@ -310,9 +349,11 @@ assert.isGame = function (game) {
       } 
     },
     stream: { _type: "undefined|[schema]", _check: function (streamItem, i, stream) {
-        assert.isStreamComment(streamItem);
+        assert.isStreamItem(streamItem);
       }
     },
+    streamCommentsSize: { _type: "number|undefined" },
+    streamImagesSize: { _type: "number|undefined" }    
   }, game, "isGame: ");
 };
 
@@ -357,12 +398,14 @@ assert.isStreamObject = function (o, m) {
   }, o, "isStreamObject ");
 };
 
-assert.isStreamComment = function (comment) {
+assert.isStreamItem = function (comment) {
   assert.isStreamObject(comment, "must be a stream object");
-  assert(comment.type === "comment", "isStreamComment: streamObject.type must === comment");
-  assert.isString(comment.data.text, "isStreamComment: streamObject.data.text must be a string");
+  assert(comment.type === "comment" || comment.type === "image", "isStreamItem: streamObject.type must === comment or image");
+  if (comment.type === "comment")
+    assert.isString(comment.data.text, "isStreamItem: streamObject.data.text must be a string");
+  if (comment.type === "image")
+    assert.isString(comment.data.image, "isStreamItem: streamObject.data.text must be a string");
 };
-
 
 assert.isError = function (error, m) {
   assert.isObject(error, "error must be an object");

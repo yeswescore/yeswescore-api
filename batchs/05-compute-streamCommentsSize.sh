@@ -1,12 +1,12 @@
 #!/bin/sh
 
 echo -e "\033[32m"
-echo "> Executing batch 01-generate-fake-data.sh"
+echo "> Executing batch 05-compute-streamCommentsSize.sh"
 echo -e "\033[0m"
 echo -e -n "\033[1;31;40m" 
 echo -n " WARNING: "
 echo -e -n "\033[0m"
-echo "This script will generate fake data in the database"
+echo "This script will update data in the database"
 
 if [ "$AUTOEXEC" != "true" ]
 then
@@ -25,12 +25,12 @@ if [ "$NODE_ENV" = "PROD" ]
 then
   echo " You are in prod environment, you cannot generate"
   export NODE_ENV="PROD"
-  # FIXME: security temporary disabled.
-  exit 1
+  logfile='/var/log/yeswescore-cron/compute-streamCommentsSize.log'
 else
   export NODE_ENV="DEV"
   port=`cat ../server/.port | head -1`
   export YESWESCORE_PORT=$port
+  logfile='/home/'$USER'/tmp/yeswescore-cron/compute-streamCommentsSize.log'
 fi
 
-./01-generate-fake-data/generate.js
+./05-compute-streamCommentsSize/compute.js 2>&1 | tee -a $logfile

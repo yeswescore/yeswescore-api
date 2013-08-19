@@ -14,11 +14,11 @@ var generateFakeId = function () {
   return s
 }
 var generateFakeName = function () {
-  return [ "Garcia", "Blanc", "Serra", "Guisset", "Martinez", "Mas", "Pla", "Sola", "Lopez", "Torrès", "Gil", "Richard",
+  return [ "Garcia", "Blanc", "Serra", "Guisset", "Martinez", "Mas", "Pla", "Sola", "Lopez", "Tors", "Gil", "Richard",
            "Sanchez", "Simon", "Esteve", "Salvat", "Vidal", "Bertrand", "Bonnet", "Mestres", "Perez", "Batlle" ].random();
 }
 var generateFakeFirstName = function () {
-  return [ "Agathe","Aliénor","Alix","Ambre","Apolline","Athénaïs","Axelle","Camille","Capucine","Celeste","Charlotte",
+  return [ "Agathe","Alinor","Alix","Ambre","Apolline","Athnaïs","Axelle","Camille","Capucine","Celeste","Charlotte",
            "Chloé","Clarisse","Emma","Eva","Gabrielle","isaure","Jade","Juliette","leonore","Louise","Margaux","Mathilde",
            "Maya","Romane","Rose","Roxane","Violette","Zélie","Zoé"].random();
 }
@@ -32,7 +32,7 @@ var generateFakeComment = function () {
    "Je t'ai ajouté! :D",
    "Lol, c'te gros tocard.",
    "j'arrive pas à faire venir Roger à mon Open 13 et ça me fout les boules.",
-   "C'est EXACTEMENT ça, Franchement pour dire ça faut vraiment être d'une mauvaise foi incomparable ou n'y rien connaître au tennis. On peut ne pas aimer Federer mais ne pas reconnaître qu'il fait le show...",
+   "C'est EXACTEMENT ça, Franchement pour dire ça faut vraiment être d'une mauvaise foi incomparable ou n'y rien connaitre au tennis. On peut ne pas aimer Federer mais ne pas reconnaitre qu'il fait le show...",
    "Sous entendu : Désolé de cette interview de merde. je dois vite me retirer et crever très vite. Ciao. ",
    "Haha on sent le mec frustré qui veut se démarquer de la masse en critiquant Federer alors que tout le monde l'adule. \
 \
@@ -40,7 +40,7 @@ Ou alors c'est juste que pour lui, spectacle = faire le gorille et le clown sur 
 \
 Et le \"s'il n'était pas numéro 3 on en parlerait pas autant\"   dans le genre \"j'ai aucun argument pour descendre Federer, donc j'en invente un bien débile\" \
 \
-Ah mais c'est sûr, si Federer n'avait pas gagné 17 GC, on n'en parlerait pas autant ! ",
+Ah mais c'est sur, si Federer n'avait pas gagné 17 GC, on n'en parlerait pas autant ! ",
    "C'était pas lui qui disait que la victoire de Federer à Bercy était sa plus belle édition parce qu'il était fan et tout et tout ?",
    "Ah ben comme ça on est fixé sur la venue de Federer à l'open 13 (bon y avait pas trop de suspens   ) ",
    "Enfin quelqu'un qui ose dire les vrais choses   \
@@ -61,6 +61,13 @@ var generateFakeDateCreation = function () {
   var secAgo = 3600 * 2 + Math.floor(Math.random() * 3600);
   return new Date(new Date().getTime() - secAgo * 1000).toISO();
 }
+
+var generateFakeDateBirth = function () {
+  // date entre il y a 2 et 3 h
+  var secAgo = 3600 * 2 + Math.floor(Math.random() * 3600);
+  return new Date(new Date().getTime() - secAgo * 100000000).toISO();
+}
+
 var generateFakeDateEnd = function () {
   // date entre il y a 0 et 1 h
   var secAgo = Math.floor(Math.random() * 3600);
@@ -114,8 +121,19 @@ var generatePlayersAsync = function () {
         return new DB.Model.Player({
             name: generateFakeFirstName() + " " + generateFakeName(),
             location: {
-              currentPos: generateFakeLocation()
+              currentPos: generateFakeLocation(),
+              city: generateFakeCity(),
+              address: "random adress " + Math.random(),
+        	  zip: "zip"+Math.random()
             },
+            dates: {
+              birth : generateFakeDateBirth()
+            },
+            push: {
+              platform : [ "android", "ios", "wp8", "bb" ].random(),
+              token :  generateFakeId()
+            },
+            gender : [ "man", "woman" ].random(),
             rank: "15/2",
             club: clubInfo,
             games: [],
@@ -177,6 +195,7 @@ var generateGamesAsync = function () {
           },
           teams: [ ],
           stream: [ ],
+          dates: [ ],
           infos: {
             type: "singles",
             subtype: [ "A", "B", "C", "D", "E", "F", "G", "H", "I" ].random(),
@@ -186,7 +205,8 @@ var generateGamesAsync = function () {
                       "A", "B", "C", "D", "E", "F", "" ].random(),
             surface: ["BP", "EP", "EPDM", "GAS", "GAZ", "MOQ", 
                         "NVTB", "PAR", "RES", "TB", "" ].random(),
-            tour: [ "Poule", "consolante", "1er tour", "2nd tour" ].random()
+            tour: [ "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"  ].random(),
+            official : [true, false].random()
           }
         });
         
@@ -217,6 +237,10 @@ var generateGamesAsync = function () {
             game.infos.score = "0/0";
           }
         }
+        
+        //expected : ["01/01/1970",Date.now()].random()
+        if (Math.random()>0.5)
+          game.dates.expected = Date.now(); 
         
         // generating players
         var player1 = players[i*2];
@@ -266,7 +290,10 @@ var generateGamesAsync = function () {
           }
           game.stream.push(comment);
         }
-        
+        //
+        game.streamCommentsSize = game.stream.length;
+        game.streamImagesSize = 0;
+        //
         games.push(game);
       }
 

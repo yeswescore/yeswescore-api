@@ -23,7 +23,7 @@ app.get('/v2/players/', function(req, res){
   var limit = req.query.limit || 10;
   var offset = req.query.offset || 0;
   var club = req.query.club;
-  var fields = req.query.fields;
+  var fields = req.query.fields || "following,idlicense,language,name,type,rank,type,games,dates.creation,location.currentPos,id,gender,dates.birth,push.platform,club.id,club.name,email.address,token,profile";
   var longitude = req.query.longitude;
   var latitude = req.query.latitude;
   var distance = req.query.distance;
@@ -112,7 +112,8 @@ app.get('/v2/players/autocomplete/', function(req, res){
  * Specific options:
  */
 app.get('/v2/players/:id', function(req, res){
-  var fields = req.query.fields;
+
+  var fields = req.query.fields || "following,idlicense,language,name,type,rank,type,games,dates.creation,location.currentPos,id,gender,dates.birth,push.platform,club.id,club.name,email.address,token,profile";
   
   DB.isAuthenticatedAsync(req.query)
     .then(function (authentifiedPlayer) {
@@ -131,6 +132,44 @@ app.get('/v2/players/:id', function(req, res){
       });
     },
     app.defaultError(res, "authentication error"));
+});
+
+
+/**
+ * Read players with push.token who follow a player
+ * only server can do this !! no v2 before
+ *
+ * Specific options:
+ */
+app.get('/players/:id/push', function(req, res){
+
+  var fields = req.query.fields || "name,type,push.platform,push.token"; 
+  var id = req.params.id;
+  var sort = req.query.sort || "name";
+
+  if (id) {
+  
+    // searching
+    var query = DB.Model.Player
+      .find({
+        $and: [
+          { 'following': id },
+        ]
+      });
+      
+    query.where('push.token').exists();    
+    
+    query.select(fields.replace(/,/g, " "))
+      .sort(sort.replace(/,/g, " "))
+      .exec(function (err, players) {
+        if (err)
+          return app.defaultError(res)(err);
+        res.send(JSON.stringifyModels(players));
+      });
+  } else {
+    res.send(JSON.stringify([]));
+  }  
+
 });
 
 /**
@@ -156,7 +195,7 @@ app.get('/v2/players/:id/games/', function(req, res){
   var sort = req.query.sort || "-dates.start";
   var limit = req.query.limit || 10;
   var offset = req.query.offset || 0;
-  var fields = req.query.fields || "status,sport,owner,dates.creation,dates.start,dates.end,location.country,location.city,location.currentPos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.status,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam";
+  var fields = req.query.fields || "status,sport,owner,dates.creation,dates.start,dates.end,location.country,location.city,location.currentPos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.status,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,streamCommentsSize,streamImagesSize";
   var owned = null;
   owned = (req.query.owned === "true") ? true : owned;
   owned = (req.query.owned === "false") ? false : owned;
@@ -207,9 +246,13 @@ app.get('/v2/players/:id/games/', function(req, res){
  *   email: { 
  *     address: String,    (default="")
  *   },
+ *   image: String     (default=undefined)
  *   language: String  (default=cf configuration)
  *   idlicense: String (default="")
  *   club: { id:..., name:... }  (default=null, name: is ignored)
+ *   location : { city:String,address:String,zip:String }
+ *   gender
+ *   push : { platform:enum,token:String } 
  *   type: String      (enum=default,owned default=default)
  * }
  */
@@ -221,6 +264,7 @@ app.post('/v2/players/', express.bodyParser(), function(req, res){
   // preprocessing req.body.
   req.body.location = (req.body.location) ? req.body.location : {};
   req.body.email = (req.body.email) ? req.body.email : {};
+  req.body.profile = (req.body.profile) ? req.body.profile : {};
   if (req.body.email && typeof req.body.email.address === "string")
     req.body.email.address = req.body.email.address.toLowerCase();
   
@@ -240,17 +284,36 @@ app.post('/v2/players/', express.bodyParser(), function(req, res){
     return null;
   }).then(function (club) {
     // creating a new player
-    var inlinedClub = (club) ? { id: club.id, name: club.name } : null;
     var player = new DB.Model.Player({
         name: req.body.name || "",
-        location : { currentPos: req.body.location.currentPos || [] },
+        location : { 
+          currentPos: req.body.location.currentPos || [],
+          city: req.body.location.city || "",
+          address: req.body.location.address || "",
+          zip: req.body.location.zip || ""          
+        },      
         rank: req.body.rank || "",
-        idlicense: req.body.idlicense || "",
-        club: inlinedClub, // will be undefined !
+        idlicense: req.body.idlicense || "",        
         type: req.body.type || "default"
     });
+    // club
+    if (club)
+      player.club = { id: club.id, name: club.name };
     // language
     player.languageSafe = req.body.language || Conf.get("default.language");
+    //birth
+    if (req.body.dates && typeof req.body.dates.birth === "string") {
+      player.dates.birth = req.body.dates.birth;
+    }    
+    //gender
+    if (req.body.gender && typeof req.body.gender === "string") {
+      player.gender = req.body.gender;
+    }
+    //push
+    if (req.body.push && typeof req.body.push.token === "string" && typeof req.body.push.platform === "string") {
+      player.push.platform = req.body.push.platform;
+      player.push.token = req.body.push.token;      
+    }        
     // email
     if (req.body.email && typeof req.body.email.address === "string") {
       // registering email.
@@ -261,6 +324,10 @@ app.post('/v2/players/', express.bodyParser(), function(req, res){
       player.email._dates._created = Date.now();
       // sending token by email.
       emailConfirmationRequired = true;
+    }
+    // profile
+    if (req.body.profile && typeof req.body.profile.image === "string") {
+      player.profile = { image: req.body.profile.image };
     }
     // password
     if (req.body.uncryptedPassword)
@@ -328,24 +395,55 @@ app.post('/v2/players/:id', express.bodyParser(), function(req, res){
       player = playerowned;
         
     // updating player
-    var inlinedClub = (club) ? { id: club.id, name: club.name } : null;
-    if (inlinedClub) {
-      player["club"] = inlinedClub;
-    }
-    ["name", "rank", "idlicense"].forEach(function (o) {
+    ["name", "rank", "idlicense", "gender"].forEach(function (o) {
       if (typeof req.body[o] !== "undefined")
         player[o] = req.body[o];
     });
+    // club
+    if (club && club.id)
+      player.club = { id: club.id, name: club.name };
+    // Warning, we need to compare the old player model to the incoming data
+    // because in mongo, the field is suppressed (undefined), & in incoming data, the field is = ""
+    //   if we don't compare, Player.pre('save') will detect isModified('club') => true
+    //    => _wasModified('club') => hook on every game of the player => performances hits.
+    if (player.club && player.club.id &&
+        req.body.club && req.body.club.id === "") {
+      // hack: mapping "" => to undefined.
+      var undefined = (function () { })();
+      player.club.id = undefined;
+      player.club.name = undefined;
+    }
     // language
     if (typeof req.body.language !== "undefined")
       player.languageSafe = req.body.language;
-    // position
-    if (req.body.location && req.body.location.currentPos)
-      player.location = { currentPos : req.body.location.currentPos };
+    // location
+    if (req.body.location) {
+      player.location = {};     
+      if (req.body.location.currentPos)
+        player.location.currentPos = req.body.location.currentPos;
+      //city  
+      if (req.body.location.city)
+        player.location.city = req.body.location.city;
+      //city  
+      if (req.body.location.address)
+        player.location.address = req.body.location.address;
+      //city  
+      if (req.body.location.zip)
+        player.location.zip = req.body.location.zip;  
+    }                       
     // password
     if (req.body.uncryptedPassword)
       player.uncryptedPassword = req.body.uncryptedPassword;
     player.dates.update = Date.now();
+    //birth
+    if (req.body.dates && typeof req.body.dates.birth === "string") {
+      player.dates.birth = req.body.dates.birth;
+    }    
+    //push
+    if (req.body.push && typeof req.body.push.token === "string" && typeof req.body.push.platform === "string") {
+      player.push.platform = req.body.push.platform;
+      player.push.token = req.body.push.token;      
+    }      
     // email
     if (req.body.email && typeof req.body.email.address === "string")
     {
@@ -373,6 +471,10 @@ app.post('/v2/players/:id', express.bodyParser(), function(req, res){
         }
       }
     }
+    // profile
+    if (req.body.profile && typeof req.body.profile.image === "string") {
+      player.profile = { image: req.body.profile.image };
+    }
     // saving player
     return DB.saveAsync(player);
   }).then(function (player) {
@@ -382,6 +484,15 @@ app.post('/v2/players/:id', express.bodyParser(), function(req, res){
   }, app.defaultError(res));
 });
 
+/**
+ * follow a player
+ * 
+ * You must be authentified (?playerid=...&token=...)
+ * 
+ * Body {
+ *   id: String,     (default=undefined)
+ * }
+ */
 app.post('/v2/players/:id/following/', express.bodyParser(), function(req, res) {
   if (typeof req.body.id !== "string")
     return app.defaultError(res)("missing id");
@@ -414,6 +525,16 @@ app.post('/v2/players/:id/following/', express.bodyParser(), function(req, res) 
   }, app.defaultError(res));
 });
   
+/**
+ * unfollow a player
+ * 
+ * You must be authentified (?playerid=...&token=...)
+ *  &_method=delete
+ * 
+ * Body {
+ *   id: String,     (default=undefined)
+ * }
+ */  
 app.delete('/v2/players/:id/following/', express.bodyParser(), function(req, res) {
   // fixme, this code should be shared with previous function.
   if (typeof req.body.id !== "string")
