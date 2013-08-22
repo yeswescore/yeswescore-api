@@ -575,16 +575,15 @@ for (var schemaName in DB.Schema) {
 //
 // Schema methods
 //
-DB.Schema.Game.methods.isPlayerWinning = function (playerId) {
+DB.Schema.Game.methods.isPlayerWinning = function (player) {
+  var playerId = DB.toStringId(player);
   var winningTeamIndex = this.getWinningTeamIndex();
   if (winningTeamIndex === null)
     return false;
   var everyPlayerOfWinningTeamIsDifferentFromInputPlayer = 
-    this.teams[winningTeamIndex].players.every(function (p) {
-      if (typeof p === "string")
-        return p != playerId;
-      return p.id != playerId;
-    });
+    this.teams[winningTeamIndex].players
+      .map(function (p) { return DB.toStringId(p) })
+      .every(function (id) { return !DB.Id.eq(id, playerId) });
   return ! everyPlayerOfWinningTeamIsDifferentFromInputPlayer;
 };
 
@@ -592,13 +591,15 @@ DB.Schema.Game.methods.isTeamWinning = function (teamId) {
   var winningTeamIndex = this.getWinningTeamIndex();
   if (winningTeamIndex === null)
     return false;
-  return this.teams[winningTeamIndex].id === teamId;
+  return DB.Id.eq(this.teams[winningTeamIndex].id, teamId);
 };
 
 DB.Schema.Game.methods.getWinningTeamIndex = function () {
-  if (typeof this.score !== "string")
+  if (!this.infos)
     return null;
-  var scoreDetails = this.score.split("/");
+  if (typeof this.infos.score !== "string")
+    return null;
+  var scoreDetails = this.infos.score.split("/");
   if (scoreDetails.length !== 2)
     return null;
   var scoreTeamA = parseInt(scoreDetails[0], 10);

@@ -115,6 +115,31 @@ app.get('/v2/games/:id', function (req, res){
   });
 });
 
+
+/**
+ * Tel if a team or player is winning a specific game.
+ *
+ * Specific options:
+ *  /v2/games/:id/isWinning/?player=:id   (playerId)
+ *  /v2/games/:id/isWinning/?team=:id     (gameId)
+ */
+app.get('/v2/games/:id/isWinning/', function (req, res) {
+  if (typeof req.query.player === "undefined" &&
+      typeof req.query.team === "undefined")
+    return app.defaultError(res)("missing player or a team");
+  
+  var query = DB.Model.Game.findOne({_id:req.params.id, _deleted: false})
+  query.exec(function (err, game) {
+    if (err)
+      return app.defaultError(res)(err);
+    if (game === null)
+      return app.defaultError(res)("no game found");
+    if (req.query.player)
+      return res.send(JSON.stringify({"result": game.isPlayerWinning(req.query.player)}));
+    return res.send(JSON.stringify({"result": game.isTeamWinning(req.query.team)}));
+  });
+});
+
 /**
  * Read a game stream
  *   sorting item by date_creation.
