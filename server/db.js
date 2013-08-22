@@ -239,7 +239,7 @@ DB.Definition.Game = {
     creation: { type: Date, default: Date.now },
     update: { type: Date, default: Date.now },
     start: Date,
-    end: Date,
+    end: Date, // AUTO-FIELD (status)
     expected: { type: Date } 
   },
   location : {
@@ -254,7 +254,7 @@ DB.Definition.Game = {
   infos: {
     type: { type: String, enum: [ "singles", "doubles" ] },
     subtype: { type: String, enum: [ "A", "B", "C", "D", "E", "F", "G", "H", "I" ] },
-    sets: String,
+    sets: String, // 6/1;6/2
     score: String,
     court: { type: String, enum: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11",
                                   "A", "B", "C", "D", "E", "F", "" ] },
