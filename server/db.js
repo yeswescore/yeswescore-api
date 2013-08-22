@@ -577,40 +577,47 @@ for (var schemaName in DB.Schema) {
 //
 DB.Schema.Game.methods.isPlayerWinning = function (player) {
   var playerId = DB.toStringId(player);
-  var winningTeamIndex = this.getWinningTeamIndex();
-  if (winningTeamIndex === null)
+  var winningTeamIndexes = this.getWinningTeamIndexes();
+  if (!winningTeamIndexes.length)
     return false;
-  var everyPlayerOfWinningTeamIsDifferentFromInputPlayer = 
-    this.teams[winningTeamIndex].players
-      .map(function (p) { return DB.toStringId(p) })
-      .every(function (id) { return !DB.Id.eq(id, playerId) });
+  var everyPlayerOfWinningTeamIsDifferentFromInputPlayer =
+    winningTeamIndexes.every(function (winningTeamIndex) {
+      return this.teams[winningTeamIndex].players
+                 .map(function (p) { return DB.toStringId(p) })
+                 .every(function (id) { return !DB.Id.eq(id, playerId) });
+    }, this);
   return ! everyPlayerOfWinningTeamIsDifferentFromInputPlayer;
 };
 
 DB.Schema.Game.methods.isTeamWinning = function (teamId) {
-  var winningTeamIndex = this.getWinningTeamIndex();
-  if (winningTeamIndex === null)
+  var winningTeamIndexes = this.getWinningTeamIndexes();
+  if (!winningTeamIndexes.length)
     return false;
-  return DB.Id.eq(this.teams[winningTeamIndex].id, teamId);
+  var everyTeamOfWinningTeamIsDifferentFromInputTeam =
+    winningTeamIndexes.every(function (winningTeamIndex) {
+      return DB.Id.neq(this.teams[winningTeamIndex].id, teamId);
+    }, this);
+  return ! everyTeamOfWinningTeamIsDifferentFromInputTeam;
 };
 
-DB.Schema.Game.methods.getWinningTeamIndex = function () {
+// @return [indexes]  []<=>error, [0], [1] => 1 winner, [0,1] => draw.
+DB.Schema.Game.methods.getWinningTeamIndexes = function () {
   if (!this.infos)
-    return null;
+    return [];
   if (typeof this.infos.score !== "string")
-    return null;
+    return [];
   var scoreDetails = this.infos.score.split("/");
   if (scoreDetails.length !== 2)
-    return null;
+    return [];
   var scoreTeamA = parseInt(scoreDetails[0], 10);
   var scoreTeamB = parseInt(scoreDetails[1], 10)
   if (scoreTeamA == NaN || scoreTeamB == NaN)
-    return null;
+    return [];
   if (scoreTeamA == scoreTeamB)
-    return -1; // draw
+    return [0, 1]; // draw
   if (scoreTeamA < scoreTeamB)
-    return 1; // team B is winning
-  return 0; // team A is winning
+    return [1]; // team B is winning
+  return [0]; // team A is winning
 };
 
 
