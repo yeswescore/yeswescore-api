@@ -53,7 +53,7 @@ http.getJSON = function (options, f) {
 
 http.post = function (options, data, f) {
   if (debug) {
-    console.log('http: POST: ' + options.path + ' data ' + JSON.stringify(data));
+    console.log('=> http: POST: ' + options.path + ' data ' + JSON.stringify(data));
   }
   // node default querystring.stringify doesn't handle nested objects.
   // we post using Content-Type: application/json.
@@ -78,7 +78,7 @@ http.post = function (options, data, f) {
        .on("end", function () {
           try {
             if (debug) {
-              console.log('http: POST: ' + options.path + ' result');
+              console.log('<= http: POST: ' + options.path + ' result');
               console.log(json);
             }
             var data = JSON.parse(json);
