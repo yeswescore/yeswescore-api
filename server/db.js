@@ -263,7 +263,12 @@ DB.Definition.Game = {
     tour: String,
     startTeam: { type: Schema.Types.ObjectId },
     official: { type: Boolean, default: true },
-    numberOfBestSets: { type: Number }
+    numberOfBestSets: { type: Number },
+    winners: {
+      players: [ { type: Schema.Types.ObjectId, ref: "Player" } ],  // AUTO-FIELD (status)
+      teams: [ { type: Schema.Types.ObjectId, ref: "Team" } ],      // AUTO-FIELD (status)
+      status: { type: String, enum: ["win", "draw"] }               // AUTO-FIELD (status)
+    }
   },
   // private 
   _deleted: { type: Boolean, default: false },  // FIXME: unused
@@ -301,8 +306,23 @@ DB.Definition.Game.status.set = function (status) {
   if (status === "ongoing" && oldStatus === "finished")
     this.dates.end = undefined;
   if ((status === "finished" && oldStatus === "created") ||
-      (status === "finished" && oldStatus === "ongoing"))
+      (status === "finished" && oldStatus === "ongoing")) {
+    // end of game
     this.dates.end = Date.now();
+    // updating winners, only if possible
+    var winningTeamIndexes = this.getWinningTeamIndexes();
+    this.infos.winners.status = "win";
+    this.infos.winners.teams = [];
+    this.infos.winners.players = [];
+    winningTeamIndexes.forEach(function (winningTeamIndex, i) {
+      if (i == 1)
+        this.infos.winners.status = "draw";
+      this.infos.winners.teams.push(DB.toStringId(this.teams[winningTeamIndex]));
+      this.teams[winningTeamIndex].players.forEach(function (player) {
+        this.infos.winners.players.push(DB.toStringId(player));
+      }, this);
+    }, this);
+  }
   return status;
 };
 

@@ -92,7 +92,13 @@ app.get('/v2/games/', function(req, res){
  *  /v2/games/:id/?populate=teams.players
  */
 app.get('/v2/games/:id', function (req, res){
-  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,teams.players.owner,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,infos.numberOfBestSets,streamCommentsSize,streamImagesSize";
+  var fields = req.query.fields ||
+    "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,"+
+    "location.country,location.city,location.pos,"+
+    "teams,teams.players.name,teams.players.club,teams.players.rank,teams.players.owner,"+
+    "infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,infos.numberOfBestSets,"+
+    "infos.winners,infos.winners.teams,infos.winners.players,infos.winners.status,"+
+    "streamCommentsSize,streamImagesSize";
   // populate option
   var populate = "teams.players";
   if (typeof req.query.populate !== "undefined")
@@ -426,17 +432,14 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
         throw "you are not the owner of the game";
       return game;
     }).then(function updateFields(game) {
-      // updatable simple fields
-      if (typeof req.body.status !== "undefined") {
-        push.status = game.status;
-        game.status = req.body.status;               
-      }
       if (typeof req.body.location !== "undefined") {
         if (typeof req.body.location.country === "string")
           game.location.country = req.body.location.country;
         if (typeof req.body.location.city === "string")
           game.location.city = req.body.location.city;
-      } 
+      }
+      if (req.body.dates && typeof req.body.dates.expected === "string")
+        game.dates.expected = req.body.dates.expected;
       if (typeof req.body.infos !== "undefined") {
         if (typeof req.body.infos.type === "string")
           game.infos.type = req.body.infos.type;
@@ -452,29 +455,35 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
           game.infos.surface = req.body.infos.surface;
         if (typeof req.body.infos.tour === "string")
           game.infos.tour = req.body.infos.tour;
-        if (typeof req.body.infos.official === "string") {
-          game.infos.official = (req.body.infos.official === "true");
-          push.official = req.body.infos.official;
-          push.win = game.isPlayerWinning(push.player.id) ? "1" : "0";
-          // FIXME: que remplir le jour ou N oponents > 1
-          if ( game.teams[0].players[0].id === push.player.id ) {           
-            push.opponent.name = game.teams[1].players[0].name;
-            push.opponent.rank = game.teams[1].players[0].rank;
-          } else {
-            push.opponent.name = game.teams[0].players[0].name;
-            push.opponent.rank = game.teams[0].players[0].rank;
-          }
-          push.score = game.infos.score;
-          push.sets = game.infos.sets;
-          push.dates.start = game.dates.start || "";
-        }
         if (typeof req.body.infos.numberOfBestSets !== "undefined")
           game.infos.numberOfBestSets = req.body.infos.numberOfBestSets;
+        if (typeof req.body.infos.official === "string")
+          game.infos.official = (req.body.infos.official === "true");
       }
+      // WARNING: we must update status at the end (after sets) !
+      if (typeof req.body.status !== "undefined") {
+        push.status = game.status;
+        game.status = req.body.status;
+      }
+      // auto update
       game.dates.update = Date.now();
-      if (req.body.dates && typeof req.body.dates.expected === "string")
-        game.dates.expected = req.body.dates.expected;
-      //
+      // now all the data is set, we can update push infos.
+      if (typeof req.body.infos !== "undefined" &&
+          typeof req.body.infos.official === "string") {
+        push.official = req.body.infos.official;
+        push.win = game.isPlayerWinning(push.player.id) ? "1" : "0";
+        // FIXME: que remplir le jour ou N oponents > 1
+        if ( game.teams[0].players[0].id === push.player.id ) {
+          push.opponent.name = game.teams[1].players[0].name;
+          push.opponent.rank = game.teams[1].players[0].rank;
+        } else {
+          push.opponent.name = game.teams[0].players[0].name;
+          push.opponent.rank = game.teams[0].players[0].rank;
+        }
+        push.score = game.infos.score;
+        push.sets = game.infos.sets;
+        push.dates.start = game.dates.start || "";
+      }
       return DB.Model.Game.updateTeamsAsync(game, req.body.teams);
     }).then(function update(game) {
       return DB.saveAsync(game);

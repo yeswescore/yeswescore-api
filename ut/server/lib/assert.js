@@ -346,7 +346,12 @@ assert.isGame = function (game) {
       tour: { _type: "undefined|string" },
       startTeam: { _type: "undefined|id" },
       official: { _type: "boolean" },
-      numberOfBestSets: { _type:"number|undefined" }
+      numberOfBestSets: { _type:"number|undefined" },
+      winners: {
+        teams: { _type: "[id]|undefined" },
+        players: { _type: "[id]|undefined" },
+        status: { _type: "undefined|enum", _enum: ["win", "draw"]}
+      }
     },
     teams: { _type: "[schema]", _check: function (team, i, teams) {
         assert(teams.length === 2, "isGame: game must have 2 teams");
