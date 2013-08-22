@@ -572,6 +572,41 @@ for (var schemaName in DB.Schema) {
 }
 
 //
+// Schema methods
+//
+DB.Schema.Game.methods.isPlayerWinning = function (playerId) {
+  var winningTeamIndex = this.getWinningTeamIndex();
+  if (winningTeamIndex === null)
+    return false;
+  var everyPlayerOfWinningTeamIsDifferentFromInputPlayer = 
+    this.teams[winningTeamIndex].players.every(function (p) {
+      if (typeof p === "string")
+        return p != playerId;
+      return p.id != playerId;
+    });
+  return ! everyPlayerOfWinningTeamIsDifferentFromInputPlayer;
+};
+
+DB.Schema.Game.methods.getWinningTeamIndex = function () {
+  if (typeof this.score !== "string")
+    return null;
+  var scoreDetails = this.score.split("/");
+  if (scoreDetails.length !== 2)
+    return null;
+  var scoreTeamA = parseInt(scoreDetails[0], 10);
+  var scoreTeamB = parseInt(scoreDetails[1], 10)
+  if (scoreTeamA == NaN || scoreTeamB == NaN)
+    return null;
+  if (scoreTeamA == scoreTeamB)
+    return -1; // draw
+  if (scoreTeamA < scoreTeamB)
+    return 1; // team B is winning
+  return 0; // team A is winning
+};
+
+
+
+//
 // Models
 //
 DB.Model.Club = mongoose.model("Club", DB.Schema.Club);
