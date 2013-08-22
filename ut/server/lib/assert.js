@@ -244,11 +244,11 @@ assert.isPlayerScheme = function (player, m) {
       update: { _type: "date|undefined" },
       birth: { _type: "date|undefined" }      
     },
-	push: {
-	  platform: { _type: "enum|undefined", _enum: [ "android", "ios", "wp8", "bb" ] },
-	  token: { _type: "string|undefined" }
-	},
-	gender: { _type: "enum|undefined", _enum: [ "man", "woman" ] },    
+    push: {
+      platform: { _type: "enum|undefined", _enum: [ "android", "ios", "wp8", "bb" ] },
+      token: { _type: "string|undefined" }
+    },
+    gender: { _type: "enum|undefined", _enum: [ "man", "woman" ] },
     email: {
       address: { _type: "string|undefined" },
       status: { _type: "enum|undefined", _enum: [ "pending-confirmation", "confirmed" ] }
