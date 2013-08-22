@@ -184,6 +184,10 @@ assert.schema = function (schema, obj, msg) {
         assert(Array.isArray(obj[k]), msg + " field " + k + " should be an array of subschemas");
         obj[k].forEach(value._check);
         break;
+      case "[id]":
+        assert(Array.isArray(obj[k]));
+        obj[k].forEach(function (key) { assert.isId(key); });
+        break;
       case "check":
         assert(typeof value._check === "function", msg + " malformed schema : check on field " + k);
         value._check(obj[k]);
