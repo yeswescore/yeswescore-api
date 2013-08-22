@@ -37,7 +37,7 @@ app.get('/v2/games/', function(req, res){
   var offset = req.query.offset || 0;
   var text = req.query.q;
   var club = req.query.club || null;
-  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,streamCommentsSize,streamImagesSize";
+  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,infos.numberOfBestSets,streamCommentsSize,streamImagesSize";
   var sort = req.query.sort || "-dates.start";
   var status = req.query.status || "created,ongoing,finished";
   var longitude = req.query.longitude;
@@ -92,7 +92,7 @@ app.get('/v2/games/', function(req, res){
  *  /v2/games/:id/?populate=teams.players
  */
 app.get('/v2/games/:id', function (req, res){
-  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,teams.players.owner,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,streamCommentsSize,streamImagesSize";
+  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,teams.players.owner,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,infos.numberOfBestSets,streamCommentsSize,streamImagesSize";
   // populate option
   var populate = "teams.players";
   if (typeof req.query.populate !== "undefined")
@@ -260,7 +260,8 @@ app.get('/v2/games/:id/stream/', function (req, res){
  *      surface: String   (default="")
  *      tour: String      (default="")
  *      startTeam: Int    (default=undefined) must be undefined, 0 or 1.
- *      official: Boolean  (default=true)
+ *      official: Boolean (default=true)
+ *      numberOfBestSets: Int      (default=undefined)
  *   }
  * }
  * 
@@ -300,12 +301,14 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
           score: req.body.infos.score || "",
           court: req.body.infos.court || "",
           surface: req.body.infos.surface || "",
-          tour: req.body.infos.tour || ""          
+          tour: req.body.infos.tour || ""
         }
       });
       //
       if (typeof req.body.infos.official === "string")
         game.infos.official = (req.body.infos.official === "true");
+      if (typeof req.body.infos.numberOfBestSets)
+        game.infos.numberOfBestSets = req.body.infos.numberOfBestSets;
       if (req.body.dates && typeof req.body.dates.expected === "string")
         game.dates.expected = req.body.dates.expected;
       //
@@ -365,10 +368,10 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
  * result is a redirect to /v2/games/:newid
  */
 app.post('/v2/games/:id', express.bodyParser(), function(req, res){
-  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,streamCommentsSize,streamImagesSize";
+  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,infos.numberOfBestSets,streamCommentsSize,streamImagesSize";
   var err = DB.Model.Game.checkFields(req.body);
   var push = {
-    player: {name:"",id:""}
+      player: {name:"",id:""}
     , opponent: {name:"",rank:""}
     , language:""
     , status:""
@@ -387,14 +390,10 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
         throw "unauthorized";
       push.language = authentifiedPlayer.language;
       push.player.id = authentifiedPlayer.id;
-      push.player.name = authentifiedPlayer.name;     
-
-	  var query = DB.Model.Game.findOne({_id:req.params.id, _deleted: false});
-	  query.populate("teams.players", fields["teams.players"]);
-	  return Q.nfcall(query.exec.bind(query));
-      //return Q.nfcall(DB.Model.Game.findOne.bind(DB.Model.Game),
-      //               {_id:req.params.id, _deleted: false});
-                      
+      push.player.name = authentifiedPlayer.name;
+      var query = DB.Model.Game.findOne({_id:req.params.id, _deleted: false});
+      query.populate("teams.players", fields["teams.players"]);
+      return Q.nfcall(query.exec.bind(query));
     }).then(function checkGameOwner(game) {
       if (game === null)
         throw "no game found";
@@ -430,34 +429,22 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
           game.infos.tour = req.body.infos.tour;
         if (typeof req.body.infos.official === "string") {
           game.infos.official = (req.body.infos.official === "true");
-          push.official = req.body.infos.official;          
+          push.official = req.body.infos.official;
+          push.win = game.isPlayerWinning(push.player.id) ? "1" : "0";
+          // FIXME: que remplir le jour ou N oponents > 1
           if ( game.teams[0].players[0].id === push.player.id ) {           
             push.opponent.name = game.teams[1].players[0].name;
             push.opponent.rank = game.teams[1].players[0].rank;
-            push.score = game.infos.score;
-            push.sets = game.infos.sets;            
-            if (Push.getIndexWinningTeam(push.score)==0)
-              push.win = "1";
-            else if (Push.getIndexWinningTeam(push.score)==1)
-              push.win = "0";            
-          }
-          else {
+          } else {
             push.opponent.name = game.teams[0].players[0].name;
-            push.opponent.rank = game.teams[0].players[0].rank; 
-            push.score = game.infos.score;
-            if (Push.getIndexWinningTeam(push.score)==0)
-              push.win = "0";
-            else if (Push.getIndexWinningTeam(push.score)==1)
-              push.win = "1";                                    
+            push.opponent.rank = game.teams[0].players[0].rank;
           }
-          
-          //push.dates.create = Date.now();
-          if (typeof game.dates.start === "undefined") {
-            push.dates.start = "";
-          }
-          else
-            push.dates.start = game.dates.start; 
+          push.score = game.infos.score;
+          push.sets = game.infos.sets;
+          push.dates.start = game.dates.start || "";
         }
+        if (typeof req.body.infos.numberOfBestSets !== "undefined")
+          game.infos.numberOfBestSets = req.body.infos.numberOfBestSets;
       }
       game.dates.update = Date.now();
       if (req.body.dates && typeof req.body.dates.expected === "string")
@@ -491,8 +478,8 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
           if (push.status !== req.body.status) {
             // change status if finished,created or started, we send notification to followers
             // send new status
-			push.status = req.body.status;
-		    Push.sendPushs(null,push);   		  
+            push.status = req.body.status;
+            Push.sendPushs(null,push);   		  
           }          
         }
       }

@@ -277,7 +277,8 @@ describe('dev:games', function(){
             court: "10",
             surface: "GAZ",
             tour: "1er tour",
-            official: "false" // jquery poste du texte et non un boolean
+            official: "false", // jquery poste du texte et non un boolean
+            numberOfBestSets: 3
           },
           status: "ongoing",
           teams: [ { id: null, players: [ { name : "toto" } ] },
@@ -296,6 +297,7 @@ describe('dev:games', function(){
           assert(game.infos.court === newGame.infos.court, "court should be the same");
           assert(game.infos.surface === newGame.infos.surface, "surface should be the same");
           assert(game.infos.official === false, "official should be the same (1) ");
+          assert(game.infos.numberOfBestSets === newGame.infos.numberOfBestSets, "numberOfBestSets should be the same (1) ");
           assert(JSON.parse(JSON.stringify(newGame.dates.expected)) === game.dates.expected, "dates.expected should be the same");
                     
           assert(game.status === newGame.status, "status should be the same " + game.status + " vs " + newGame.status);
@@ -348,6 +350,7 @@ describe('dev:games', function(){
           game.infos.surface = "NVTB";
           game.infos.tour = "2nd tour";
           game.infos.official = true;
+          game.infos.numberOfBestSets = 5;
           game.dates.expected = new Date();
           
           http.post(options, game, function (game) {
@@ -370,6 +373,7 @@ describe('dev:games', function(){
               assert(g.infos.surface === modifiedGame.infos.surface, "surface should be updated in DB");
               assert(g.infos.tour === modifiedGame.infos.tour, "tour should be updated in DB");
               assert(g.infos.official === modifiedGame.infos.official, "official should be updated in DB");                          
+              assert(g.infos.numberOfBestSets === modifiedGame.infos.numberOfBestSets, "numberOfBestSets should be updated in DB");
               
               assert(g.status === modifiedGame.status, "status should be updated");
               assert(typeof g.dates.start !== "undefined", "game should be started (dates.start!== undefined)");

@@ -262,7 +262,8 @@ DB.Definition.Game = {
                                     "NVTB", "PAR", "RES", "TB", "" ] },
     tour: String,
     startTeam: { type: Schema.Types.ObjectId },
-    official: { type: Boolean, default: true }
+    official: { type: Boolean, default: true },
+    numberOfBestSets: { type: Number }
   },
   // private 
   _deleted: { type: Boolean, default: false },  // FIXME: unused
@@ -587,6 +588,13 @@ DB.Schema.Game.methods.isPlayerWinning = function (playerId) {
   return ! everyPlayerOfWinningTeamIsDifferentFromInputPlayer;
 };
 
+DB.Schema.Game.methods.isTeamWinning = function (teamId) {
+  var winningTeamIndex = this.getWinningTeamIndex();
+  if (winningTeamIndex === null)
+    return false;
+  return this.teams[winningTeamIndex].id === teamId;
+};
+
 DB.Schema.Game.methods.getWinningTeamIndex = function () {
   if (typeof this.score !== "string")
     return null;
@@ -675,12 +683,13 @@ DB.Model.Game.checkFields = function (game) {
        "NVTB", "PAR", "RES", "TB", "" ].indexOf(game.infos.surface) === -1)
     return "wrong surface (BP,EP,EPDM,GAS,GAZ,MOQ,NVTB,PAR,RES,TB or empty";
     
-  //console.log("game.infos.official",game.infos.official);
-  //console.log("typeof game.infos.official",typeof game.infos.official);
-    
   if (game.infos && game.infos.official &&
       (typeof game.infos.official !== "boolean" && game.infos.official !== "true" && game.infos.official !== "false") )
-    return "wrong official ( true or false only )";       
+    return "wrong official ( true or false only )";
+
+  if (game.infos && game.infos.numberOfBestSets &&
+      (parseInt(game.infos.numberOfBestSets, 10) < 0 || parseInt(game.infos.numberOfBestSets, 10) > 10))
+    return "numberOfBestSets should be numeric";
         
   return null;
 }

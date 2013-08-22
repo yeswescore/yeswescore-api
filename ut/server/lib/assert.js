@@ -341,7 +341,8 @@ assert.isGame = function (game) {
                                                   "NVTB", "PAR", "RES", "TB", "" ] },
       tour: { _type: "undefined|string" },
       startTeam: { _type: "undefined|id" },
-      official: { _type: "boolean" }
+      official: { _type: "boolean" },
+      numberOfBestSets: { _type:"number|undefined" }
     },
     teams: { _type: "[schema]", _check: function (team, i, teams) {
         assert(teams.length === 2, "isGame: game must have 2 teams");
