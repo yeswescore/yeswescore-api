@@ -47,7 +47,7 @@ var image = { data:
           "VWUTSTIAmOYCgI9eVHUg7Dzcp4HoPVuglhMNcLm7Fy1qFW9oNsurMn1ayGQVKxZiZSCqCSZAAkx/9k="
         };
   
-  describe('upload jpeg', function(){
+  describe('upload jpeg (dataURI)', function(){
     it('should exist on disk, be accessible by http', function (done){
       var options = {
         host: Conf["http.host"],
@@ -63,6 +63,7 @@ var image = { data:
           port: Conf["http.port"],
           path: Conf["api.files"] + "?"
                                   + "mimeType=image/jpeg&"
+                                  + "format=dataURI&"
                                   + "playerid="+randomplayer._id+"&token="+randomplayer.token
         };
         
@@ -82,7 +83,7 @@ var image = { data:
     });
   });
   
-  describe('upload jpeg, save in player profile', function(){
+  describe('upload jpeg (dataURI), save in player profile', function(){
     it('should exist on disk, be accessible by http, & saved in player profile ', function (done){
       var options = {
         host: Conf["http.host"],
@@ -98,6 +99,7 @@ var image = { data:
           port: Conf["http.port"],
           path: Conf["api.files"] + "?"
                                   + "mimeType=image/jpeg&"
+                                  + "format=dataURI&"
                                   + "playerid="+randomplayer._id+"&token="+randomplayer.token
         };
         
@@ -155,7 +157,7 @@ var image = { data:
     });
   });
   
-  describe('upload jpeg', function(){
+  describe('upload jpeg (dataURI)', function(){
     it('should exist on disk, model readable & good size', function (done){
       var options = {
         host: Conf["http.host"],
@@ -171,6 +173,7 @@ var image = { data:
           port: Conf["http.port"],
           path: Conf["api.files"] + "?"
                                   + "mimeType=image/jpeg&"
+                                  + "format=dataURI&"
                                   + "playerid="+randomplayer._id+"&token="+randomplayer.token
         };
         
