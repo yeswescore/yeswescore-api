@@ -725,13 +725,11 @@ DB.Model.Game.updateTeamsPlayersAsync = function (game, teams) {
     // update game teams players
     teams.forEach(function (team, teamIndex) {
       team.players.forEach(function (player, playerIndex) {
-        var playerid = (typeof player === "string") ? player: player.id;
-        var oldPlayerId = game.teams[teamIndex].players[playerIndex];
-        if (playerid != oldPlayerId)
+        var playerid = DB.toStringId(player);
+        var oldPlayerId = DB.toStringId(game.teams[teamIndex].players[playerIndex]);
+        if (DB.Id.neq(playerid, oldPlayerId))
           game.markModified('teams');
-        if (typeof playerid === "string")
-          playerid = new ObjectId(playerid);
-        game.teams[teamIndex].players[playerIndex] = playerid;
+        game.teams[teamIndex].players[playerIndex] = DB.toObjectId(playerid);
       });
     });
     return game;
@@ -742,11 +740,9 @@ DB.Model.Game.updateTeamsPlayersAsync = function (game, teams) {
 // additionnals functions
 DB.Model.Game.checkTeamsAsync = function (teams) {
   var playersId = teams.reduce(function (p, team) {
-    return p.concat(team.players.map(function (player) {
-      if (typeof player === "string")
-        return player; // player is an id
-      return player.id;
-    }).filter(function (p) { return p !== null && typeof p !== "undefined"; }));
+    return p.concat(
+      team.players.map(DB.toStringId)
+                  .filter(function (id) { return id !== null }));
   }, []);
   return DB.existAsync(DB.Model.Player, playersId)
            .then(function (exist) {
