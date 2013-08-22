@@ -884,7 +884,7 @@ DB.toStringId = function (o) {
     return o;
   if (typeof o === "object" && o instanceof ObjectId)
     return String(o);
-  if (typeof o === "object" && o.id)
+  if (typeof o === "object" && o && o.id) // null is an object
     return DB.toStringId(o.id);
   return null;
 };
