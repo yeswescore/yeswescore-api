@@ -878,4 +878,26 @@ DB.isAuthenticatedAsync = function (query, options) {
   return Q.resolve(null);
 };
 
+DB.toStringId = function (o) {
+  if (typeof o === "string")
+    return o;
+  if (typeof o === "object" && o instanceof ObjectId)
+    return String(o);
+  if (typeof o === "object" && o.id)
+    return DB.toStringId(o.id);
+  return null;
+};
+
+DB.toObjectId = function (o) {
+  var stringId = DB.toStringId(o);
+  if (stringId)
+    return new ObjectId(stringId);
+  return null;
+};
+
+DB.Id = {
+  eq : function (idA, idB) { return DB.toStringId(idA) === DB.toStringId(idB) },
+  neq: function (idA, idB) { return DB.toStringId(idA) !== DB.toStringId(idB) }
+};
+
 module.exports = DB;
