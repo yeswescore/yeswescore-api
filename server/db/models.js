@@ -47,7 +47,7 @@ Models.generate = function (DB) {
   };
 
   // FIXME: use definition to automate theses tests.
-  Models.Game.Game.checkFields = function (game) {
+  Models.Game.checkFields = function (game) {
     if (game.sport && game.sport !== "tennis")
       return "wrong sport (tennis only)";
     // check type
