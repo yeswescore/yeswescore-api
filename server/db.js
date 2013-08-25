@@ -4,6 +4,7 @@ var mongoose = require('mongoose')
   , Q = require('q')
   , app = require('./app.js')
   , crypto = require('crypto')
+  , curry = require('curry')
   , Authentication = require('./authentication.js');
   
 var ObjectId = mongoose.Types.ObjectId;
