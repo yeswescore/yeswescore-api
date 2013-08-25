@@ -260,3 +260,5 @@ Definitions.generateTeam = function (DB) {
     _reported: { type: Boolean, default: false }  // FIXME: unused
   };
 };
+
+module.exports = Definitions;
