@@ -63,7 +63,7 @@ DB.Id = {
   */
 DB.save = function (docs) {
   if (Array.isArray(docs))
-    return Q.all(docs.map(function (doc) { return DB.save(doc) }));
+    return Q.all(docs.map(DB.save));
   return Q.ninvoke(docs.save);
 };
 
