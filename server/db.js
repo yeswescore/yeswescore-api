@@ -64,7 +64,7 @@ DB.Id = {
 DB.save = function (docs) {
   if (Array.isArray(docs))
     return Q.all(docs.map(DB.save));
-  return Q.ninvoke(docs.save);
+  return Q.ninvoke(docs, 'save');
 };
 DB.saveAsync = DB.save; // backward compatibility
 
@@ -83,7 +83,7 @@ DB.existOrEmpty = curry(function (model, ids) {
 DB.exist = curry(function (model, ids) {
   ids = (Array.isArray(ids)) ? ids : [ ids ];
   ids = ids.map(DB.toStringId);
-  return Q.ninvoke(model, "count", { _id: { $in: ids }})
+  return Q.ninvoke(model, 'count', { _id: { $in: ids }})
           .then(function (n) { return n === ids.length });
 });
 
