@@ -66,6 +66,7 @@ DB.save = function (docs) {
     return Q.all(docs.map(DB.save));
   return Q.ninvoke(docs.save);
 };
+DB.saveAsync = DB.save; // backward compatibility
 
 // @param model DB.Model.*
 // @param ids  ["id",..] or [{id:..}] or {id:} or "id"
