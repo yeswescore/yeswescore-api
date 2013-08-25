@@ -15,7 +15,7 @@ var DB = require("../db.js")
 app.get('/v2/files/:id', function(req, res){
   var fields = req.query.fields;
   
-  DB.isAuthenticatedAsync(req.query)
+  Authentication.Query.getPlayer(req.query)
     .then(function (authentifiedPlayer) {
       var query = DB.Model.File.findById(req.params.id);
       if (fields)
@@ -70,7 +70,7 @@ app.post('/v2/files/', express.bodyParser(), function(req, res){
     return app.defaultError(res)("mimeType must be image");
   
   var pathInfos, file, buffer;
-  DB.isAuthenticatedAsync(req.query)
+  Authentication.Query.getPlayer(req.query)
     .then(function (authentifiedPlayer) {
         if (!authentifiedPlayer)
           throw "player not authenticated";

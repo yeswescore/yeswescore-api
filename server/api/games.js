@@ -5,6 +5,7 @@ var DB = require("../db.js")
   , Push = require("../push.js")  
   , Resources = require("../strings/resources.js")
   , mongoose = require("mongoose")
+  , Authentication = require("../authentication.js")
   , ObjectId = mongoose.Types.ObjectId;
 
 
@@ -302,7 +303,7 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
   var err = DB.Model.Game.checkFields(req.body);
   if (err)
     return app.defaultError(res)(err);
-  DB.isAuthenticatedAsync(req.query)
+  Authentication.Query.getPlayer(req.query)
     .then(function checkPlayersExists(authentifiedPlayer) {
       if (authentifiedPlayer === null)
         throw "unauthorized";
@@ -415,7 +416,7 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
   if (err)
     return app.defaultError(res)(err);
   // check player is authenticated
-  DB.isAuthenticatedAsync(req.query)
+  Authentication.Query.getPlayer(req.query)
     .then(function searchGame(authentifiedPlayer) {
       if (authentifiedPlayer === null)
         throw "unauthorized";
@@ -558,7 +559,7 @@ app.post('/v2/games/:id/stream/', express.bodyParser(), function(req, res){
       return app.defaultError(res)("fbid !== owner.facebook.id");
   }
   //
-  DB.isAuthenticatedAsync(req.query, { facebook: true })
+  Authentication.Query.getPlayer(req.query)
     .then(function searchGame(authentifiedPlayer) {
       if (authentifiedPlayer === null)
         throw "unauthorized";
@@ -624,7 +625,7 @@ app.post('/v2/games/:id/stream/', express.bodyParser(), function(req, res){
  * This code is not performant.
  */
 app.post('/v2/games/:id/stream/:streamid/', express.bodyParser(), function(req, res){
-  DB.isAuthenticatedAsync(req.query, { facebook: true })
+  Authentication.Query.getPlayer(req.query)
     .then(function searchGame(authentifiedPlayer) {
       if (authentifiedPlayer === null)
         throw "unauthorized";
@@ -674,7 +675,7 @@ app.post('/v2/games/:id/stream/:streamid/', express.bodyParser(), function(req, 
  * FIXME: remove from player games.
  */
 app.delete('/v2/games/:id/', function (req, res) {
-  DB.isAuthenticatedAsync(req.query)
+  Authentication.Query.getPlayer(req.query)
     .then(function searchGame(authentifiedPlayer) {
       if (authentifiedPlayer === null)
         throw "unauthorized";
@@ -705,7 +706,7 @@ app.delete('/v2/games/:id/', function (req, res) {
  * FIXME: remove from player games.
  */
 app.delete('/v2/games/:id/stream/:streamid/', function (req, res) {
-  DB.isAuthenticatedAsync(req.query)
+  Authentication.Query.getPlayer(req.query)
     .then(function searchGame(authentifiedPlayer) {
       if (authentifiedPlayer === null)
         throw "unauthorized";

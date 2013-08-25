@@ -115,7 +115,7 @@ app.get('/v2/players/:id', function(req, res){
 
   var fields = req.query.fields || "following,idlicense,language,name,type,rank,type,games,dates.creation,location.currentPos,id,gender,dates.birth,push.platform,club.id,club.name,email.address,token,profile";
   
-  DB.isAuthenticatedAsync(req.query)
+  Authentication.Query.getPlayer(req.query)
     .then(function (authentifiedPlayer) {
       var query = DB.Model.Player.findById(req.params.id);
       if (fields)
@@ -373,7 +373,7 @@ app.post('/v2/players/:id', express.bodyParser(), function(req, res){
         return null;
       }),
       // 2nd : authentify & find the player
-      DB.isAuthenticatedAsync(req.query)
+      Authentication.Query.getPlayer(req.query)
         .then(function (authentifiedPlayer) {
         if (!authentifiedPlayer)
           throw "player not authenticated";
@@ -500,7 +500,7 @@ app.post('/v2/players/:id/following/', express.bodyParser(), function(req, res) 
     [
       // doing 2 things in parallel
       // 1-st : authentify the player
-      DB.isAuthenticatedAsync(req.query)
+      Authentication.Query.getPlayer(req.query)
         .then(function (authentifiedPlayer) {
         if (!authentifiedPlayer)
           throw "player not authenticated";
@@ -543,7 +543,7 @@ app.delete('/v2/players/:id/following/', express.bodyParser(), function(req, res
     [
       // doing 2 things in parallel
       // 1-st : authentify the player
-      DB.isAuthenticatedAsync(req.query)
+      Authentication.Query.getPlayer(req.query)
         .then(function (authentifiedPlayer) {
         if (!authentifiedPlayer)
           throw "player not authenticated";
