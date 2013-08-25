@@ -90,7 +90,7 @@ DB.exist = curry(function (model, ids) {
 // @param model   DB.Model.*
 // @param unused  just here to enable currying
 // @return Promise(model)
-DB.getRandomModel = curry(function (model, unused) {
+DB.getRandomModel = function (model) {
   return Q.ninvoke(model, "count", {})
           .then(function (n) {
             var randomIndex = Math.floor(Math.random() * n);
@@ -98,7 +98,7 @@ DB.getRandomModel = curry(function (model, unused) {
             return Q.ninvoke(model, "exec")
                     .then(function (result) { return result[0]; });
           });
-});
+};
 
 DB.findById = curry(function (model, id) {
   return Q.ninvoke(model, 'findById', id);

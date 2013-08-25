@@ -15,7 +15,7 @@ Models.generate = function (DB) {
     model.exist = DB.exist(model);
     model.existOrEmpty = DB.existOrEmpty(model);
     if (Conf.env === "DEV")
-      model.getRandomModel = DB.getRandomModel(model);
+      model.getRandomModel = function () { return DB.getRandomModel(model) };
   });
   Models.Club = mongoose.model("Club", DB.Schemas.Club);
   Models.Player = mongoose.model("Player", DB.Schemas.Player);
