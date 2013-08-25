@@ -4,7 +4,7 @@ var Conf = require("../conf.js")
 
 if (Conf.env === "DEV") {
   app.get('/documents/games/random', function (req, res) {
-    DB.Model.Game.randomAsync().then(
+    DB.Model.Game.getRandomModel().then(
       function success(game) {
         res.send(JSON.stringify(game));
       },
@@ -24,7 +24,7 @@ if (Conf.env === "DEV") {
   });
 
   app.get('/documents/players/random', function (req, res) {
-    DB.Model.Player.randomAsync().then(
+    DB.Model.Player.getRandomModel().then(
       function success(player) {
         res.send(JSON.stringify(player));
       },
@@ -44,7 +44,7 @@ if (Conf.env === "DEV") {
   });
 
   app.get('/documents/clubs/random', function (req, res) {
-    DB.Model.Club.randomAsync().then(
+    DB.Model.Club.getRandomModel().then(
       function success(club) {
         res.send(JSON.stringify(club));
       },

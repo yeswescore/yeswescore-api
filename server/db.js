@@ -121,12 +121,4 @@ DB.Models.generate(DB);
 // FIXME: backward compatibility
 DB.Model = DB.Models;
 
-// random api
-if (Conf.env === "DEV") {
-  DB.Model.Club.randomAsync = function () { return DB.getRandomModelAsync(DB.Model.Club); };
-  DB.Model.Player.randomAsync = function () { return DB.getRandomModelAsync(DB.Model.Player); };
-  DB.Model.Game.randomAsync = function () { return DB.getRandomModelAsync(DB.Model.Game); };
-  DB.Model.Team.randomAsync = function () { return DB.getRandomModelAsync(DB.Model.Team); };
-}
-
 module.exports = DB;

@@ -1,4 +1,5 @@
 var mongoose = require('mongoose')
+  , Conf = require('../conf.js')
   , crypto = require('crypto');
 
 var Models = {};
@@ -10,10 +11,11 @@ Models.generate = function (DB) {
     // schema => model
     model = mongoose.model(modelName, DB.Schemas[modelName]);
     // generic static funcs.
-    model.getRandomModel = DB.getRandomModel(model);
     model.findById = DB.findById(model);
     model.exist = DB.exist(model);
     model.existOrEmpty = DB.existOrEmpty(model);
+    if (Conf.env === "DEV")
+      model.getRandomModel = DB.getRandomModel(model);
   });
   Models.Club = mongoose.model("Club", DB.Schemas.Club);
   Models.Player = mongoose.model("Player", DB.Schemas.Player);

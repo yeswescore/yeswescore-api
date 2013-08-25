@@ -104,7 +104,7 @@ var generatePlayersAsync = function () {
   var nbPlayers = 40;
   var randomClubs = [];
   for (var i = 0; i < nbPlayers; ++i) {
-     randomClubs.push(DB.getRandomModelAsync(DB.Model.Club));
+     randomClubs.push(DB.Model.Club.getRandomModel());
   }
   var gClubs;
 
