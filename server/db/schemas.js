@@ -43,7 +43,7 @@ Schemas.generate = function (DB) {
         // removing hidden fields
         hide.forEach(function (prop) { delete ret[prop] });
       }
-    });
+    };
   });
   
   //
