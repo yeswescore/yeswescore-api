@@ -117,6 +117,8 @@ DB.Models = require('./db/models.js')
 DB.Schemas.generate(DB);
 // generating models
 DB.Models.generate(DB);
+// FIXME: backward compatibility
+DB.Model = DB.Models;
 
 // random api
 if (Conf.env === "DEV") {
