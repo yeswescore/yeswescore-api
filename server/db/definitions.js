@@ -1,6 +1,6 @@
 var mongoose = require('mongoose')
   , Schema = mongoose.Schema
-  , Authentication = require('./authentication.js');
+  , Authentication = require('../authentication.js');
 
 var Definitions = {
   Club: null,
