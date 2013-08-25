@@ -64,7 +64,8 @@ DB.Id = {
 DB.save = function (docs) {
   if (Array.isArray(docs))
     return Q.all(docs.map(DB.save));
-  return Q.ninvoke(docs, 'save');
+  return Q.ninvoke(docs, 'save')
+          .then(function (r) { return r[0] });
 };
 DB.saveAsync = DB.save; // backward compatibility
 
@@ -84,24 +85,25 @@ DB.exist = curry(function (model, ids) {
   ids = (Array.isArray(ids)) ? ids : [ ids ];
   ids = ids.map(DB.toStringId);
   return Q.ninvoke(model, 'count', { _id: { $in: ids }})
-          .then(function (n) { return n === ids.length });
+          .then(function (r) { return r[0] === ids.length });
 });
 
 // @param model   DB.Model.*
 // @param unused  just here to enable currying
 // @return Promise(model)
 DB.getRandomModel = function (model) {
-  return Q.ninvoke(model, "count", {})
+  return Q.ninvoke(model, 'count', {})
           .then(function (n) {
             var randomIndex = Math.floor(Math.random() * n);
             var query = model.find({}).skip(randomIndex).limit(1);
-            return Q.ninvoke(model, "exec")
-                    .then(function (result) { return result[0]; });
+            return Q.ninvoke(query, 'exec')
+                    .then(function (r) { return r[0] });
           });
 };
 
 DB.findById = curry(function (model, id) {
-  return Q.ninvoke(model, 'findById', id);
+  return Q.ninvoke(model, 'findById', id)
+          .then(function (r) { return r[0] });
 });
 
 //
