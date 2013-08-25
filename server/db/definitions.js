@@ -79,8 +79,8 @@ Definitions.generateGame = function (DB) {
       city: String,
       pos: {type: [Number], index: '2d'}
     },
-    teams: [ DB.Schema.Team ],
-    stream: [ DB.Schema.StreamItem ],
+    teams: [ DB.Schemas.Team ],
+    stream: [ DB.Schemas.StreamItem ],
     streamCommentsSize: { type: Number, default: 0 },
     streamImagesSize: { type: Number, default: 0 },
     infos: {
@@ -248,7 +248,7 @@ Definitions.generateTeam = function (DB) {
       image: { type: String, ref: "File" }
     },
     //
-    stream: [ DB.Schema.StreamItem ],
+    stream: [ DB.Schemas.StreamItem ],
     streamCommentsSize: { type: Number, default: 0 },
     streamImagesSize: { type: Number, default: 0 },
     // private searchable fields
