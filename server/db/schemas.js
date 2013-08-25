@@ -26,7 +26,7 @@ Schemas.generate = function (DB) {
   var schemaNames = ["StreamItem", "Team", "Club", "Player", "Game", "File"];
   schemaNames.forEach(function (name) {
     // generating definition
-    DB.Definitions["generate"+name]();
+    DB.Definitions["generate"+name](DB);
     // create schema from definition
     Schemas[name] = new Schema(DB.Definitions[name]);
     // Adding defautl transform func
