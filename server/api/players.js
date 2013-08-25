@@ -17,7 +17,8 @@ var DB = require("../db.js")
  *  /v2/players/?distance=20           (default=undefined)
  *
  * Specific options:
- *  /v2/players/?club=:id   (filter with a club)
+ *  /v2/players/?q=Charlotte (searched text)
+ *  /v2/players/?club=:id    (filter with a club)
  */
 app.get('/v2/players/', function(req, res){
   var limit = req.query.limit || 10;
@@ -246,7 +247,9 @@ app.get('/v2/players/:id/games/', function(req, res){
  *   email: { 
  *     address: String,    (default="")
  *   },
- *   image: String     (default=undefined)
+ *   profile: {
+ *     image: String     (default=undefined)
+ *   }
  *   language: String  (default=cf configuration)
  *   idlicense: String (default="")
  *   club: { id:..., name:... }  (default=null, name: is ignored)
