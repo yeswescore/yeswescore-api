@@ -1,7 +1,7 @@
 var DB = require("../db.js")
   , express = require("express")
   , app = require("../app.js")
-  , Q = require("q")
+  , Q = require("../q.js") // Q overloaded ! w00t
   , Push = require("../push.js")
   , Resources = require("../strings/resources.js")
   , mongoose = require("mongoose")
@@ -114,29 +114,17 @@ app.post('/v2/teams/', express.bodyParser(), function(req, res){
   var ownersIds = DB.Model.Team.getOwnersIds(req.body);
   if (ownersIds.indexOf(req.query.playerid) === -1)
     return app.defaultError(res)("owner must be a player/substitute/captain/captainSubstitute or coach");
-  //
-  // Authentication.Query.getPlayer          => player or null
-  // Authentication.Query.isAuthentified     => true/false
-  // Authentication.Query.authentify         => throw "unauthorized" if no player.
-  //
-  //
-  // .inject(func, param, ...).into(data, field)
-  // .ensure(func, param, ...).is(
-  //
-  // .then(Y.inject(func, param).
-  // .then(Y.ensure(func, param).isNot
-  //
   var data;
   DB.Model.Team.validate(req.body)
    .then(Authentication.Query.authentify, req.query)
-   .ensure(DB.Model.Club.existsOrEmpty, req.body.club).isNot(false, "club error")
-   .ensure(DB.Model.Player.existsOrEmpty, ownersIds).isNot(false, "owner error")
+   .ensure(DB.Model.Club.existsOrEmpty, [req.body.club]).isNot(false, "club error")
+   .ensure(DB.Model.Player.existsOrEmpty, [ownersIds]).isNot(false, "owner error")
    .then(function () {
-     var team = new DB.Model.Team(
+      var team = new DB.Model.Team({
         sport: req.body.sport || "tennis",
         name: req.body.name || "",
-        competition: (typeof req.body.competition === "boolean") ? req.body.competition : true;
-      );
+        competition: (typeof req.body.competition === "boolean") ? req.body.competition : true
+      });
       if (req.body.profile && typeof req.body.profile.image === "string")
         team.profile = { image: req.body.profile.image };
       if (DB.toStringId(req.body.club))
