@@ -239,6 +239,9 @@ Models.generate = function (DB) {
       ownersIds.push(obj.coach);
     return ownersIds;
   };
+
+  // FIXME: empty
+  Models.Team.checkFields = function () { return Q.fcall(function () { }); };
 };
 
 module.exports = Models;
