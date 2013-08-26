@@ -1,5 +1,6 @@
 var mongoose = require('mongoose')
   , Schema = mongoose.Schema
+  , Conf = require('../conf.js')
   , crypto = require('crypto');
   
 var Schemas = {
