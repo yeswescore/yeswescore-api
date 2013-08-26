@@ -139,13 +139,12 @@ app.post('/v2/teams/', express.bodyParser(), function(req, res){
   var data;
   DB.Model.Team.checkFields(req.body)
    .then(Authentication.Query.authentify(req.query))
-   .ensure(DB.Model.Club.existsOrEmpty, [req.body.club]).isNot(false, "club error")
-   .ensure(DB.Model.Player.existsOrEmpty, [ownersIds]).isNot(false, "owner error")
+   .ensure(DB.Model.Club.existOrEmpty(req.body.club)).isNot(false, "club error")
+   .ensure(DB.Model.Player.existOrEmpty(ownersIds)).isNot(false, "owner error")
    .then(function () {
       var team = new DB.Model.Team({
         sport: req.body.sport || "tennis",
-        name: req.body.name || "",
-        competition: (typeof req.body.competition === "boolean") ? req.body.competition : true
+        name: req.body.name || ""
       });
       if (req.body.profile && typeof req.body.profile.image === "string")
         team.profile = { image: req.body.profile.image };
@@ -161,9 +160,69 @@ app.post('/v2/teams/', express.bodyParser(), function(req, res){
         team.captainSubstitute = req.body.captainSubstitute;
       if (req.body.coach)
         team.coach = req.body.coach;
+      if (typeof req.body.competition !== "undefined")
+        team.competition = (req.body.competition === "true");
       return DB.saveAsync(team);
    }).then(function (team) {
      res.send(JSON.stringifyModels(team));
    }, app.defaultError(res));
 });
 
+app.post('/v2/teams/:id/', express.bodyParser(), function(req, res){
+  if (typeof req.body.name === "string" && !req.body.name)
+    return app.defaultError(res)("empty name"); // doesn't allow empty names
+  var ownersIds = DB.Model.Team.getOwnersIds(req.body)
+    , data = { team: null };
+  // 4 checks
+  Q.all[
+    // player is correctly authentified & exist in DB
+    DB.Model.Team.checkFields(req.body)
+      .then(Authentication.Query.authentify(req.query)),
+    // club (if submited) exist in DB
+    Q.ensure(DB.Model.Club.existOrEmpty(req.body.club))
+     .isNot(false, "club error"),
+    // every players submited exist in DB (heavy)
+    Q.ensure(DB.Model.Player.existOrEmpty(ownersIds))
+     .isNot(false, "owner error"),
+    // the team also exist in DB.
+    Q.ensure(Q.ninvoke(DB.Model.Team, 'findById', req.params.id))
+     .isNot(null, "unknown team")
+     .inject(data, team)
+  ].then(function () {
+    var team = data.team;
+    // security, is playerid an ownersIds ?
+    var dbOwnersIds = DB.Model.Team.getOwnersIds(team);
+    if (dbOwnersIds.indexOf(req.params.playerid) === -1)
+      throw "unauthorized";
+    if (typeof req.body.name === "string")
+      team.name = req.body.name;
+    if (req.body.profile && typeof req.body.profile.image === "string")
+      team.profile = { image: req.body.profile.image };
+    if (DB.toStringId(req.body.club))
+      team.club = { id: DB.toStringId(req.body.club) };
+    if (Array.isArray(req.body.players))
+      team.players = req.body.players;
+    if (Array.isArray(req.body.substitutes))
+      team.substitutes = req.body.substitutes;
+    if (typeof req.body.captain !== "undefined")
+      team.captain = req.body.captain;
+    if (typeof req.body.captainSubstitute !== "undefined")
+      team.captainSubstitute = req.body.captainSubstitute;
+    if (typeof req.body.competition !== "undefined")
+      team.competition = (req.body.competition === "true");
+    if (req.body.coach)
+      team.coach = req.body.coach;
+    // updating date
+    team.dates.update = Date.now();
+    //
+    return DB.save(team);
+  }).then(function (team) {
+    // forward sur la lecture de team classique.
+    app.internalRedirect('/v2/teams/:id')(
+    {
+      query: { },
+      params: { id: team.id }
+    },
+    res);
+  }, app.defaultError(res));
+});

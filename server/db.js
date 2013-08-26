@@ -73,7 +73,7 @@ DB.saveAsync = DB.save; // backward compatibility
 // @param ids  ["id",..] or [{id:..}] or {id:} or "id"
 // @return Promise(true/false)
 DB.existOrEmpty = curry(function (model, ids) {
-  if (!ids || Array.isEmptyArray(ids))
+  if (!ids || (Array.isArray(ids) && ids.length === 0))
     return Q(true);
   return DB.exist(model, ids);
 });
