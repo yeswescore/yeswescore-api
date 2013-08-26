@@ -1,5 +1,6 @@
 var mongoose = require('mongoose')
   , Conf = require('../conf.js')
+  , Q = require('q')
   , crypto = require('crypto');
 
 var Models = {};
