@@ -11,7 +11,6 @@ Models.generate = function (DB) {
     // schema => model
     model = mongoose.model(modelName, DB.Schemas[modelName]);
     // generic static funcs.
-    model.findById = DB.findById(model);
     model.exist = DB.exist(model);
     model.existOrEmpty = DB.existOrEmpty(model);
     if (Conf.env === "DEV")
