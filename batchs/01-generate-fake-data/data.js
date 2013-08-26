@@ -169,16 +169,15 @@ var generateGamesAsync = function () {
   // generating 20 games
   var players, owned, games = [];
   return Q.all([
-    Q.ninvoke(DB.Model.Player, 'find', {type:"default"})
-     .then(function (result) { players = result[0] }),
-    Q.ninvoke(DB.Model.Player, 'find', {type:"owned"})
-     .then(function (result) { owned = result[0] }),
+    Q.nfcall(DB.Model.Player.find.bind(DB.Model.Player), {type:"default"})
+     .then(function (result) { players = result }),
+    Q.nfcall(DB.Model.Player.find.bind(DB.Model.Player), {type:"owned"})
+     .then(function (result) { owned = result }),
   ]).then(function () {
     var nbGames = 20;
 
     for (var i = 0; i < nbGames; ++i) {
       var owner = players.random().id;
-
       var game = new DB.Model.Game({
         sport: "tennis",
         status: ["ongoing", "finished"].random(),
