@@ -65,7 +65,7 @@ app.post('/v2/files/', express.bodyParser(), function(req, res){
   if (format === "dataURI" && typeof req.body.data !== "string")
     return app.defaultError(res)("missing data (dataURI)");
   if (!req.query.mimeType ||
-      DB.Definition.File.mimeType.enum.indexOf(req.query.mimeType) === -1)
+      DB.Definitions.File.mimeType.enum.indexOf(req.query.mimeType) === -1)
     return app.defaultError(res)("unknown mimeType");
   if (req.query.mimeType !== "image/jpeg")
     return app.defaultError(res)("mimeType must be image");
