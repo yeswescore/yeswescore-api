@@ -91,13 +91,22 @@ app.get('/v2/teams/autocomplete/', function(req, res){
  *
  * Generic options:
  *  /v2/teams/?fields=name
+ *
+ * Specific options:
+ *  /v2/teams/?populate=...  default=players,substitutes,captain,captainSubstitute,coach,club.id
  */
 app.get('/v2/teams/:id', function(req, res){
   var fields = req.query.fields;
-
+  // populate option
+  var populate = "players,substitutes,captain,captainSubstitute,coach,club.id";
+  if (typeof req.query.populate === "string")
+    populate = req.query.populate;
+  //
   var query = DB.Model.Team.findById(req.params.id);
   if (fields)
     query.select(fields.replace(/,/g, " "));
+  if (populate)
+    query.populate(populate.replace(/,/g, " "));
   query.exec(function (err, team) {
     if (err)
       return app.defaultError(res)(err);

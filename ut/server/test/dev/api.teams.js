@@ -149,9 +149,9 @@ describe('dev:teams', function(){
                 assert(team.sport == modifiedTeam.sport, "should have same sport");
                 assert(team.players.length === modifiedTeam.players.length, "should have same number of players");
                 assert(team.competition === true, "should be same competition bool");
-                assert(team.captain === randomPlayer._id, "should have good captain");
+                assert(team.captain.id === randomPlayer._id, "should have good captain");
                 assert(typeof team.captainSubstitute === "undefined", "should have no more captainSubstitute");
-                assert(team.coach === anotherRandomPlayer._id, "should have good coach");
+                assert(team.coach.id === anotherRandomPlayer._id, "should have good coach");
 
                 done();
               });
