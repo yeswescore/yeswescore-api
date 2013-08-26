@@ -73,4 +73,25 @@ if (Conf.env === "DEV") {
       res.send(JSON.stringify(file));
     });
   });
+
+
+  app.get('/documents/teams/random', function (req, res) {
+    DB.Model.Team.getRandomModel().then(
+      function success(club) {
+        res.send(JSON.stringify(club));
+      },
+      app.defaultError(res)
+    );
+  });
+
+  app.get('/documents/teams/:id', function (req, res) {
+    DB.Model.Team.findOne({_id:req.params.id})
+                 .exec(function (err, club) {
+      if (err)
+        return app.defaultError(res)(err);
+      if (club === null)
+        return app.defaultError(res)("no team found");
+      res.send(JSON.stringify(club));
+    });
+  });
 };
