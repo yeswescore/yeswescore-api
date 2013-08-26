@@ -240,9 +240,7 @@ Definitions.generateTeam = function (DB) {
     captainSubstitute: { type: Schema.Types.ObjectId, ref: "Player" },
     coach: { type: Schema.Types.ObjectId, ref: "Player" },
     //
-    club: {
-      id: { type: Schema.Types.ObjectId, ref: "Club" }
-    },
+    club: { type: Schema.Types.ObjectId, ref: "Club" },
     competition: { type: Boolean, default: true },
     profile: {
       image: { type: String, ref: "File" }

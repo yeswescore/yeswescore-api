@@ -34,7 +34,7 @@ app.get('/v2/teams/', function(req, res){
   if (fields)
     query.select(fields.replace(/,/g, " "))
   if (club)
-    query.where("club.id", club);
+    query.where("club", club);
   if (text) {
     text = new RegExp("("+text.searchable().pregQuote()+")");
     query.where("_searchableName", text);
@@ -93,12 +93,12 @@ app.get('/v2/teams/autocomplete/', function(req, res){
  *  /v2/teams/?fields=name
  *
  * Specific options:
- *  /v2/teams/?populate=...  default=players,substitutes,captain,captainSubstitute,coach,club.id
+ *  /v2/teams/?populate=...  default=players,substitutes,captain,captainSubstitute,coach,club
  */
 app.get('/v2/teams/:id', function(req, res){
   var fields = req.query.fields;
   // populate option
-  var populate = "players,substitutes,captain,captainSubstitute,coach,club.id";
+  var populate = "players,substitutes,captain,captainSubstitute,coach,club";
   if (typeof req.query.populate === "string")
     populate = req.query.populate;
   //
@@ -128,13 +128,13 @@ app.get('/v2/teams/:id', function(req, res){
  *   profile: {
  *     image: String   (default=undefined)
  *   }
- *   club: { id: ... }                                 (default=undefined)
- *   players: [ { id: ... }, { id: ... }, ... ],       (default=[owner])
- *   substitutes: [ { id: ... }, { id: ... }, ... ],   (default=[])
- *   captain: { id: ... },                             (default=undefined)
- *   captainSubstitute : { id: ... },                  (default=undefined)
- *   coach: { id: ...}                                 (default=undefined)
- *   competition: Boolean                              (default=true)
+ *   club: id,                             (default=undefined)
+ *   players: [ id, id, ... ],             (default=[owner])
+ *   substitutes: [ id, id, ... ],,        (default=[])
+ *   captain: id,                          (default=undefined)
+ *   captainSubstitute : id,               (default=undefined)
+ *   coach: id,                            (default=undefined)
+ *   competition: Boolean                  (default=true)
  * }
  */
 app.post('/v2/teams/', express.bodyParser(), function(req, res){
@@ -158,7 +158,7 @@ app.post('/v2/teams/', express.bodyParser(), function(req, res){
       if (req.body.profile && typeof req.body.profile.image === "string")
         team.profile = { image: req.body.profile.image };
       if (DB.toStringId(req.body.club))
-        team.club = { id: DB.toStringId(req.body.club) };
+        team.club = DB.toStringId(req.body.club);
       if (Array.isArray(req.body.players))
         team.players = req.body.players;
       if (Array.isArray(req.body.substitutes))
@@ -177,11 +177,35 @@ app.post('/v2/teams/', express.bodyParser(), function(req, res){
    }, app.defaultError(res));
 });
 
+/**
+ * Modify a new Team
+ *
+ * You must be authentified
+ * You must give at least 1 players/captain/substitute/captainSubstitute/coach
+ *
+ * Body {
+ *   name: String,     (default="")
+ *   sport, String,    (default="tennis")
+ *   profile: {
+ *     image: String   (default=undefined)
+ *   }
+ *   club: id,                             (default=undefined)
+ *   players: [ id, id, ... ],             (default=[owner])
+ *   substitutes: [ id, id, ... ],,        (default=[])
+ *   captain: id,                          (default=undefined)
+ *   captainSubstitute : id,               (default=undefined)
+ *   coach: id,                            (default=undefined)
+ *   competition: Boolean                  (default=true)
+ * }
+ */
 app.post('/v2/teams/:id/', express.bodyParser(), function(req, res){
   if (typeof req.body.name === "string" && !req.body.name)
     return app.defaultError(res)("empty name"); // doesn't allow empty names
   var ownersIds = DB.Model.Team.getOwnersIds(req.body)
     , data = { team: null };
+  // check if "owner" is in players/substitutes/captain/captainSubstitute/coach
+  if (ownersIds.indexOf(req.query.playerid) === -1)
+    return app.defaultError(res)("owner must be a player/substitute/captain/captainSubstitute or coach");
   // 4 checks
   Q.all[
     // player is correctly authentified & exist in DB
@@ -208,7 +232,7 @@ app.post('/v2/teams/:id/', express.bodyParser(), function(req, res){
     if (req.body.profile && typeof req.body.profile.image === "string")
       team.profile = { image: req.body.profile.image };
     if (DB.toStringId(req.body.club))
-      team.club = { id: DB.toStringId(req.body.club) };
+      team.club = DB.toStringId(req.body.club);
     if (Array.isArray(req.body.players))
       team.players = req.body.players;
     if (Array.isArray(req.body.substitutes))

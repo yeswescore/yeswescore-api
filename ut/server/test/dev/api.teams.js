@@ -37,41 +37,51 @@ describe('dev:teams', function(){
       var options = {
         host: Conf["http.host"],
         port: Conf["http.port"],
-        path: Conf["documents.players"]+"random"
+        path: Conf["documents.clubs"]+"random"
       };
-      http.getJSON(options, function (randomPlayer) {
-        assert.isObject(randomPlayer, "random player must exist");
-        
+      
+      http.getJSON(options, function (randomclub) {
         var options = {
           host: Conf["http.host"],
           port: Conf["http.port"],
-          path: Conf["api.teams"]+"?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+          path: Conf["documents.players"]+"random"
         };
+        
+        http.getJSON(options, function (randomPlayer) {
+          assert.isObject(randomPlayer, "random player must exist");
 
-        var newTeam = {
-          sport : "tennis",
-          name: "team-"+Math.random(),
-          players: [ randomPlayer._id ],
-          substitutes: [],
-          competition: false
-        };
-        http.post(options, newTeam, function (team) {
-          assert.isTeam(team);
-
-          // read it from DB.
           var options = {
             host: Conf["http.host"],
             port: Conf["http.port"],
-            path: Conf["api.teams"]+team.id
+            path: Conf["api.teams"]+"?playerid="+randomPlayer._id+"&token="+randomPlayer.token
           };
-          
-          http.getJSON(options, function (team) {
-            assert(team.name === newTeam.name, "should have same name");
-            assert(team.sport == newTeam.sport, "should have same sport");
-            assert(team.players.length === newTeam.players.length, "should have same number of players");
-            assert(team.competition === newTeam.competition, "should be same competition bool");
 
-            done();
+          var newTeam = {
+            sport : "tennis",
+            name: "team-"+Math.random(),
+            players: [ randomPlayer._id ],
+            substitutes: [],
+            competition: false,
+            club: randomclub._id
+          };
+          http.post(options, newTeam, function (team) {
+            assert.isTeam(team);
+
+            // read it from DB.
+            var options = {
+              host: Conf["http.host"],
+              port: Conf["http.port"],
+              path: Conf["api.teams"]+team.id
+            };
+
+            http.getJSON(options, function (team) {
+              assert(team.name === newTeam.name, "should have same name");
+              assert(team.sport == newTeam.sport, "should have same sport");
+              assert(team.players.length === newTeam.players.length, "should have same number of players");
+              assert(team.competition === newTeam.competition, "should be same competition bool");
+
+              done();
+            });
           });
         });
       });

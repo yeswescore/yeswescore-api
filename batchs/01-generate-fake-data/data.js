@@ -348,7 +348,7 @@ var generateTeamsAsync = function () {
           captain: teamPlayers.random(),
           substitutes: teamPlayersSubstitutes,
           captainSubstitute: teamPlayersSubstitutes.random(), // might crash ?
-          club: { id: gClubs.random().id },
+          club: gClubs.random().id,
           competition: [true,false].random()
         });
         teams.push(team);
