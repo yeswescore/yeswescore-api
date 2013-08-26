@@ -398,6 +398,8 @@ assert.isGameTeam = function (o, m) {
     streamImagesSize: { _type: "*|undefined" },
   }, o, "isGameTeam: ");
 };
+// FIXME: temporary for compatibility
+assert.isTeam = assert.isGameTeam;
 
 assert.isStreamObject = function (o, m) {
   assert.schema({

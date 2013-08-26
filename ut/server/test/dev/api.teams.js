@@ -24,7 +24,7 @@ describe('dev:teams', function(){
           path: Conf["api.teams"]+randomTeam._id
         };
         http.getJSON(options, function (team) {
-          assert.isClub(team, "must be a team");
+          assert.isTeam(team, "must be a team");
           assert(team.id === randomTeam._id, "must be same team");
           done();
         });
