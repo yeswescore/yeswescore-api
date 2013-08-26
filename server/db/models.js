@@ -146,7 +146,7 @@ Models.generate = function (DB) {
         team.players.map(DB.toStringId)
                     .filter(function (id) { return id !== null }));
     }, []);
-    return DB.existAsync(DB.Model.Player, playersId)
+    return DB.exist(DB.Model.Player, playersId)
             .then(function (exist) {
                 if (!exist)
                   throw "some player doesn't exist";
