@@ -1,4 +1,5 @@
 var DB = require("../db.js")
+  , Q = require('q')
   , express = require("express")
   , app = require("../app.js");
 
@@ -151,11 +152,9 @@ app.get('/v2/clubs/:id/games/', function(req, res){
 app.post('/v2/clubs/', express.bodyParser(), function(req, res){
   if (!req.body.name || !req.body.location || !req.body.location.city)
     return app.defaultError(res)("please provide club name & city");
-  DB.Model.Club.findOne(
-    { name: req.body.name, 'location.city': req.body.location.city },
-    function (err, club) {
-      if (err)
-        return app.defaultError(res)(err);
+  Q.nfcall(DB.Model.Club.findOne.bind(DB.Model.Club),
+          { name: req.body.name, 'location.city': req.body.location.city })
+    .then(function (club) {
       if (club)
         return app.defaultError(res)("club already registered");
       // creating a new club (no owner)
@@ -188,10 +187,9 @@ app.post('/v2/clubs/', express.bodyParser(), function(req, res){
         club.countTeams1AN = parseInt(req.body.countTeams1AN, 10);
       if (typeof req.body.school !== "undefined")
         club.school = req.body.school;
-      DB.saveAsync(club)
-        .then(
-          function (club) { res.send(JSON.stringifyModels(club)) },
-          app.defaultError(res)
-        );
-    });
+      return DB.saveAsync(club);
+    }).then(
+      function (club) { res.send(JSON.stringifyModels(club)) },
+      app.defaultError(res)
+    );
 });

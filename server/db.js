@@ -64,7 +64,8 @@ DB.Id = {
 DB.save = function (docs) {
   if (Array.isArray(docs))
     return Q.all(docs.map(DB.save));
-  return Q.nfcall(docs.save.bind(docs));
+  return Q.ninvoke(docs, 'save')
+          .spread(function (r) { return r });
 };
 DB.saveAsync = DB.save; // backward compatibility
 
