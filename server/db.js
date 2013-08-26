@@ -123,4 +123,6 @@ DB.Models.generate(DB);
 // FIXME: backward compatibility
 DB.Model = DB.Models;
 
+Authentication.init(DB);
+
 module.exports = DB;
