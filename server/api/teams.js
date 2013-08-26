@@ -5,6 +5,7 @@ var DB = require("../db.js")
   , Push = require("../push.js")
   , Resources = require("../strings/resources.js")
   , mongoose = require("mongoose")
+  , Authentication = require("../authentication.js")
   , ObjectId = mongoose.Types.ObjectId;
 
 /**
