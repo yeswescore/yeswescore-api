@@ -360,8 +360,8 @@ var generateTeamsAsync = function () {
 Data.generateFakeDataAsync = function () {
   return generateClubsAsync().then(function () { console.log('generate clubs finished'); })
    .then(generatePlayersAsync).then(function () { console.log('generate players finished'); })
-   .then(generateGamesAsync).then(function () { console.log('generate game finished'); })
-   //.then(generateTeamsAsync)
+   .then(generateGamesAsync).then(function () { console.log('generate games finished'); })
+   .then(generateTeamsAsync).then(function () { console.log('generate teams finished'); })
    .then(function () {
       console.log('FAKE DATA GENERATED');
     }, function (e) {
