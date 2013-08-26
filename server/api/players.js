@@ -3,6 +3,7 @@ var DB = require("../db.js")
   , app = require("../app.js")
   , Email = require("../email.js")
   , Conf = require("../conf.js")
+  , Authentication = require("../authentication.js")
   , Q = require("q");
 
 /**

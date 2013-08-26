@@ -4,6 +4,7 @@ var DB = require("../db.js")
   , Conf = require("../conf.js")
   , Q = require("q")
   , mkdirp = require('mkdirp')
+  , Authentication = require("../authentication.js")
   , fs = require('fs');  
 
 /**
