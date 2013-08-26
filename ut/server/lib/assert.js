@@ -376,7 +376,6 @@ assert.isGameTeam = function (o, m) {
     name: { _type: "string|undefined" },
     dates: { _type: "*|undefined" },
     players: { _type: "[schema]", _check: function (player, i, players) {
-        assert(players.length === 1, "isGameTeam: only singles are handle yet");
         // player can be a simple ObjectId
         // or an object depending if populate=teams.players was activated
         if (isId(player) || (isObject(player) && isId(player.id))) {
