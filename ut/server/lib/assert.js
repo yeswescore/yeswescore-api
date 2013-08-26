@@ -192,6 +192,8 @@ assert.schema = function (schema, obj, msg) {
         assert(typeof value._check === "function", msg + " malformed schema : check on field " + k);
         value._check(obj[k]);
         break;
+      case "*":
+        break;
       default:
         assert(false, msg + " malformed schema : " +value._type + " is unknown on field " + k);
         break;
@@ -370,7 +372,9 @@ assert.isGame = function (game) {
 assert.isGameTeam = function (o, m) {
   assert.schema({
     id: { _type: "id|undefined" },
-    points: { _type: "string|undefined" },
+    sport: { _type: "string|undefined" },
+    name: { _type: "string|undefined" },
+    dates: { _type: "*|undefined" },
     players: { _type: "[schema]", _check: function (player, i, players) {
         assert(players.length === 1, "isGameTeam: only singles are handle yet");
         // player can be a simple ObjectId
@@ -381,7 +385,17 @@ assert.isGameTeam = function (o, m) {
           assert(false, "isGameTeam: team.players[*] mut be player ids");
         }
       }
-    }
+    },
+    club: { _type: "*|undefined" },
+    substitutes: { _type: "*|undefined" },
+    captain: { _type: "*|undefined" },
+    captainSubstitute: { _type: "*|undefined" },
+    coach: { _type: "*|undefined" },
+    competition: { _type: "*|undefined" },
+    profile: { _type: "*|undefined" },
+    stream: { _type: "*|undefined" },
+    streamCommentsSize: { _type: "*|undefined" },
+    streamImagesSize: { _type: "*|undefined" },
   }, o, "isGameTeam: ");
 };
 
