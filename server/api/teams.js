@@ -86,6 +86,27 @@ app.get('/v2/teams/autocomplete/', function(req, res){
 });
 
 /**
+ * Read a team
+ *
+ * Generic options:
+ *  /v2/teams/?fields=name
+ */
+app.get('/v2/teams/:id', function(req, res){
+  var fields = req.query.fields;
+
+  var query = DB.Model.Team.findById(req.params.id);
+  if (fields)
+    query.select(fields.replace(/,/g, " "));
+  query.exec(function (err, team) {
+    if (err)
+      return app.defaultError(res)(err);
+    if (team === null)
+      return app.defaultError(res)("no team found");
+    res.send(JSON.stringifyModels(team));
+  });
+});
+
+/**
  * Create a new Team
  *
  * You must be authentified
