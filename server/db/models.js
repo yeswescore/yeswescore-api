@@ -228,9 +228,9 @@ Models.generate = function (DB) {
     var ownersIds = [];
     if (!obj) return [];
     if (Array.isArray(obj.players) && obj.players.length)
-      ownersIds.concat(obj.players.map(DB.toStringId));
+      ownersIds = ownersIds.concat(obj.players.map(DB.toStringId));
     if (Array.isArray(obj.substitutes) && obj.substitutes.length)
-      ownersIds.concat(obj.substitutes.map(DB.toStringId));
+      ownersIds = ownersIds.concat(obj.substitutes.map(DB.toStringId));
     if (obj.captain)
       ownersIds.push(obj.captain);
     if (obj.captainSubstitute)
