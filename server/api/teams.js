@@ -138,7 +138,7 @@ app.post('/v2/teams/', express.bodyParser(), function(req, res){
     return app.defaultError(res)("owner must be a player/substitute/captain/captainSubstitute or coach");
   var data;
   DB.Model.Team.checkFields(req.body)
-   .then(Authentication.Query.authentify, req.query)
+   .then(Authentication.Query.authentify(req.query))
    .ensure(DB.Model.Club.existsOrEmpty, [req.body.club]).isNot(false, "club error")
    .ensure(DB.Model.Player.existsOrEmpty, [ownersIds]).isNot(false, "owner error")
    .then(function () {
