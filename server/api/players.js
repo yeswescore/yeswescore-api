@@ -373,7 +373,7 @@ app.post('/v2/players/:id', express.bodyParser(), function(req, res){
       // 1-st : find the club
       Q.fcall(function () {
         if (club && club.id)
-          return DB.Model.findByIdAsync(DB.Model.Club, club.id);
+          return Q.ninvoke(DB.Model.Club, 'findById', club.id);
         return null;
       }),
       // 2nd : authentify & find the player
@@ -383,9 +383,7 @@ app.post('/v2/players/:id', express.bodyParser(), function(req, res){
           throw "player not authenticated";
         return authentifiedPlayer;
       }),
-      Q.fcall(function () {      
-          return DB.Model.findByIdAsync(DB.Model.Player, req.params.id);
-      })      
+      Q.ninvoke(DB.Model.Player, 'findById', req.params.id)
     ]
   ).then(function (qall) {
     var club = qall[0];
