@@ -139,7 +139,6 @@ Models.generate = function (DB) {
     });
   };
 
-
   // additionnals functions
   Models.Game.checkTeamsAsync = function (teams) {
     var playersId = teams.reduce(function (p, team) {
@@ -222,6 +221,22 @@ Models.generate = function (DB) {
     return crypto.createHash('sha256')
                 .update(buffer)
                 .digest('hex');
+  };
+
+  Models.Team.getOwnersIds = function (obj) {
+    var ownersIds = [];
+    if (!obj) return [];
+    if (Array.isArray(obj.players) && obj.players.length)
+      ownersIds.concat(obj.players.map(DB.toStringId));
+    if (Array.isArray(obj.substitutes) && obj.substitutes.length)
+      ownersIds.concat(obj.substitutes.map(DB.toStringId));
+    if (obj.captain)
+      ownersIds.push(obj.captain);
+    if (obj.captainSubstitute)
+      ownersIds.push(obj.captainSubstitute);
+    if (obj.coach)
+      ownersIds.push(obj.coach);
+    return ownersIds;
   };
 };
 
