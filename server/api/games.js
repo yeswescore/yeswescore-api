@@ -327,7 +327,7 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
         ],
         stream: [],
         infos: {
-          type: "singles",
+          type: req.body.infos.type || "singles",
           subtype: req.body.infos.subtype || "A",
           sets: req.body.infos.sets || "",
           score: req.body.infos.score || "",
