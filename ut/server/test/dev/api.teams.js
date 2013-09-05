@@ -1,200 +1,119 @@
 var assert = require("../../lib/assert.js")
   , http = require("../../lib/http.js")
-  , Conf = require("../../../../server/conf.js");
+  , Conf = require("../../../../server/conf.js")
+  , Q = require("../../../../server/q.js");
 
-if (Conf.env !== "DEV")
-  process.exit(0);
-
-var DB = {};
-DB.toStringId = function (o) {
-  if (typeof o === "string")
-    return o;
-  if (typeof o === "object" && o && o.id) // null is an object
-    return DB.toStringId(o.id);
-  if (typeof o === "object" && o && o._id) // null is an object
-    return DB.toStringId(o._id);
-  return null;
-};
+var Shared = require('./shared.js');
+var DB = Shared.DB;
+var API = Shared.API;
 
 describe('dev:teams', function(){
   // READ
   describe('read random document team, then read api team should be a valid team', function(){
     it('should give team (not empty & valid)', function (done){
-      var options = {
-        host: Conf["http.host"],
-        port: Conf["http.port"],
-        path: Conf["documents.teams"]+"random"
-      };
-
-      http.getJSON(options, function (randomTeam) {
-        assert.isObject(randomTeam, "random team must exist");
-
-        var options = {
-          host: Conf["http.host"],
-          port: Conf["http.port"],
-          path: Conf["api.teams"]+randomTeam._id
-        };
-        http.getJSON(options, function (team) {
-          assert.isTeam(team, "must be a team");
-          assert(team.id === randomTeam._id, "must be same team");
-          done();
-        });
-      });
+      Q.wrap("c'est partiiii")
+        .then(API.Team.random)
+        .then(function map(randomTeam) { return randomTeam._id })
+        .then(API.Team.read)
+        .then(function () { done() });
     });
   });
 
   describe('create simpliest random team, read it', function() {
     it('should create the team', function (done) {
-      var options = {
-        host: Conf["http.host"],
-        port: Conf["http.port"],
-        path: Conf["documents.clubs"]+"random"
-      };
-      
-      http.getJSON(options, function (randomclub) {
-        var options = {
-          host: Conf["http.host"],
-          port: Conf["http.port"],
-          path: Conf["documents.players"]+"random"
-        };
-        
-        http.getJSON(options, function (randomPlayer) {
-          assert.isObject(randomPlayer, "random player must exist");
+      var data = {}, newTeam;
 
-          var options = {
-            host: Conf["http.host"],
-            port: Conf["http.port"],
-            path: Conf["api.teams"]+"?playerid="+randomPlayer._id+"&token="+randomPlayer.token
-          };
-
-          var newTeam = {
+      Q.wrap("c'est partiiii")
+       .then(function () { return API.Club.random() }).inject(data, "randomClub")
+       .then(function () { return API.Player.random() }).inject(data, "randomPlayer")
+       .then(function () {
+          var randomPlayer = data.randomPlayer;
+          var randomClub = data.randomClub;
+          newTeam = {
             sport : "tennis",
             name: "team-"+Math.random(),
             players: [ randomPlayer._id ],
             substitutes: [],
             competition: false,
-            club: randomclub._id
+            club: randomClub._id
           };
-          http.post(options, newTeam, function (team) {
-            assert.isTeam(team);
-
-            // read it from DB.
-            var options = {
-              host: Conf["http.host"],
-              port: Conf["http.port"],
-              path: Conf["api.teams"]+team.id
-            };
-
-            http.getJSON(options, function (team) {
-              assert(team.name === newTeam.name, "should have same name");
-              assert(team.sport == newTeam.sport, "should have same sport");
-              assert(team.players.length === newTeam.players.length, "should have same number of players");
-              assert(team.competition === newTeam.competition, "should be same competition bool");
-
-              done();
-            });
-          });
-        });
-      });
+          return API.Team.create(newTeam, randomPlayer._id, randomPlayer.token)
+        })
+       .then(function (team) { return API.Team.read(team.id) })
+       .then(function (team) {
+          assert(team.name === newTeam.name, "should have same name");
+          assert(team.sport == newTeam.sport, "should have same sport");
+          assert(team.players.length === newTeam.players.length, "should have same number of players");
+          assert(team.competition === newTeam.competition, "should be same competition bool");
+       }).then(
+         function () { done() },
+         function (err) { done(err) }
+       );
     });
   });
 
   describe('create simpliest random team, modify it, read it', function() {
     it('should create the team & save it without errors', function (done) {
-      var options = {
-        host: Conf["http.host"],
-        port: Conf["http.port"],
-        path: Conf["documents.players"]+"random"
-      };
-      http.getJSON(options, function (randomPlayer) {
-        assert.isObject(randomPlayer, "random player must exist");
+      var data = {}, modifiedTeam;
 
-        var options = {
-          host: Conf["http.host"],
-          port: Conf["http.port"],
-          path: Conf["api.teams"]+"?playerid="+randomPlayer._id+"&token="+randomPlayer.token
-        };
-
-        var newTeam = {
-          sport : "tennis",
-          name: "team-"+Math.random(),
-          players: [ randomPlayer._id ],
-          substitutes: [ randomPlayer._id ],
-          captainSubstitute: randomPlayer._id, 
-          competition: "false"
-        };
-        http.post(options, newTeam, function (team) {
-          assert.isTeam(team);
-
-          var options = {
-            host: Conf["http.host"],
-            port: Conf["http.port"],
-            path: Conf["documents.players"]+"random"
+      Q.wrap("c'est partiiii")
+       .then(function () { return API.Player.random() }).inject(data, "randomPlayer")
+       .then(function () { return API.Player.random() }).inject(data, "anotherRandomPlayer")
+       .then(function () {
+          // CREATION TEAM
+          var randomPlayer = data.randomPlayer;
+          var newTeam = {
+            sport : "tennis",
+            name: "team-"+Math.random(),
+            players: [ randomPlayer._id ],
+            substitutes: [ randomPlayer._id ],
+            captainSubstitute: randomPlayer._id,
+            competition: "false"
           };
-          http.getJSON(options, function (anotherRandomPlayer) {
-            // modify it
-            var options = {
-              host: Conf["http.host"],
-              port: Conf["http.port"],
-              path: Conf["api.teams"]+team.id+"/?playerid="+randomPlayer._id+"&token="+randomPlayer.token
-            };
-
-            var modifiedTeam = team;
-            team.name = "team-"+Math.random();
-            // add player
-            team.players.push(anotherRandomPlayer._id);
-            team.substitutes = [ anotherRandomPlayer._id ];
-            team.captain = randomPlayer._id;
-            team.captainSubstitute = ""; // try to empty this relationship.
-            team.coach = anotherRandomPlayer._id;
-            team.competition = "true";
-
-            http.post(options, modifiedTeam, function (team) {
-              assert(team.name === modifiedTeam.name, "should have same name");
-              assert(team.sport == modifiedTeam.sport, "should have same sport");
-              assert(team.players.length === modifiedTeam.players.length, "should have same number of players");
-              assert(team.competition === true, "should be same competition bool");
-              assert(DB.toStringId(team.captain) === DB.toStringId(randomPlayer), "should have good captain");
-              assert(typeof team.captainSubstitute === "undefined", "should have no more captainSubstitute");
-              assert(DB.toStringId(team.coach) === DB.toStringId(anotherRandomPlayer), "should have good coach");
-
-              // read it from DB.
-              var options = {
-                host: Conf["http.host"],
-                port: Conf["http.port"],
-                path: Conf["api.teams"]+team.id
-              };
-
-              http.getJSON(options, function (team) {
-                assert(team.name === modifiedTeam.name, "should have same name");
-                assert(team.sport == modifiedTeam.sport, "should have same sport");
-                assert(team.players.length === modifiedTeam.players.length, "should have same number of players");
-                assert(team.competition === true, "should be same competition bool");
-                assert(DB.toStringId(team.captain.id) === DB.toStringId(randomPlayer), "should have good captain");
-                assert(typeof team.captainSubstitute === "undefined", "should have no more captainSubstitute");
-                assert(DB.toStringId(team.coach) === DB.toStringId(anotherRandomPlayer), "should have good coach");
-
-                done();
-              });
-            });
-          });
-        });
-      });
+          return API.Team.create(newTeam, randomPlayer._id, randomPlayer.token)
+        }).then(function (team) {
+          // MODIFICATION DE LA TEAM
+          var randomPlayer = data.randomPlayer;
+          var anotherRandomPlayer = data.anotherRandomPlayer;
+          modifiedTeam = team;
+          team.name = "team-"+Math.random();
+          // add player
+          team.players.push(anotherRandomPlayer._id);
+          team.substitutes = [ anotherRandomPlayer._id ];
+          team.captain = randomPlayer._id;
+          team.captainSubstitute = ""; // try to empty this relationship.
+          team.coach = anotherRandomPlayer._id;
+          team.competition = "true";
+          return API.Team.update(team, randomPlayer._id, randomPlayer.token);
+        }).then(function (team) {
+          // VERIFICATION DE LA MODIFICATION DE LA TEAM
+          var randomPlayer = data.randomPlayer;
+          var anotherRandomPlayer = data.anotherRandomPlayer;
+          assert(team.name === modifiedTeam.name, "should have same name");
+          assert(team.sport == modifiedTeam.sport, "should have same sport");
+          assert(team.players.length === modifiedTeam.players.length, "should have same number of players");
+          assert(team.competition === true, "should be same competition bool");
+          assert(DB.toStringId(team.captain) === DB.toStringId(randomPlayer), "should have good captain");
+          assert(typeof team.captainSubstitute === "undefined", "should have no more captainSubstitute");
+          assert(DB.toStringId(team.coach) === DB.toStringId(anotherRandomPlayer), "should have good coach");
+          return API.Team.read(team.id);
+        }).then(function (team) {
+          // 2nd VERIFICATION DE LA MODIFICATION DE LA TEAM
+          var randomPlayer = data.randomPlayer;
+          var anotherRandomPlayer = data.anotherRandomPlayer;
+          assert(team.name === modifiedTeam.name, "should have same name");
+          assert(team.sport == modifiedTeam.sport, "should have same sport");
+          assert(team.players.length === modifiedTeam.players.length, "should have same number of players");
+          assert(team.competition === true, "should be same competition bool");
+          assert(DB.toStringId(team.captain.id) === DB.toStringId(randomPlayer), "should have good captain");
+          assert(typeof team.captainSubstitute === "undefined", "should have no more captainSubstitute");
+          assert(DB.toStringId(team.coach) === DB.toStringId(anotherRandomPlayer), "should have good coach");
+        }).then(
+         function () { done() },
+         function (err) { done(err) }
+       );
     });
   });
-
-
-  var computeStreamCommentsSize = function (stream) {
-    assert(Array.isArray(stream));
-
-    var i, cpt = 0;
-    for (i = 0; i < stream.length; ++i) {
-      if (stream[i].type === "comment" &&
-          stream[i]._deleted === false)
-        cpt++;
-    }
-    return cpt;
-  };
 
   describe('write a comment on a team stream', function () {
     it('should create team, create a comment, size of stream +1 (not empty & valid)', function (done){
@@ -260,7 +179,7 @@ describe('dev:teams', function(){
               };
               http.getJSON(options, function (team) {
                 assert.isObject(team, "team must exist");
-                assert(computeStreamCommentsSize(team.stream) === team.streamCommentsSize, 'team stream length & streamCommentsSize should be the same (2) ' + team.stream.length + ' vs ' + team.streamCommentsSize);
+                assert(Shared.computeStreamCommentsSize(team.stream) === team.streamCommentsSize, 'team stream length & streamCommentsSize should be the same (2) ' + team.stream.length + ' vs ' + team.streamCommentsSize);
                 done();
               });
             });
