@@ -8,7 +8,7 @@ Q.makePromise.prototype.ensure = function (promise) {
   var that = this;
   return {
     is: function (val, message) {
-      return that.then(promise)
+      return that.then(function () { return promise })
                  .then(function (result) {
                     if (result !== val)
                       throw (message || "ensure is "+val+" failed");
@@ -17,7 +17,7 @@ Q.makePromise.prototype.ensure = function (promise) {
     },
 
     isNot: function (val, message) {
-      return that.then(promise)
+      return that.then(function () { return promise })
                  .then(function (result) {
                     if (result === val)
                       throw (message || "ensure is "+val+" failed");
@@ -33,7 +33,7 @@ Q.ensure = function (func, params) {
 
 
 Q.makePromise.prototype.inject = function (obj, field) {
-  return that.then(function (r) { obj[field] = r; return r; });
+  return this.then(function (r) { obj[field] = r; return r; });
 };
 
 module.exports = Q;
