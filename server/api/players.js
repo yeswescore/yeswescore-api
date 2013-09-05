@@ -336,7 +336,7 @@ app.post('/v2/players/', express.bodyParser(), function(req, res){
     // password
     if (req.body.uncryptedPassword)
       player.uncryptedPassword = req.body.uncryptedPassword;
-    return DB.saveAsync(player);
+    return DB.save(player);
   }).then(function (player) {
     // everything went ok => sending email confirmation
     if (emailConfirmationRequired)
@@ -478,7 +478,7 @@ app.post('/v2/players/:id', express.bodyParser(), function(req, res){
       player.profile = { image: req.body.profile.image };
     }
     // saving player
-    return DB.saveAsync(player);
+    return DB.save(player);
   }).then(function (player) {
     if (emailConfirmationRequired)
       Email.sendEmailConfirmation(player.email.address, player.email._token, player.language);

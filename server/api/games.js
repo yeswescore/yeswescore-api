@@ -345,14 +345,14 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
         game.dates.expected = req.body.dates.expected;
       //
       return DB.Models.Game.updateTeamsAsync(game, req.body.teams);
-    }).then(function saveAsync(game) {
-      return DB.saveAsync(game);
+    }).then(function save(game) {
+      return DB.save(game);
     }).then(function saveStartTeam(game) {
       if (req.body.infos.startTeam) {
         var startTeam = parseInt(req.body.infos.startTeam, 10);
         if (startTeam === 0 || startTeam === 1) {
           game.infos.startTeam = game.teams[startTeam].id;
-          return DB.saveAsync(game);
+          return DB.save(game);
         }
       }
       return game;
@@ -487,19 +487,19 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
       }
       return DB.Models.Game.updateTeamsAsync(game, req.body.teams);
     }).then(function update(game) {
-      return DB.saveAsync(game);
+      return DB.save(game);
     }).then(function saveStartTeam(game) {
       if (typeof req.body.infos !== "undefined" && 
           req.body.infos.startTeam) {
         var startTeam = parseInt(req.body.infos.startTeam, 10);
         if (startTeam === 0 || startTeam === 1) {
           game.infos.startTeam = game.teams[startTeam].id;
-          return DB.saveAsync(game);
+          return DB.save(game);
         }
         if (req.body.infos.startTeam == game.teams[0].id ||
             req.body.infos.startTeam == game.teams[1].id) {
           game.infos.startTeam = req.body.infos.startTeam;
-          return DB.saveAsync(game);
+          return DB.save(game);
         }
       }
       return game;
@@ -595,7 +595,7 @@ app.post('/v2/games/:id/stream/', express.bodyParser(), function(req, res){
         
       game.stream.push(streamItem);
       game.dates.update = Date.now();
-      return DB.saveAsync(game);
+      return DB.save(game);
     }).then(function incr(game) {
       if (req.body.type === "comment") {
         return Q.nfcall(DB.Models.Game.findByIdAndUpdate.bind(DB.Models.Game),
@@ -652,7 +652,7 @@ app.post('/v2/games/:id/stream/:streamid/', express.bodyParser(), function(req, 
         if (req.body.data && req.body.data.text)
           game.stream[i].data = { text: req.body.data.text };
         game.stream[i].dates.update = Date.now();
-        return DB.saveAsync(game);
+        return DB.save(game);
       }
       throw "no streamItem found";
     }).then(function (game) {
@@ -694,7 +694,7 @@ app.delete('/v2/games/:id/', function (req, res) {
     }).then(function (game) {
       // mark the game as deleted
       game._deleted = true;
-      return DB.saveAsync(game);
+      return DB.save(game);
     }).then(function () {
       res.send('{}'); // smallest json.
     }, app.defaultError(res));
@@ -731,7 +731,7 @@ app.delete('/v2/games/:id/stream/:streamid/', function (req, res) {
           // streamItem found => delete it
           game.stream[i]._deleted = true;
           game.stream[i].dates.update = Date.now();
-          return DB.saveAsync(game);
+          return DB.save(game);
         }
       }
       throw "no streamItem found";

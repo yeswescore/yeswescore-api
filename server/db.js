@@ -58,8 +58,8 @@ DB.Id = {
   * ex:
   *   var playerA = new DB.Models.Player({ "name" : "vincent" });
   *   var playerB = new DB.Models.Player({ "name" : "marc" });
-  *   DB.saveAsync(playerA).then(...)
-  *   DB.saveAsync([playerA, playerB]).then(...)
+  *   DB.save(playerA).then(...)
+  *   DB.save([playerA, playerB]).then(...)
   */
 DB.save = function (docs) {
   if (Array.isArray(docs))
@@ -67,7 +67,6 @@ DB.save = function (docs) {
   return Q.ninvoke(docs, 'save')
           .spread(function (r) { return r });
 };
-DB.saveAsync = DB.save; // backward compatibility
 
 // @param model DB.Models.*
 // @param ids  ["id",..] or [{id:..}] or {id:} or "id"

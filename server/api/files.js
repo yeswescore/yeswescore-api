@@ -111,7 +111,7 @@ app.post('/v2/files/', express.bodyParser(), function(req, res){
           parseFloat(req.query.longitude),
           parseFloat(req.query.latitude)
         ];
-      return DB.saveAsync(file);
+      return DB.save(file);
     }).then(function createDirectory() {
       var directory = Conf.get("files.path")+pathInfos.directory;
       return Q.nfcall(mkdirp, directory);

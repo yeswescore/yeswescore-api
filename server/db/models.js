@@ -191,7 +191,7 @@ Models.generate = function (DB) {
                   p.club.id = club.id;
                   p.club.name = club.name;
                 }
-                return DB.saveAsync(p)
+                return DB.save(p)
                         .then(function (p) {
                             teams[teamIndex].players[playerIndex] = p.id;
                       });

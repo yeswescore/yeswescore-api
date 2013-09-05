@@ -187,7 +187,7 @@ app.post('/v2/clubs/', express.bodyParser(), function(req, res){
         club.countTeams1AN = parseInt(req.body.countTeams1AN, 10);
       if (typeof req.body.school !== "undefined")
         club.school = req.body.school;
-      return DB.saveAsync(club);
+      return DB.save(club);
     }).then(
       function (club) { res.send(JSON.stringifyModels(club)) },
       app.defaultError(res)

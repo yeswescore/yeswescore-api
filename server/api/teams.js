@@ -289,7 +289,7 @@ app.post('/v2/teams/', express.bodyParser(), function(req, res){
         team.coach = req.body.coach;
       if (typeof req.body.competition !== "undefined")
         team.competition = (req.body.competition === "true");
-      return DB.saveAsync(team);
+      return DB.save(team);
    }).then(function (team) {
      res.send(JSON.stringifyModels(team));
    }, app.defaultError(res));
@@ -435,7 +435,7 @@ app.post('/v2/teams/:id/stream/', express.bodyParser(), function(req, res){
 
     team.stream.push(streamItem);
     team.dates.update = Date.now();
-    return DB.saveAsync(team);
+    return DB.save(team);
     }).then(function incr(team) {
       if (req.body.type === "comment")
         return Q.ninvoke(DB.Models.Team, "findByIdAndUpdate", team.id, { $inc: { streamCommentsSize: 1 } });
@@ -485,7 +485,7 @@ app.post('/v2/teams/:id/stream/:streamid/', express.bodyParser(), function(req, 
         if (req.body.data && req.body.data.text)
           team.stream[i].data = { text: req.body.data.text };
         team.stream[i].dates.update = Date.now();
-        return DB.saveAsync(team);
+        return DB.save(team);
       }
       throw "no streamItem found";
     }).then(function (team) {

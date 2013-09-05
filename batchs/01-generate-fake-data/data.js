@@ -96,7 +96,7 @@ var generateClubsAsync = function () {
       school: "school"+Math.random(),
     });
   });
-  return DB.saveAsync(clubs);
+  return DB.save(clubs);
 };
 
 var generatePlayersAsync = function () {
@@ -140,7 +140,7 @@ var generatePlayersAsync = function () {
             type: "default"
         });
      });
-     return DB.saveAsync(players);
+     return DB.save(players);
    }).then(function (players) {
       var anonymous = gClubs.map(function (club) {
         var clubInfo = {
@@ -161,7 +161,7 @@ var generatePlayersAsync = function () {
             type: "owned"
         });
       });
-      return DB.saveAsync(anonymous);
+      return DB.save(anonymous);
    });
 };
 
@@ -291,7 +291,7 @@ var generateGamesAsync = function () {
       //
       games.push(game);
     }
-    return DB.saveAsync(games);
+    return DB.save(games);
   }).then(function (games) {
     // for several games, choosing a startTeam
     games.forEach(function (game, i) {
@@ -303,7 +303,7 @@ var generateGamesAsync = function () {
         }
       }
     });
-    return DB.saveAsync(games);
+    return DB.save(games);
   }).then(function (games) {
     games.forEach(function (game, i) {
       // adding games to players
@@ -313,7 +313,7 @@ var generateGamesAsync = function () {
         owned[i*2+1].owner = game.owner;
     });
     // saving players
-    return DB.saveAsync(owned);
+    return DB.save(owned);
   });
 };
 
@@ -353,7 +353,7 @@ var generateTeamsAsync = function () {
         });
         teams.push(team);
       }
-      return DB.saveAsync(teams);
+      return DB.save(teams);
   }, function (err) { console.log('error ' + err); });
 };
 
