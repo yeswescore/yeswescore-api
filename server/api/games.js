@@ -642,13 +642,17 @@ app.post('/v2/games/:id/stream/:streamid/', express.bodyParser(), function(req, 
       var streamid = req.params.streamid
         , l = game.stream.length;
       for (var i = 0; i < l; ++i) {
-        if (game.stream[i]._id == streamid) {
-          // streamItem found => update it
-          if (req.body.data && req.body.data.text)
-            game.stream[i].data = { text: req.body.data.text };
-          game.stream[i].dates.update = Date.now();
-          return DB.saveAsync(game);
-        }
+        var streamItem = game.stream[i];
+        if (streamItem._id != streamid)
+          continue;
+        // streamItem found => owned ?
+        if (DB.toStringId(req.query.playerid) !== DB.toStringId(streamItem.owner.player))
+          throw "you don't own this streamitem";
+        // update the streamItem
+        if (req.body.data && req.body.data.text)
+          game.stream[i].data = { text: req.body.data.text };
+        game.stream[i].dates.update = Date.now();
+        return DB.saveAsync(game);
       }
       throw "no streamItem found";
     }).then(function (game) {
@@ -657,7 +661,7 @@ app.post('/v2/games/:id/stream/:streamid/', express.bodyParser(), function(req, 
       for (var i = 0; i < l; ++i) {
         if (game.stream[i]._id == streamid) {
           var streamItem = game.stream[i].toObject({virtuals: true, transform: true});
-          res.send(JSON.stringify(streamItem));
+          return res.send(JSON.stringify(streamItem));
         }
       }
       // we normaly shouldn't reach this point.

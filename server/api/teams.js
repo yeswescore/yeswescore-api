@@ -117,6 +117,124 @@ app.get('/v2/teams/:id', function(req, res){
 });
 
 /**
+ * Read a team stream
+ *   sorting item by date_creation.
+ *
+ * The team stream is private to team members
+ *
+ * Generic options:
+ *  /v2/teams/:id/stream/?limit=5       (default=10)
+ *
+ * Specific options:
+ *  /v2/teams/:id/stream/?after=date    ex: "16:01:2013" ou "16 janvier 2013" ou...
+ *  /v2/teams/:id/stream/?lastid=...    recherche ts les elements depuis tel ou tel id
+ *
+ * WARNING: might be performance hits. We can't use $elemMatch (see below).
+ * FIXME: solution: create a separate collection for the stream.
+ */
+app.get('/v2/teams/:id/stream/', function (req, res){
+  var limit = req.query.limit || 10;
+  var after = req.query.after || null;
+  var lastid = req.query.lastid || null;
+  var data = { };
+
+  Q.all([
+    Authentication.Query.authentify(req.query),
+    Q.ensure(Q.ninvoke(DB.Model.Team, "findOne", {_id:req.params.id, _deleted: false}))
+     .isNot(null, "team not found")
+     .inject(data, "team")
+  ]).then(function () {
+    var team = data.team;
+    
+    // privacy: only team members can read the stream
+    // FIXME: might be security issues here with /v2/teams/:id/?fields=...
+    var ownersIds = DB.Model.Team.getOwnersIds(team);
+    if (ownersIds.indexOf(req.query.playerid) === -1)
+      throw "auth player must be a player/substitute/captain/captainSubstitute or coach";
+
+    // we select the stream & filter using javascript.
+    // this cannot be done at the driver level using something like
+    // > query.select({ stream: { $elemMatchAll: { 'dates.creation' : { $gte: new Date(after) } } } });
+    // because $elemMatchAll doesn't exist & $elemMatch only return 1 result.
+    // @øee http://docs.mongodb.org/manual/reference/projection/elemMatch/#_S_elemMatch
+    // @see https://jira.mongodb.org/browse/SERVER-6612
+
+    var stream = team.stream || [];
+    // filtering
+    stream = stream.filter(function (s) {
+      return s._deleted === false;
+    });
+
+    // after
+    if (after) {
+      after = new Date(after).getTime();
+      stream = stream.filter(function (streamItem) {
+        return new Date(streamItem.dates.creation).getTime() >= after;
+      });
+    }
+
+    // lastid
+    if (lastid) {
+      stream = stream.filter(function (streamItem) {
+        return streamItem.id > lastid;
+      });
+    }
+
+    // sorting by date (new to old)
+    stream.sort(function (a, b) {
+      if (a.dates.creation < b.dates.creation)
+        return 1;
+      if (a.dates.creation > b.dates.creation)
+        return -1;
+      return 0;
+    });
+
+    // limit
+    stream = stream.filter(function (streamItem, index) {
+      return index < limit;
+    });
+
+    // populating owners
+    // FIXME: should be optimized.
+    var playersPromises = stream.map(function (streamItem) {
+      if (streamItem.owner.player)
+        return Q.ninvoke(DB.Model.Player, "findById", streamItem.owner.player);
+      return Q.wrap(null); // facebook
+    });
+
+    return Q.all(playersPromises).then(
+      function (players) {
+        // remplacing :
+        //     { owner: { player: "512fd6227293e00f60000026" } }
+        //  or { owner: { facebook: { id: "7293e00f6", name: "..." } } }
+        //
+        // to:
+        //
+        //     { owner: { player: { id: "...", name: "..." } } }
+        //  or { owner: { facebook: { id: "7293e00f6", name: "..." } } }
+        stream = stream.map(function (streamItem, index) {
+          // FIXME: mongoose missing feature.
+          // How to populate a model property manually after instantiation?
+          // https://groups.google.com/forum/?fromgroups=#!topic/mongoose-orm/nrBq_gOVzBo
+          var streamItemObject = streamItem.toObject({virtuals: true, transform: true});
+          var player = players[index];
+          if (player) {
+            var playerId = streamItemObject.owner.player;
+            streamItemObject.owner.player = {
+              id: playerId,
+              name: player.name
+            };
+          }
+          return streamItemObject;
+        });
+
+        // FIXME: should be stringifyModels when mongoose will be fixed.
+        res.send(JSON.stringify(stream));
+    });
+  }, app.defaultError(res));
+});
+
+/**
  * Create a new Team
  *
  * You must be authentified
@@ -220,7 +338,7 @@ app.post('/v2/teams/:id/', express.bodyParser(), function(req, res){
     // the team also exist in DB.
     Q.ensure(Q.ninvoke(DB.Model.Team, 'findById', req.params.id))
      .isNot(null, "unknown team")
-     .inject(data, team)
+     .inject(data, "team")
   ].then(function () {
     var team = data.team;
     // security, is playerid an ownersIds ?
@@ -258,4 +376,128 @@ app.post('/v2/teams/:id/', express.bodyParser(), function(req, res){
     },
     res);
   }, app.defaultError(res));
+});
+
+
+/*
+ * Post in the stream
+ *
+ * You must be authentified
+ * You must be part of the team !
+ *
+ * WARNING WARNING WARNING
+ *  DO NOT TRUST THE RESULT
+ *  might have race conditions on result.
+ * WARNING WARNING WARNING
+ *
+ * Body {
+ *   type: "comment",   (default="comment")
+ *   owner: { player: ObjectId, facebook: { id: "...", name: "..." } }
+ *   data: { text: "..." }
+ * }
+ */
+app.post('/v2/teams/:id/stream/', express.bodyParser(), function(req, res){
+  var data = { };;
+  
+  // input validation
+  if (req.body.type !== "comment" && req.body.type !== "image")
+    return app.defaultError(res)("type must be comment or image "+req.body.type);
+  //
+    console.log('recherche team : ' + req.params.id);
+  Q.all([
+    Authentication.Query.authentify(req.query),
+    Q.ensure(Q.ninvoke(DB.Model.Team, "findOne", {_id:req.params.id, _deleted: false}))
+     .isNot(null, "team not found")
+     .inject(data, "team")
+  ]).then(function pushIntoStream() {
+    var team = data.team;
+    
+    // privacy: only team members can post
+    var ownersIds = DB.Model.Team.getOwnersIds(team);
+    if (ownersIds.indexOf(req.query.playerid) === -1)
+      throw "auth player must be a player/substitute/captain/captainSubstitute or coach";
+    
+    // FIXME: performance issue here...
+    //  we should be using { $push: { stream: streamItem } }
+    //  but there are 2 problems :
+    //   - how can we get the new _id with $push api ? (need to read using slice -1 ? might be race conditions :(
+    //   - seems to be a bug: no _id is created in mongo :(
+    var streamItem = {};
+    streamItem.type = req.body.type;
+    streamItem.owner = { player: req.query.playerid };
+    // adding data
+    if (req.body.type === "comment" &&
+        req.body.data && req.body.data.text)
+      streamItem.data = { text: req.body.data.text };
+    if (req.body.type === "image" &&
+        req.body.data && req.body.data.id)
+      streamItem.data = { id: req.body.data.id };
+
+    team.stream.push(streamItem);
+    team.dates.update = Date.now();
+    return DB.saveAsync(team);
+    }).then(function incr(team) {
+      if (req.body.type === "comment")
+        return Q.ninvoke(DB.Model.Team, "findByIdAndUpdate", team.id, { $inc: { streamCommentsSize: 1 } });
+      else
+        return Q.ninvoke(DB.Model.Team, "findByIdAndUpdate", team.id, { $inc: { streamImagesSize: 1 } });
+    }).then(function sendGame(team) {
+      if (team.stream.length === 0)
+        throw "no streamItem added";
+      res.send(JSON.stringifyModels(team.stream[team.stream.length - 1]));
+    }, app.defaultError(res));
+});
+
+/*
+ * Update a streamitem
+ *
+ * You must be authentified
+ * You must be part of the team
+ *
+ * Body {
+ *   data: { text: "..." }
+ * }
+ *
+ * This code is not performant.
+ */
+app.post('/v2/teams/:id/stream/:streamid/', express.bodyParser(), function(req, res){
+  var data = { };
+  
+  Q.all([
+    Authentication.Query.authentify(),
+    Q.ensure(Q.ninvoke(DB.Model.Team, "findOne", {_id:req.params.id, _deleted: false}))
+     .isNot(null, "team not found")
+     .inject(data, "team")
+  ]).then(function (team) {
+      // search the streamItem
+      if (!Array.isArray(team.stream))
+        throw "empty stream";
+      var streamid = req.params.streamid
+        , l = team.stream.length;
+      for (var i = 0; i < l; ++i) {
+        var streamItem = team.stream[i];
+        if (streamItem._id != streamid)
+          continue;
+        // streamItem found => owned ?
+        if (DB.toStringId(req.query.playerid) !== DB.toStringId(streamItem.owner.player))
+          throw "you don't own this streamitem";
+        // update the streamItem
+        if (req.body.data && req.body.data.text)
+          team.stream[i].data = { text: req.body.data.text };
+        team.stream[i].dates.update = Date.now();
+        return DB.saveAsync(team);
+      }
+      throw "no streamItem found";
+    }).then(function (team) {
+      var streamid = req.params.streamid
+        , l = team.stream.length;
+      for (var i = 0; i < l; ++i) {
+        if (team.stream[i]._id == streamid) {
+          var streamItem = team.stream[i].toObject({virtuals: true, transform: true});
+          return res.send(JSON.stringify(streamItem));
+        }
+      }
+      // we normaly shouldn't reach this point.
+      throw "unknown exception";
+    }, app.defaultError(res));
 });
