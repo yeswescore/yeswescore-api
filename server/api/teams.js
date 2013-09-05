@@ -378,7 +378,6 @@ app.post('/v2/teams/:id/', express.bodyParser(), function(req, res){
   }, app.defaultError(res));
 });
 
-
 /*
  * Post in the stream
  *
