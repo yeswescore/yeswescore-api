@@ -220,7 +220,7 @@ app.post('/v2/teams/:id/', express.bodyParser(), function(req, res){
     // the team also exist in DB.
     Q.ensure(Q.ninvoke(DB.Model.Team, 'findById', req.params.id))
      .isNot(null, "unknown team")
-     .inject(data, team)
+     .inject(data, "team")
   ].then(function () {
     var team = data.team;
     // security, is playerid an ownersIds ?
