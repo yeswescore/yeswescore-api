@@ -325,7 +325,7 @@ app.post('/v2/teams/:id/', express.bodyParser(), function(req, res){
   if (ownersIds.indexOf(req.query.playerid) === -1)
     return app.defaultError(res)("owner must be a player/substitute/captain/captainSubstitute or coach");
   // 4 checks
-  Q.all[
+  Q.all([
     // player is correctly authentified & exist in DB
     DB.Models.Team.checkFields(req.body)
       .then(Authentication.Query.authentify(req.query)),
@@ -339,11 +339,12 @@ app.post('/v2/teams/:id/', express.bodyParser(), function(req, res){
     Q.ensure(Q.ninvoke(DB.Models.Team, 'findById', req.params.id))
      .isNot(null, "unknown team")
      .inject(data, "team")
-  ].then(function () {
+  ]).then(function () {
     var team = data.team;
     // security, is playerid an ownersIds ?
     var dbOwnersIds = DB.Models.Team.getOwnersIds(team);
-    if (dbOwnersIds.indexOf(req.params.playerid) === -1)
+    console.log('team owners : ' + JSON.stringify(dbOwnersIds) + ' vs ' + req.query.playerid);
+    if (dbOwnersIds.indexOf(req.query.playerid) === -1)
       throw "unauthorized";
     if (typeof req.body.name === "string")
       team.name = req.body.name;
@@ -356,9 +357,9 @@ app.post('/v2/teams/:id/', express.bodyParser(), function(req, res){
     if (Array.isArray(req.body.substitutes))
       team.substitutes = req.body.substitutes;
     if (typeof req.body.captain !== "undefined")
-      team.captain = req.body.captain;
+      team.captain = (req.body.captain) ? req.body.captain : undefined;
     if (typeof req.body.captainSubstitute !== "undefined")
-      team.captainSubstitute = req.body.captainSubstitute;
+      team.captainSubstitute = (req.body.captainSubstitute) ? req.body.captainSubstitute : undefined;
     if (typeof req.body.competition !== "undefined")
       team.competition = (req.body.competition === "true");
     if (req.body.coach)
