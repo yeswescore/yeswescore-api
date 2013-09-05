@@ -5,6 +5,17 @@ var assert = require("../../lib/assert.js")
 if (Conf.env !== "DEV")
   process.exit(0);
 
+var DB = {};
+DB.toStringId = function (o) {
+  if (typeof o === "string")
+    return o;
+  if (typeof o === "object" && o && o.id) // null is an object
+    return DB.toStringId(o.id);
+  if (typeof o === "object" && o && o._id) // null is an object
+    return DB.toStringId(o._id);
+  return null;
+};
+
 describe('dev:teams', function(){
   // READ
   describe('read random document team, then read api team should be a valid team', function(){
@@ -125,7 +136,7 @@ describe('dev:teams', function(){
             var options = {
               host: Conf["http.host"],
               port: Conf["http.port"],
-              path: Conf["api.teams"]+"?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+              path: Conf["api.teams"]+team.id+"/?playerid="+randomPlayer._id+"&token="+randomPlayer.token
             };
 
             var modifiedTeam = team;
@@ -137,15 +148,15 @@ describe('dev:teams', function(){
             team.captainSubstitute = ""; // try to empty this relationship.
             team.coach = anotherRandomPlayer._id;
             team.competition = "true";
-            
+
             http.post(options, modifiedTeam, function (team) {
               assert(team.name === modifiedTeam.name, "should have same name");
               assert(team.sport == modifiedTeam.sport, "should have same sport");
               assert(team.players.length === modifiedTeam.players.length, "should have same number of players");
               assert(team.competition === true, "should be same competition bool");
-              assert(team.captain === randomPlayer._id, "should have good captain");
+              assert(DB.toStringId(team.captain) === DB.toStringId(randomPlayer), "should have good captain");
               assert(typeof team.captainSubstitute === "undefined", "should have no more captainSubstitute");
-              assert(team.coach === anotherRandomPlayer._id, "should have good coach");
+              assert(DB.toStringId(team.coach) === DB.toStringId(anotherRandomPlayer), "should have good coach");
 
               // read it from DB.
               var options = {
@@ -159,9 +170,9 @@ describe('dev:teams', function(){
                 assert(team.sport == modifiedTeam.sport, "should have same sport");
                 assert(team.players.length === modifiedTeam.players.length, "should have same number of players");
                 assert(team.competition === true, "should be same competition bool");
-                assert(team.captain.id === randomPlayer._id, "should have good captain");
+                assert(DB.toStringId(team.captain.id) === DB.toStringId(randomPlayer), "should have good captain");
                 assert(typeof team.captainSubstitute === "undefined", "should have no more captainSubstitute");
-                assert(team.coach.id === anotherRandomPlayer._id, "should have good coach");
+                assert(DB.toStringId(team.coach) === DB.toStringId(anotherRandomPlayer), "should have good coach");
 
                 done();
               });
