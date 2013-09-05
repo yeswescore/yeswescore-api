@@ -83,7 +83,7 @@ DB.existOrEmpty = curry(function (model, ids) {
 // @return Promise(true/false)
 DB.exist = curry(function (model, ids) {
   ids = (Array.isArray(ids)) ? ids : [ ids ];
-  ids = ids.map(DB.toStringId);
+  ids = ids.map(DB.toStringId).unique();
   return Q.nfcall(model.count.bind(model), { _id: { $in: ids }})
           .then(function (r) { return r === ids.length });
 });
