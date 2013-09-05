@@ -4,7 +4,7 @@ var Conf = require("../conf.js")
 
 if (Conf.env === "DEV") {
   app.get('/documents/games/random', function (req, res) {
-    DB.Model.Game.getRandomModel().then(
+    DB.Models.Game.getRandomModel().then(
       function success(game) {
         res.send(JSON.stringify(game));
       },
@@ -13,7 +13,7 @@ if (Conf.env === "DEV") {
   });
 
   app.get('/documents/games/:id', function (req, res) {
-    DB.Model.Game.findOne({_id:req.params.id})
+    DB.Models.Game.findOne({_id:req.params.id})
                  .exec(function (err, game) {
       if (err)
         return app.defaultError(res)(err);
@@ -24,7 +24,7 @@ if (Conf.env === "DEV") {
   });
 
   app.get('/documents/players/random', function (req, res) {
-    DB.Model.Player.getRandomModel().then(
+    DB.Models.Player.getRandomModel().then(
       function success(player) {
         res.send(JSON.stringify(player));
       },
@@ -33,7 +33,7 @@ if (Conf.env === "DEV") {
   });
 
   app.get('/documents/players/:id', function (req, res) {
-    DB.Model.Player.findOne({_id:req.params.id})
+    DB.Models.Player.findOne({_id:req.params.id})
                    .exec(function (err, player) {
       if (err)
         return app.defaultError(res)(err);
@@ -44,7 +44,7 @@ if (Conf.env === "DEV") {
   });
 
   app.get('/documents/clubs/random', function (req, res) {
-    DB.Model.Club.getRandomModel().then(
+    DB.Models.Club.getRandomModel().then(
       function success(club) {
         res.send(JSON.stringify(club));
       },
@@ -53,7 +53,7 @@ if (Conf.env === "DEV") {
   });
 
   app.get('/documents/clubs/:id', function (req, res) {
-    DB.Model.Club.findOne({_id:req.params.id})
+    DB.Models.Club.findOne({_id:req.params.id})
                  .exec(function (err, club) {
       if (err)
         return app.defaultError(res)(err);
@@ -64,7 +64,7 @@ if (Conf.env === "DEV") {
   });
   
   app.get('/documents/files/:id', function (req, res) {
-    DB.Model.File.findOne({_id:req.params.id})
+    DB.Models.File.findOne({_id:req.params.id})
                  .exec(function (err, file) {
       if (err)
         return app.defaultError(res)(err);
@@ -76,7 +76,7 @@ if (Conf.env === "DEV") {
 
 
   app.get('/documents/teams/random', function (req, res) {
-    DB.Model.Team.getRandomModel().then(
+    DB.Models.Team.getRandomModel().then(
       function success(club) {
         res.send(JSON.stringify(club));
       },
@@ -85,7 +85,7 @@ if (Conf.env === "DEV") {
   });
 
   app.get('/documents/teams/:id', function (req, res) {
-    DB.Model.Team.findOne({_id:req.params.id})
+    DB.Models.Team.findOne({_id:req.params.id})
                  .exec(function (err, club) {
       if (err)
         return app.defaultError(res)(err);

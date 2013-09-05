@@ -28,7 +28,7 @@ Models.generate = function (DB) {
   //
   Models.Player.isEmailRegisteredAsync = function (email) {
     return Q.nfcall(
-      DB.Model.Player.findOne.bind(DB.Model.Player),
+      DB.Models.Player.findOne.bind(DB.Models.Player),
       {
         "email.address": email,
         $or: [
@@ -112,7 +112,7 @@ Models.generate = function (DB) {
         game.teams[teamIndex].points = team.points;
     });
     // update teams.players
-    return DB.Model.Game.updateTeamsPlayersAsync(game, teams);
+    return DB.Models.Game.updateTeamsPlayersAsync(game, teams);
   };
 
   /**
@@ -122,9 +122,9 @@ Models.generate = function (DB) {
   Models.Game.updateTeamsPlayersAsync = function (game, teams) {
     if (!Array.isArray(teams))
       return Q.resolve(game); // nothing to do.
-    return DB.Model.Game.checkTeamsAsync(teams).then(function () {
+    return DB.Models.Game.checkTeamsAsync(teams).then(function () {
       // teams exist => create owned players
-      return DB.Model.Game.createOwnedPlayersAsync(teams, game.owner)
+      return DB.Models.Game.createOwnedPlayersAsync(teams, game.owner)
     }).then(function () {
       // update game teams players
       teams.forEach(function (team, teamIndex) {
@@ -147,7 +147,7 @@ Models.generate = function (DB) {
         team.players.map(DB.toStringId)
                     .filter(function (id) { return id !== null }));
     }, []);
-    return DB.exist(DB.Model.Player, playersId)
+    return DB.exist(DB.Models.Player, playersId)
             .then(function (exist) {
                 if (!exist)
                   throw "some player doesn't exist";
@@ -169,7 +169,7 @@ Models.generate = function (DB) {
           //
           // creating owned anonymous player
           (function createOwnedAnonymousPlayer(teamIndex, playerIndex) {
-            var p = new DB.Model.Player({
+            var p = new DB.Models.Player({
               name: player.name || "",
               rank: player.rank || "",
               type: "owned",
@@ -179,7 +179,7 @@ Models.generate = function (DB) {
             var deferred = Q.defer();
             var ownedPlayerPromise = deferred.promise;
             if (player.club && player.club.id) {
-              DB.Model.Club.findById(player.club.id, function (err, club) {
+              DB.Models.Club.findById(player.club.id, function (err, club) {
                 deferred.resolve(club); // never fail !
               });
             } else {

@@ -18,7 +18,7 @@ app.get('/v2/files/:id', function(req, res){
   
   Authentication.Query.getPlayer(req.query)
     .then(function (authentifiedPlayer) {
-      var query = DB.Model.File.findById(req.params.id);
+      var query = DB.Models.File.findById(req.params.id);
       if (fields)
          query.select(fields.replace(/,/g, " "))
       query.exec(function (err, file) {
@@ -87,9 +87,9 @@ app.post('/v2/files/', express.bodyParser(), function(req, res){
         req.files.file.path);
     }).then(function (buf) {
       buffer = buf;
-      var checksum = DB.Model.File.checksum(buffer);
+      var checksum = DB.Models.File.checksum(buffer);
       
-      file = new DB.Model.File({
+      file = new DB.Models.File({
         _id: checksum + "-" +  req.query.playerid + "-" + Math.round(Math.random() * 1000),
         owner: req.query.playerid,
         mimeType: "image/jpeg",
@@ -97,7 +97,7 @@ app.post('/v2/files/', express.bodyParser(), function(req, res){
         metadata: { }
       });
       // computing path
-      pathInfos = DB.Model.File.idTypeToPathInfos(file.id, file.mimeType);
+      pathInfos = DB.Models.File.idTypeToPathInfos(file.id, file.mimeType);
       file.path = pathInfos.path;
       //
       if (req.query.width)

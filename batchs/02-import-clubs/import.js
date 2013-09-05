@@ -99,7 +99,7 @@ function start() {
   })
   .on('end', function(count){
     console.log('saving ' + nb_clubs + ' clubs ... please wait');
-    DB.Model.Club.create(clubs, function (err) {
+    DB.Models.Club.create(clubs, function (err) {
       if (err) {
         console.log('error: ' + err);
         process.exit(1);

@@ -53,7 +53,7 @@ app.get('/v2/games/', function(req, res){
   // process fields
   var fields = app.createPopulateFields(fields, populate);
   // heavy...
-  var query = DB.Model.Game.find({}, fields.select);
+  var query = DB.Models.Game.find({}, fields.select);
   if (text) {
     text = new RegExp("("+text.searchable().pregQuote()+")");
     query.or([
@@ -108,7 +108,7 @@ app.get('/v2/games/:id', function (req, res){
   // preprocess fields
   var fields = app.createPopulateFields(fields, populate);
   // searching player by id.
-  var query = DB.Model.Game.findOne({_id:req.params.id, _deleted: false}, fields.select);
+  var query = DB.Models.Game.findOne({_id:req.params.id, _deleted: false}, fields.select);
   if (populatePaths.indexOf("teams.players") !== -1) {
     query.populate("teams.players", fields["teams.players"]);
   }
@@ -135,7 +135,7 @@ app.get('/v2/games/:id/isWinning/', function (req, res) {
       typeof req.query.team === "undefined")
     return app.defaultError(res)("missing player or a team");
   
-  var query = DB.Model.Game.findOne({_id:req.params.id, _deleted: false})
+  var query = DB.Models.Game.findOne({_id:req.params.id, _deleted: false})
   query.exec(function (err, game) {
     if (err)
       return app.defaultError(res)(err);
@@ -166,7 +166,7 @@ app.get('/v2/games/:id/stream/', function (req, res){
   var after = req.query.after || null;
   var lastid = req.query.lastid || null;
   
-  var query = DB.Model.Game.findOne({_id:req.params.id, _deleted: false})
+  var query = DB.Models.Game.findOne({_id:req.params.id, _deleted: false})
   query.exec(function (err, game) {
     if (err)
       return app.defaultError(res)(err);
@@ -219,7 +219,7 @@ app.get('/v2/games/:id/stream/', function (req, res){
     // FIXME: should be optimized.
     var playersPromises = stream.map(function (streamItem) {
       if (streamItem.owner.player)
-        return Q.nfcall(DB.Model.Player.findById.bind(DB.Model.Player),
+        return Q.nfcall(DB.Models.Player.findById.bind(DB.Models.Player),
                         streamItem.owner.player);
       return Q.resolve(null); // facebook
     });
@@ -300,7 +300,7 @@ app.get('/v2/games/:id/stream/', function (req, res){
  * result is a redirect to /v2/games/:newid
  */
 app.post('/v2/games/', express.bodyParser(), function (req, res) {
-  var err = DB.Model.Game.checkFields(req.body);
+  var err = DB.Models.Game.checkFields(req.body);
   if (err)
     return app.defaultError(res)(err);
   Authentication.Query.getPlayer(req.query)
@@ -312,7 +312,7 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
       // => creating game
       req.body.location = (req.body.location) ? req.body.location : {};
       req.body.infos = (req.body.infos) ? req.body.infos : {};
-      var game = new DB.Model.Game({
+      var game = new DB.Models.Game({
         sport: req.body.sport || "tennis",
         owner: authentifiedPlayer.id,
         status: req.body.status || "created",
@@ -344,7 +344,7 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
       if (req.body.dates && typeof req.body.dates.expected === "string")
         game.dates.expected = req.body.dates.expected;
       //
-      return DB.Model.Game.updateTeamsAsync(game, req.body.teams);
+      return DB.Models.Game.updateTeamsAsync(game, req.body.teams);
     }).then(function saveAsync(game) {
       return DB.saveAsync(game);
     }).then(function saveStartTeam(game) {
@@ -401,7 +401,7 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
  */
 app.post('/v2/games/:id', express.bodyParser(), function(req, res){
   var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,infos.numberOfBestSets,streamCommentsSize,streamImagesSize";
-  var err = DB.Model.Game.checkFields(req.body);
+  var err = DB.Models.Game.checkFields(req.body);
   var push = {
       player: {name:"",id:""}
     , opponent: {name:"",rank:""}
@@ -423,7 +423,7 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
       push.language = authentifiedPlayer.language;
       push.player.id = authentifiedPlayer.id;
       push.player.name = authentifiedPlayer.name;
-      var query = DB.Model.Game.findOne({_id:req.params.id, _deleted: false});
+      var query = DB.Models.Game.findOne({_id:req.params.id, _deleted: false});
       query.populate("teams.players", fields["teams.players"]);
       return Q.nfcall(query.exec.bind(query));
     }).then(function checkGameOwner(game) {
@@ -485,7 +485,7 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
         push.sets = game.infos.sets;
         push.dates.start = game.dates.start || "";
       }
-      return DB.Model.Game.updateTeamsAsync(game, req.body.teams);
+      return DB.Models.Game.updateTeamsAsync(game, req.body.teams);
     }).then(function update(game) {
       return DB.saveAsync(game);
     }).then(function saveStartTeam(game) {
@@ -563,7 +563,7 @@ app.post('/v2/games/:id/stream/', express.bodyParser(), function(req, res){
     .then(function searchGame(authentifiedPlayer) {
       if (authentifiedPlayer === null)
         throw "unauthorized";
-      return Q.nfcall(DB.Model.Game.findOne.bind(DB.Model.Game),
+      return Q.nfcall(DB.Models.Game.findOne.bind(DB.Models.Game),
                       {_id:req.params.id, _deleted: false});
     }).then(function pushIntoStream(game) {
       if (game === null)
@@ -598,11 +598,11 @@ app.post('/v2/games/:id/stream/', express.bodyParser(), function(req, res){
       return DB.saveAsync(game);
     }).then(function incr(game) {
       if (req.body.type === "comment") {
-        return Q.nfcall(DB.Model.Game.findByIdAndUpdate.bind(DB.Model.Game),
+        return Q.nfcall(DB.Models.Game.findByIdAndUpdate.bind(DB.Models.Game),
                       game.id,
                       { $inc: { streamCommentsSize: 1 } });
       } else {
-        return Q.nfcall(DB.Model.Game.findByIdAndUpdate.bind(DB.Model.Game),
+        return Q.nfcall(DB.Models.Game.findByIdAndUpdate.bind(DB.Models.Game),
                       game.id,
                       { $inc: { streamImagesSize: 1 } });
       }
@@ -629,7 +629,7 @@ app.post('/v2/games/:id/stream/:streamid/', express.bodyParser(), function(req, 
     .then(function searchGame(authentifiedPlayer) {
       if (authentifiedPlayer === null)
         throw "unauthorized";
-      return Q.nfcall(DB.Model.Game.findOne.bind(DB.Model.Game),
+      return Q.nfcall(DB.Models.Game.findOne.bind(DB.Models.Game),
                       {_id:req.params.id, _deleted: false});
     }).then(function checkGameOwner(game) {
       if (game === null)
@@ -683,7 +683,7 @@ app.delete('/v2/games/:id/', function (req, res) {
     .then(function searchGame(authentifiedPlayer) {
       if (authentifiedPlayer === null)
         throw "unauthorized";
-      return Q.nfcall(DB.Model.Game.findOne.bind(DB.Model.Game),
+      return Q.nfcall(DB.Models.Game.findOne.bind(DB.Models.Game),
                       {_id:req.params.id, _deleted: false});
     }).then(function checkGameOwner(game) {
       if (game === null)
@@ -714,7 +714,7 @@ app.delete('/v2/games/:id/stream/:streamid/', function (req, res) {
     .then(function searchGame(authentifiedPlayer) {
       if (authentifiedPlayer === null)
         throw "unauthorized";
-      return Q.nfcall(DB.Model.Game.findOne.bind(DB.Model.Game),
+      return Q.nfcall(DB.Models.Game.findOne.bind(DB.Models.Game),
                       {_id:req.params.id, _deleted: false});
     }).then(function checkGameOwner(game) {
       if (game === null)
@@ -749,11 +749,11 @@ app.delete('/v2/games/:id/stream/:streamid/', function (req, res) {
       }
       
       if (isComment==true)
-        return Q.nfcall(DB.Model.Game.findByIdAndUpdate.bind(DB.Model.Game),
+        return Q.nfcall(DB.Models.Game.findByIdAndUpdate.bind(DB.Models.Game),
                       game.id,
                       { $inc: { streamCommentsSize: -1 } });
       else 
-        return Q.nfcall(DB.Model.Game.findByIdAndUpdate.bind(DB.Model.Game),
+        return Q.nfcall(DB.Models.Game.findByIdAndUpdate.bind(DB.Models.Game),
                       game.id,
                       { $inc: { streamImagesSize: -1 } });      
                       

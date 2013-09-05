@@ -56,8 +56,8 @@ DB.Id = {
   * Saving one or multiple documents
   *
   * ex:
-  *   var playerA = new DB.Model.Player({ "name" : "vincent" });
-  *   var playerB = new DB.Model.Player({ "name" : "marc" });
+  *   var playerA = new DB.Models.Player({ "name" : "vincent" });
+  *   var playerB = new DB.Models.Player({ "name" : "marc" });
   *   DB.saveAsync(playerA).then(...)
   *   DB.saveAsync([playerA, playerB]).then(...)
   */
@@ -69,7 +69,7 @@ DB.save = function (docs) {
 };
 DB.saveAsync = DB.save; // backward compatibility
 
-// @param model DB.Model.*
+// @param model DB.Models.*
 // @param ids  ["id",..] or [{id:..}] or {id:} or "id"
 // @return Promise(true/false)
 DB.existOrEmpty = curry(function (model, ids) {
@@ -78,7 +78,7 @@ DB.existOrEmpty = curry(function (model, ids) {
   return DB.exist(model, ids);
 });
 
-// @param model DB.Model.*
+// @param model DB.Models.*
 // @param ids  ["id",..] or [{id:..}] or {id:} or "id"
 // @return Promise(true/false)
 DB.exist = curry(function (model, ids) {
@@ -88,7 +88,7 @@ DB.exist = curry(function (model, ids) {
           .then(function (r) { return r === ids.length });
 });
 
-// @param model   DB.Model.*
+// @param model   DB.Models.*
 // @param unused  just here to enable currying
 // @return Promise(model)
 DB.getRandomModel = function (model) {
@@ -119,8 +119,6 @@ DB.Models = require('./db/models.js')
 DB.Schemas.generate(DB);
 // generating models
 DB.Models.generate(DB);
-// FIXME: backward compatibility
-DB.Model = DB.Models;
 
 Authentication.init(DB);
 

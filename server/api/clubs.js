@@ -45,7 +45,7 @@ app.get('/v2/clubs/autocomplete/', function(req, res){
     // slow
     text = new RegExp("("+text.searchable().pregQuote()+")");
     // searching
-    var query = DB.Model.Club
+    var query = DB.Models.Club
       .find({_searchableName: text})
       .select(fields.replace(/,/g, " "));
     if (longitude && latitude && distance)
@@ -71,7 +71,7 @@ app.get('/v2/clubs/autocomplete/', function(req, res){
 app.get('/v2/clubs/:id', function(req, res){
   var fields = req.query.fields;
   
-  var query = DB.Model.Club.findById(req.params.id);
+  var query = DB.Models.Club.findById(req.params.id);
   if (fields)
     query.select(fields.replace(/,/g, " "));
   query.exec(function (err, club) {
@@ -104,12 +104,12 @@ app.get('/v2/clubs/:id/games/', function(req, res){
   var sort = req.query.sort || "-dates.start";
   var limit = req.query.limit || 10;
   var offset = req.query.offset || 0;
-  DB.Model.Club.findById(req.params.id, function (err, club) {
+  DB.Models.Club.findById(req.params.id, function (err, club) {
     if (err)
       return app.defaultError(res)(err);
     if (club === null)
       return app.defaultError(res)("no club found");
-    var query = DB.Model.Game.find({});
+    var query = DB.Models.Game.find({});
     query.where('_searchablePlayersClubsIds', club);
     if (status)
       query.where('status').in(status.split(","));
@@ -152,14 +152,14 @@ app.get('/v2/clubs/:id/games/', function(req, res){
 app.post('/v2/clubs/', express.bodyParser(), function(req, res){
   if (!req.body.name || !req.body.location || !req.body.location.city)
     return app.defaultError(res)("please provide club name & city");
-  Q.nfcall(DB.Model.Club.findOne.bind(DB.Model.Club),
+  Q.nfcall(DB.Models.Club.findOne.bind(DB.Models.Club),
           { name: req.body.name, 'location.city': req.body.location.city })
     .then(function (club) {
       if (club)
         return app.defaultError(res)("club already registered");
       // creating a new club (no owner)
       req.body.location = (req.body.location) ? req.body.location : {};
-      var club = new DB.Model.Club({
+      var club = new DB.Models.Club({
         sport: "tennis",
         name: req.body.name,
         location : {

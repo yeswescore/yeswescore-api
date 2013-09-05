@@ -25,7 +25,7 @@ Authentication.init = function (DB) {
     // default auth: using our system (playerid & token)
     if (query && query.playerid && query.token) {
       return Q.nfcall(
-        DB.Model.Player.findOne.bind(DB.Model.Player),
+        DB.Models.Player.findOne.bind(DB.Models.Player),
         {_id: query.playerid, token: query.token}
       );
     }

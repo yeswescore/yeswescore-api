@@ -30,7 +30,7 @@ app.get('/v2/teams/', function(req, res){
     "club,competition,profile";
   var text = req.query.q;
 
-  var query = DB.Model.Team.find()
+  var query = DB.Models.Team.find()
   if (fields)
     query.select(fields.replace(/,/g, " "))
   if (club)
@@ -69,7 +69,7 @@ app.get('/v2/teams/autocomplete/', function(req, res){
 
   // current algorithm is just a text search.
   if (text) {
-    var query = DB.Model.Team.find();
+    var query = DB.Models.Team.find();
     text = new RegExp("("+text.searchable().pregQuote()+")");
     query.where('_searchableName', text);
     query.where('_deleted', false);
@@ -102,7 +102,7 @@ app.get('/v2/teams/:id', function(req, res){
   if (typeof req.query.populate === "string")
     populate = req.query.populate;
   //
-  var query = DB.Model.Team.findById(req.params.id);
+  var query = DB.Models.Team.findById(req.params.id);
   if (fields)
     query.select(fields.replace(/,/g, " "));
   if (populate)
@@ -140,7 +140,7 @@ app.get('/v2/teams/:id/stream/', function (req, res){
 
   Q.all([
     Authentication.Query.authentify(req.query),
-    Q.ensure(Q.ninvoke(DB.Model.Team, "findOne", {_id:req.params.id, _deleted: false}))
+    Q.ensure(Q.ninvoke(DB.Models.Team, "findOne", {_id:req.params.id, _deleted: false}))
      .isNot(null, "team not found")
      .inject(data, "team")
   ]).then(function () {
@@ -148,7 +148,7 @@ app.get('/v2/teams/:id/stream/', function (req, res){
     
     // privacy: only team members can read the stream
     // FIXME: might be security issues here with /v2/teams/:id/?fields=...
-    var ownersIds = DB.Model.Team.getOwnersIds(team);
+    var ownersIds = DB.Models.Team.getOwnersIds(team);
     if (ownersIds.indexOf(req.query.playerid) === -1)
       throw "auth player must be a player/substitute/captain/captainSubstitute or coach";
 
@@ -198,7 +198,7 @@ app.get('/v2/teams/:id/stream/', function (req, res){
     // FIXME: should be optimized.
     var playersPromises = stream.map(function (streamItem) {
       if (streamItem.owner.player)
-        return Q.ninvoke(DB.Model.Player, "findById", streamItem.owner.player);
+        return Q.ninvoke(DB.Models.Player, "findById", streamItem.owner.player);
       return Q.wrap(null); // facebook
     });
 
@@ -260,16 +260,16 @@ app.post('/v2/teams/', express.bodyParser(), function(req, res){
   if (typeof req.body.name !== "string" || !req.body.name)
     return app.defaultError(res)("missing name");
   // check if "owner" is in players/substitutes/captain/captainSubstitute/coach
-  var ownersIds = DB.Model.Team.getOwnersIds(req.body);
+  var ownersIds = DB.Models.Team.getOwnersIds(req.body);
   if (ownersIds.indexOf(req.query.playerid) === -1)
     return app.defaultError(res)("owner must be a player/substitute/captain/captainSubstitute or coach");
   var data;
-  DB.Model.Team.checkFields(req.body)
+  DB.Models.Team.checkFields(req.body)
    .then(Authentication.Query.authentify(req.query))
-   .ensure(DB.Model.Club.existOrEmpty(req.body.club)).isNot(false, "club error")
-   .ensure(DB.Model.Player.existOrEmpty(ownersIds)).isNot(false, "owner error")
+   .ensure(DB.Models.Club.existOrEmpty(req.body.club)).isNot(false, "club error")
+   .ensure(DB.Models.Player.existOrEmpty(ownersIds)).isNot(false, "owner error")
    .then(function () {
-      var team = new DB.Model.Team({
+      var team = new DB.Models.Team({
         sport: req.body.sport || "tennis",
         name: req.body.name || ""
       });
@@ -319,7 +319,7 @@ app.post('/v2/teams/', express.bodyParser(), function(req, res){
 app.post('/v2/teams/:id/', express.bodyParser(), function(req, res){
   if (typeof req.body.name === "string" && !req.body.name)
     return app.defaultError(res)("empty name"); // doesn't allow empty names
-  var ownersIds = DB.Model.Team.getOwnersIds(req.body)
+  var ownersIds = DB.Models.Team.getOwnersIds(req.body)
     , data = { team: null };
   // check if "owner" is in players/substitutes/captain/captainSubstitute/coach
   if (ownersIds.indexOf(req.query.playerid) === -1)
@@ -327,22 +327,22 @@ app.post('/v2/teams/:id/', express.bodyParser(), function(req, res){
   // 4 checks
   Q.all[
     // player is correctly authentified & exist in DB
-    DB.Model.Team.checkFields(req.body)
+    DB.Models.Team.checkFields(req.body)
       .then(Authentication.Query.authentify(req.query)),
     // club (if submited) exist in DB
-    Q.ensure(DB.Model.Club.existOrEmpty(req.body.club))
+    Q.ensure(DB.Models.Club.existOrEmpty(req.body.club))
      .isNot(false, "club error"),
     // every players submited exist in DB (heavy)
-    Q.ensure(DB.Model.Player.existOrEmpty(ownersIds))
+    Q.ensure(DB.Models.Player.existOrEmpty(ownersIds))
      .isNot(false, "owner error"),
     // the team also exist in DB.
-    Q.ensure(Q.ninvoke(DB.Model.Team, 'findById', req.params.id))
+    Q.ensure(Q.ninvoke(DB.Models.Team, 'findById', req.params.id))
      .isNot(null, "unknown team")
      .inject(data, "team")
   ].then(function () {
     var team = data.team;
     // security, is playerid an ownersIds ?
-    var dbOwnersIds = DB.Model.Team.getOwnersIds(team);
+    var dbOwnersIds = DB.Models.Team.getOwnersIds(team);
     if (dbOwnersIds.indexOf(req.params.playerid) === -1)
       throw "unauthorized";
     if (typeof req.body.name === "string")
@@ -405,14 +405,14 @@ app.post('/v2/teams/:id/stream/', express.bodyParser(), function(req, res){
     console.log('recherche team : ' + req.params.id);
   Q.all([
     Authentication.Query.authentify(req.query),
-    Q.ensure(Q.ninvoke(DB.Model.Team, "findOne", {_id:req.params.id, _deleted: false}))
+    Q.ensure(Q.ninvoke(DB.Models.Team, "findOne", {_id:req.params.id, _deleted: false}))
      .isNot(null, "team not found")
      .inject(data, "team")
   ]).then(function pushIntoStream() {
     var team = data.team;
     
     // privacy: only team members can post
-    var ownersIds = DB.Model.Team.getOwnersIds(team);
+    var ownersIds = DB.Models.Team.getOwnersIds(team);
     if (ownersIds.indexOf(req.query.playerid) === -1)
       throw "auth player must be a player/substitute/captain/captainSubstitute or coach";
     
@@ -437,9 +437,9 @@ app.post('/v2/teams/:id/stream/', express.bodyParser(), function(req, res){
     return DB.saveAsync(team);
     }).then(function incr(team) {
       if (req.body.type === "comment")
-        return Q.ninvoke(DB.Model.Team, "findByIdAndUpdate", team.id, { $inc: { streamCommentsSize: 1 } });
+        return Q.ninvoke(DB.Models.Team, "findByIdAndUpdate", team.id, { $inc: { streamCommentsSize: 1 } });
       else
-        return Q.ninvoke(DB.Model.Team, "findByIdAndUpdate", team.id, { $inc: { streamImagesSize: 1 } });
+        return Q.ninvoke(DB.Models.Team, "findByIdAndUpdate", team.id, { $inc: { streamImagesSize: 1 } });
     }).then(function sendGame(team) {
       if (team.stream.length === 0)
         throw "no streamItem added";
@@ -464,7 +464,7 @@ app.post('/v2/teams/:id/stream/:streamid/', express.bodyParser(), function(req, 
   
   Q.all([
     Authentication.Query.authentify(),
-    Q.ensure(Q.ninvoke(DB.Model.Team, "findOne", {_id:req.params.id, _deleted: false}))
+    Q.ensure(Q.ninvoke(DB.Models.Team, "findOne", {_id:req.params.id, _deleted: false}))
      .isNot(null, "team not found")
      .inject(data, "team")
   ]).then(function (team) {

@@ -77,7 +77,7 @@ var generateFakeDateEnd = function () {
 var generateClubsAsync = function () {
   var names = ["CAEN TC", "CAEN LA BUTTE", "LOUVIGNY TC", "MONDEVILLE USO", "CONDE SUR NOIREAU TC", "ARROMANCHE TENNIS PORT WILSON", "FLEURY TENNIS CLUB"];
   var clubs = names.map(function (clubName) {
-    return new DB.Model.Club({
+    return new DB.Models.Club({
       sport: "tennis",
       name: clubName,
       location: {
@@ -104,7 +104,7 @@ var generatePlayersAsync = function () {
   var nbPlayers = 40;
   var randomClubs = [];
   for (var i = 0; i < nbPlayers; ++i) {
-     randomClubs.push(DB.Model.Club.getRandomModel());
+     randomClubs.push(DB.Models.Club.getRandomModel());
   }
   var gClubs;
 
@@ -118,7 +118,7 @@ var generatePlayersAsync = function () {
         };
         if (Math.random() > 0.7)
           clubInfo = undefined;
-        return new DB.Model.Player({
+        return new DB.Models.Player({
             name: generateFakeFirstName() + " " + generateFakeName(),
             location: {
               currentPos: generateFakeLocation(),
@@ -149,7 +149,7 @@ var generatePlayersAsync = function () {
         };
         if (Math.random() > 0.7)
           clubInfo = undefined;
-        return new DB.Model.Player({
+        return new DB.Models.Player({
             name: generateFakeFirstName() + " " + generateFakeName(),
             location: {
               country: "",
@@ -169,16 +169,16 @@ var generateGamesAsync = function () {
   // generating 20 games
   var players, owned, games = [];
   return Q.all([
-    Q.nfcall(DB.Model.Player.find.bind(DB.Model.Player), {type:"default"})
+    Q.nfcall(DB.Models.Player.find.bind(DB.Models.Player), {type:"default"})
      .then(function (result) { players = result }),
-    Q.nfcall(DB.Model.Player.find.bind(DB.Model.Player), {type:"owned"})
+    Q.nfcall(DB.Models.Player.find.bind(DB.Models.Player), {type:"owned"})
      .then(function (result) { owned = result }),
   ]).then(function () {
     var nbGames = 20;
 
     for (var i = 0; i < nbGames; ++i) {
       var owner = players.random().id;
-      var game = new DB.Model.Game({
+      var game = new DB.Models.Game({
         sport: "tennis",
         status: ["ongoing", "finished"].random(),
         owner: owner, // utilisateur ayant saisi le match.
@@ -321,13 +321,13 @@ var generateTeamsAsync = function () {
   var nbTeams = 2;
   var randomClubs = [];
   for (var i = 0; i < nbTeams; ++i) {
-     randomClubs.push(DB.Model.Club.getRandomModel());
+     randomClubs.push(DB.Models.Club.getRandomModel());
   }
   var gClubs = null;
   return Q.all(randomClubs)
     .then(function (clubs) {
       gClubs = clubs;
-      return Q.nfcall(DB.Model.Player.find.bind(DB.Model.Player),
+      return Q.nfcall(DB.Models.Player.find.bind(DB.Models.Player),
                       {type:"default"});
     }).then(function (players) {
       // creating 2 random teams with 1 to N players
@@ -341,7 +341,7 @@ var generateTeamsAsync = function () {
             Math.round(Math.random() * players.length / 2) + 1,
             Math.round(Math.random() * players.length / 5)
         );
-        team = new DB.Model.Team({
+        team = new DB.Models.Team({
           sport: 'tennis',
           name: ['Equipe A', 'Equipe B', 'Equipe C'].random(),
           players: teamPlayers,
