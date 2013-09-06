@@ -2,8 +2,9 @@ var http = require("http")
   , assert = require("assert");
 
 var debug = false;
-  
+
 http.is302OK = function (options, f) {
+  options.agent = false;
   http.get(options, function (res) {
     assert.equal(res.statusCode, 302);
     if (typeof f === "function")
@@ -13,6 +14,7 @@ http.is302OK = function (options, f) {
 
 // simple high level funcs
 http.is200OK = function (options, f) {
+  options.agent = false;
   http.get(options, function (res) {
     assert.equal(res.statusCode, 200);
     if (typeof f === "function")
@@ -21,6 +23,7 @@ http.is200OK = function (options, f) {
 };
 
 http.is404OK = function (options, f) {
+  options.agent = false;
   http.get(options, function (res) {
     assert.equal(res.statusCode, 404);
     if (typeof f === "function")
@@ -33,6 +36,7 @@ http.getJSON = function (options, f) {
   if (debug) {
     console.log('http: GET: ' + options.path);
   }
+  options.agent = false; // @see http://stackoverflow.com/questions/15909884/sockets-dont-appear-to-be-closing-when-using-node-js-http-get
   http.get(options, function (res) {
     var json = "";
     res.on("data", function (chunk) { json += chunk })
