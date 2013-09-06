@@ -188,4 +188,85 @@ describe('dev:teams', function(){
       });
     });
   });
+
+  describe('write a comment on a stream, delete it', function () {
+    it('should not be able to read it again / delete it', function (done){
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.players"]+"random"
+      };
+      http.getJSON(options, function (randomPlayer) {
+        assert.isObject(randomPlayer, "random player must exist");
+
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["api.teams"]+"?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+        };
+
+        var newTeam = {
+          sport : "tennis",
+          name: "team-"+Math.random(),
+          players: [ randomPlayer._id ],
+          substitutes: [ randomPlayer._id ],
+          captainSubstitute: randomPlayer._id,
+          competition: "false"
+        };
+        http.post(options, newTeam, function (team) {
+          assert.isTeam(team);
+          
+          // adding comment in team stream
+          var streamObj = {
+            type: "comment",
+            data: { text : "test" }
+          };
+          var options = {
+            host: Conf["http.host"],
+            port: Conf["http.port"],
+            path: Conf["api.teams"]+team.id+"/stream/?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+          };
+          http.post(options, streamObj, function (s) {
+            assert.isStreamItem(s);
+            assert.isId(s.id);
+
+            // deleting
+            var options = {
+              host: Conf["http.host"],
+              port: Conf["http.port"],
+              path: Conf["api.teams"]+team.id+"/stream/"+s.id+"/?playerid="+randomPlayer._id+"&token="+randomPlayer.token+"&_method=delete"
+            };
+            http.getJSON(options, function (empty) {
+              assert(Object.keys(empty).length === 0, 'must be empty (deleted)');
+
+              // ensure streamItem is not in stream any more
+              var options = {
+                host: Conf["http.host"],
+                port: Conf["http.port"],
+                path: Conf["api.teams"]+team.id+"/stream/?limit=100000&playerid="+randomPlayer._id+"&token="+randomPlayer.token
+              };
+
+              http.getJSON(options, function (stream) {
+                assert.isArray(stream, 'must be an array');
+                stream.forEach(function (streamItem) {
+                  assert(streamItem.id != s.id);
+                });
+
+                var options = {
+                  host: Conf["http.host"],
+                  port: Conf["http.port"],
+                  path: Conf["documents.teams"]+team.id
+                };
+                http.getJSON(options, function (team) {
+                  assert.isObject(team, "team must exist");
+                  assert(Shared.computeStreamCommentsSize(team.stream) === team.streamCommentsSize, 'team stream length & streamCommentsSize should be the same (2) ' + team.stream.length + ' vs ' + team.streamCommentsSize);
+                  done();
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+  });
 });

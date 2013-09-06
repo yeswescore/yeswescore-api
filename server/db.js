@@ -35,6 +35,8 @@ DB.toStringId = function (o) {
     return String(o);
   if (typeof o === "object" && o && o.id) // null is an object
     return DB.toStringId(o.id);
+  if (typeof o === "object" && o && o._id) // null is an object
+    return DB.toStringId(o._id);
   return null;
 };
 

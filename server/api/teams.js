@@ -397,13 +397,12 @@ app.post('/v2/teams/:id/', express.bodyParser(), function(req, res){
  * }
  */
 app.post('/v2/teams/:id/stream/', express.bodyParser(), function(req, res){
-  var data = { };;
+  var data = { };
   
   // input validation
   if (req.body.type !== "comment" && req.body.type !== "image")
     return app.defaultError(res)("type must be comment or image "+req.body.type);
   //
-    console.log('recherche team : ' + req.params.id);
   Q.all([
     Authentication.Query.authentify(req.query),
     Q.ensure(Q.ninvoke(DB.Models.Team, "findOne", {_id:req.params.id, _deleted: false}))
@@ -501,3 +500,86 @@ app.post('/v2/teams/:id/stream/:streamid/', express.bodyParser(), function(req, 
       throw "unknown exception";
     }, app.defaultError(res));
 });
+
+
+/*
+ * Delete a team
+ *
+ * You must be authentified & member of the team
+ *
+ * /v2/teams/:id/?_method=delete&playerid=...&token=...
+ */
+app.delete('/v2/teams/:id/', function (req, res) {
+  var data = { };
+  
+  Q.all([
+    Authentication.Query.authentify(req.query),
+    Q.ensure(Q.ninvoke(DB.Models.Team, "findOne", {_id:req.params.id, _deleted: false}))
+     .isNot(null, "team not found")
+     .inject(data, "team")
+  ]).then(function checkGameOwner() {
+    var team = data.team;
+    // only team members can delete a team
+    var ownersIds = DB.Models.Team.getOwnersIds(team);
+    if (ownersIds.indexOf(req.query.playerid) === -1)
+      throw "auth player must be a player/substitute/captain/captainSubstitute or coach";
+  }).then(function () {
+    // mark the team as deleted
+    var team = data.team;
+    team._deleted = true;
+    return DB.save(team);
+  }).then(function () {
+    res.send('{}'); // smallest json.
+  }, app.defaultError(res));
+});
+
+/*
+ * Delete a streamItem
+ *
+ * You must be authentified & owner of the streamItem
+ *
+ * /v2/teams/:id/?_method=delete&playerid=...&token=...
+ */
+app.delete('/v2/teams/:id/stream/:streamid/', function (req, res) {
+  var data = { };
+
+  Q.all([
+    Authentication.Query.authentify(req.query),
+    Q.ensure(Q.ninvoke(DB.Models.Team, "findOne", {_id:req.params.id, _deleted: false}))
+     .isNot(null, "team not found")
+     .inject(data, "team")
+  ]).then(function () {
+    var team = data.team;
+    // search the streamItem
+    if (!Array.isArray(team.stream))
+      throw "empty stream";
+    var streamid = req.params.streamid
+      , l = team.stream.length;
+    
+    for (var i = 0; i < l; ++i) {
+      if (DB.toStringId(team.stream[i]) == streamid) {
+        // streamItem found => delete it
+        team.stream[i]._deleted = true;
+        team.stream[i].dates.update = Date.now();
+        return DB.save(team);
+      }
+    }
+    throw "no streamItem found";
+  }).then(function incr(team) {
+    var streamid = req.params.streamid
+      , l = team.stream.length, isComment = true;
+
+    for (var i = 0; i < l; ++i) {
+      if (DB.toStringId(team.stream[i]) == streamid && team.stream[i].type === "image")
+        isComment = false;
+    }
+    if (isComment)
+      return Q.ninvoke(DB.Models.Team, 'findByIdAndUpdate', team.id, { $inc: { streamCommentsSize: -1 } });
+    else
+      return Q.ninvoke(DB.Models.Team, 'findByIdAndUpdate', team.id, { $inc: { streamImagesSize: -1 } });
+  }).then(function () {
+    res.send('{}'); // smallest json.
+  }, app.defaultError(res));
+});
+
+
