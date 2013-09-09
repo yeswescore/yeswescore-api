@@ -331,9 +331,6 @@ app.post('/v2/teams/:id/', express.bodyParser(), function(req, res){
     return app.defaultError(res)("empty name"); // doesn't allow empty names
   var ownersIds = DB.Models.Team.getOwnersIds(req.body)
     , data = { team: null };
-  // check if "owner" is in players/substitutes/captain/captainSubstitute/coach
-  if (ownersIds.indexOf(req.query.playerid) === -1)
-    return app.defaultError(res)("owner must be a player/substitute/captain/captainSubstitute or coach");
   // 4 checks
   Q.all([
     // player is correctly authentified & exist in DB
@@ -353,7 +350,6 @@ app.post('/v2/teams/:id/', express.bodyParser(), function(req, res){
     var team = data.team;
     // security, is playerid an ownersIds ?
     var dbOwnersIds = DB.Models.Team.getOwnersIds(team);
-    console.log('team owners : ' + JSON.stringify(dbOwnersIds) + ' vs ' + req.query.playerid);
     if (dbOwnersIds.indexOf(req.query.playerid) === -1)
       throw "unauthorized";
     if (typeof req.body.name === "string")
