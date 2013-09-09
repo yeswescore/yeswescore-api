@@ -79,7 +79,7 @@ describe('dev:teams', function(){
           var options = {
             host: Conf["http.host"],
             port: Conf["http.port"],
-            path: Conf["api.teams"]+'?playerid='+randomPlayer._id+'&limit=100000' // no limit
+            path: Conf["api.teams"]+'?player='+randomPlayer._id+'&limit=100000' // no limit
           };
           return http.getJSONAsync(options);
        })
