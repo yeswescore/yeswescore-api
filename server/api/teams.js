@@ -17,13 +17,15 @@ var DB = require("../db.js")
  *  /v2/teams/?fields=name           (default=undefined)
  *
  * Specific options:
- *  /v2/teams/?q=EquipeA (searched text)
- *  /v2/teams/?club=:id   (filter with a club)
+ *  /v2/teams/?q=EquipeA    (searched text)
+ *  /v2/teams/?club=:id     (filter with a club)
+ *  /v2/teams/?playerid=:id (teams of the player)
  */
 app.get('/v2/teams/', function(req, res){
   var limit = req.query.limit || 10;
   var offset = req.query.offset || 0;
   var club = req.query.club;
+  var playerid = req.query.playerid;
   var fields = req.query.fields ||
     "sport,name,dates,dates.creation,"+
     "players,captain,substitutes,captainSubstitute,coach,"+
@@ -32,7 +34,15 @@ app.get('/v2/teams/', function(req, res){
 
   var query = DB.Models.Team.find()
   if (fields)
-    query.select(fields.replace(/,/g, " "))
+    query.select(fields.replace(/,/g, " "));
+  if (playerid)
+    query.or([
+      { "players": playerid }
+    , { "substitutes": playerid }
+    , { "captain": playerid }
+    , { "captainSubstitute": playerid }
+    , { "coach" : playerid }
+    ]);
   if (club)
     query.where("club", club);
   if (text) {

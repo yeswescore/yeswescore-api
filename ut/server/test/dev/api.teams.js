@@ -52,6 +52,54 @@ describe('dev:teams', function(){
     });
   });
 
+  describe('create simpliest random team, search it by the playerid', function() {
+    it('should create the team, & be linked to playerid', function (done) {
+      var data = {}, newTeam;
+
+      Q.wrap("c'est partiiii")
+       .then(function () { return API.Club.random() }).inject(data, "randomClub")
+       .then(function () { return API.Player.random() }).inject(data, "randomPlayer")
+       .then(function () {
+          var randomPlayer = data.randomPlayer;
+          var randomClub = data.randomClub;
+          newTeam = {
+            sport : "tennis",
+            name: "team-"+Math.random(),
+            players: [ randomPlayer._id ],
+            substitutes: [],
+            competition: false,
+            club: randomClub._id
+          };
+          return API.Team.create(newTeam, randomPlayer._id, randomPlayer.token)
+       })
+       .inject(data, "team")
+       .then(function () {
+          var randomPlayer = data.randomPlayer;
+          // reading team from DB
+          var options = {
+            host: Conf["http.host"],
+            port: Conf["http.port"],
+            path: Conf["api.teams"]+'?playerid='+randomPlayer._id+'&limit=100000' // no limit
+          };
+          return http.getJSONAsync(options);
+       })
+       .then(function (teams) {
+          assert.isArray(teams, 'teams must be an array of team');
+          assert(teams.length > 0, 'must have at least 1 team in result');
+          var found = false;
+          teams.forEach(function (team) {
+            if (team.id === data.team.id)
+              found = true;
+          });
+          assert(found, 'must have found team id ' + data.team.id + ' in team list teams ' + JSON.stringify(teams));
+       })
+       .then(
+         function () { done() },
+         function (err) { done(err) }
+       );
+    });
+  });
+
   describe('create simpliest random team, modify it, read it', function() {
     it('should create the team & save it without errors', function (done) {
       var data = {}, modifiedTeam;

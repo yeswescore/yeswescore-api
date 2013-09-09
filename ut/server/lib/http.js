@@ -1,5 +1,6 @@
 var http = require("http")
-  , assert = require("assert");
+  , assert = require("assert")
+  , Q = require("q");
 
 var debug = false;
 
@@ -54,6 +55,14 @@ http.getJSON = function (options, f) {
         });
   }).on("error", function (e) { throw e });
 };
+http.getJSONAsync = function (options) {
+  var d = Q.defer();
+  http.getJSON(options, function (result) {
+    d.resolve(result);
+  });
+  return d.promise;
+};
+
 
 http.post = function (options, data, f) {
   if (debug) {
@@ -95,6 +104,13 @@ http.post = function (options, data, f) {
   req.on("error", function (e) { throw e });
   req.write(data);
   req.end();
+};
+http.postAsync = function (options, data) {
+  var d = Q.defer();
+  http.post(options, data, function (result) {
+    d.resolve(result);
+  });
+  return d.promise;
 };
 
 module.exports = http;
