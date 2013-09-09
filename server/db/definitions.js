@@ -37,6 +37,7 @@ Definitions.generateClub = function (DB) {
     countTeams: Number,
     countTeams1AN: Number,
     school: String,
+    owner: { type: Schema.Types.ObjectId, ref: "Player" },
     // private
     _deleted: { type: Boolean, default: false }, // FIXME: unused
     _reported: { type: Boolean, default: false },

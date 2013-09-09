@@ -50,48 +50,56 @@ describe('dev:clubs', function(){
       var options = {
         host: Conf["http.host"],
         port: Conf["http.port"],
-        path: Conf["api.clubs"]
+        path: Conf["documents.players"]+"random"
       };
-      
-      var newClub = {
-        name : "club-"+Math.random(),
-        location: {
-          address: "Hotel de ville",
-          city: "Lyon",
-          zip: "zip"+Math.random(),
-          pos: [ 42, 43 ]
-        },
-        fedid: String(Math.random()),
-        ligue: "ligue"+Math.random(),
-        outdoor: Math.round(Math.random() * 10),
-        indoor: Math.round(Math.random() * 10),
-        countPlayers: Math.round(Math.random() * 100),
-        countPlayers1AN: Math.round(Math.random() * 100),
-        countTeams: Math.round(Math.random() * 10),
-        countTeams1AN: Math.round(Math.random() * 10),
-        school: "school"+Math.random(),
-      };
-      http.post(options, newClub, function (club) {
-        assert.isClub(club);
-        assert(club.name === newClub.name, "should have same name");
-        assert(club.location.address == newClub.location.address);
-        assert(club.location.city == newClub.location.city);
-        assert(club.location.pos[0] == newClub.location.pos[0]);
-        assert(club.location.pos[1] == newClub.location.pos[1]);
-        assert(club.location.zip === newClub.location.zip, "should have same zip");
-        
-        assert(club.fedid === newClub.fedid, "should have same fedid");
-        assert(club.ligue === newClub.ligue, "should have same ligue");
 
-        assert(club.outdoor === newClub.outdoor, "should have same outdoor");
-        assert(club.indoor === newClub.indoor, "should have same indoor (" + club.indoor + " vs " + newClub.indoor + ")");
-        assert(club.countPlayers === newClub.countPlayers, "should have same countPlayers");
-        assert(club.countPlayers1AN === newClub.countPlayers1AN, "should have same countPlayers1AN");
-        assert(club.countTeams === newClub.countTeams, "should have same countTeams");
-        assert(club.countTeams1AN === newClub.countTeams1AN, "should have same countTeams1AN");
-        assert(club.school === newClub.school, "should have same school");
-        
-        done();
+      http.getJSON(options, function (randomPlayer) {
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["api.clubs"]+"?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+        };
+
+        var newClub = {
+          name : "club-"+Math.random(),
+          location: {
+            address: "Hotel de ville",
+            city: "Lyon",
+            zip: "zip"+Math.random(),
+            pos: [ 42, 43 ]
+          },
+          fedid: String(Math.random()),
+          ligue: "ligue"+Math.random(),
+          outdoor: Math.round(Math.random() * 10),
+          indoor: Math.round(Math.random() * 10),
+          countPlayers: Math.round(Math.random() * 100),
+          countPlayers1AN: Math.round(Math.random() * 100),
+          countTeams: Math.round(Math.random() * 10),
+          countTeams1AN: Math.round(Math.random() * 10),
+          school: "school"+Math.random(),
+        };
+        http.post(options, newClub, function (club) {
+          assert.isClub(club);
+          assert(club.name === newClub.name, "should have same name");
+          assert(club.location.address == newClub.location.address);
+          assert(club.location.city == newClub.location.city);
+          assert(club.location.pos[0] == newClub.location.pos[0]);
+          assert(club.location.pos[1] == newClub.location.pos[1]);
+          assert(club.location.zip === newClub.location.zip, "should have same zip");
+
+          assert(club.fedid === newClub.fedid, "should have same fedid");
+          assert(club.ligue === newClub.ligue, "should have same ligue");
+
+          assert(club.outdoor === newClub.outdoor, "should have same outdoor");
+          assert(club.indoor === newClub.indoor, "should have same indoor (" + club.indoor + " vs " + newClub.indoor + ")");
+          assert(club.countPlayers === newClub.countPlayers, "should have same countPlayers");
+          assert(club.countPlayers1AN === newClub.countPlayers1AN, "should have same countPlayers1AN");
+          assert(club.countTeams === newClub.countTeams, "should have same countTeams");
+          assert(club.countTeams1AN === newClub.countTeams1AN, "should have same countTeams1AN");
+          assert(club.school === newClub.school, "should have same school");
+
+          done();
+        });
       });
     });
   });
@@ -101,36 +109,44 @@ describe('dev:clubs', function(){
       var options = {
         host: Conf["http.host"],
         port: Conf["http.port"],
-        path: Conf["api.clubs"]
+        path: Conf["documents.players"]+"random"
       };
-      
-      var randomName = "club-"+Math.random();
-      var randomCity = "city-"+Math.random();
-      
-      var newClub = {
-        name : randomName,
-        location: {
-          city: randomCity
-        }
-      };
-      http.post(options, newClub, function (club) {
-        assert.isClub(club);
-        assert(club.name === newClub.name, "should have same name");
-        assert(club.location.city === newClub.location.city, "should have same city");
 
-        // try to create a 2nd one
-        var newClub2 = {
+      http.getJSON(options, function (randomPlayer) {
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["api.clubs"]+"?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+        };
+
+        var randomName = "club-"+Math.random();
+        var randomCity = "city-"+Math.random();
+
+        var newClub = {
           name : randomName,
           location: {
             city: randomCity
           }
         };
+        http.post(options, newClub, function (club) {
+          assert.isClub(club);
+          assert(club.name === newClub.name, "should have same name");
+          assert(club.location.city === newClub.location.city, "should have same city");
 
-        http.post(options, newClub2, function (error) {
-          assert.isError(error, "should be an error");
-          assert(error.error === "club already registered", "should have error club already registered");
-        
-          done();
+          // try to create a 2nd one
+          var newClub2 = {
+            name : randomName,
+            location: {
+              city: randomCity
+            }
+          };
+
+          http.post(options, newClub2, function (error) {
+            assert.isError(error, "should be an error");
+            assert(error.error === "club already registered", "should have error club already registered");
+
+            done();
+          });
         });
       });
     });
@@ -141,47 +157,55 @@ describe('dev:clubs', function(){
       var options = {
         host: Conf["http.host"],
         port: Conf["http.port"],
-        path: Conf["api.clubs"]
+        path: Conf["documents.players"]+"random"
       };
-      
-      var positions = {
-        borabora : [ -151.741305, -16.500436 ],
-        tupai : [ -151.816893, -16.249431 ]
-      };
-      
-     var nameFilter = "club"+Math.random();
-      
-      var newClub = {
-        name : nameFilter,
-        location: {
-          city: "borabora",
-          pos: positions.borabora
-        }
-      };
-      http.post(options, newClub, function (club) {
-        assert.isClub(club);
-        
+
+      http.getJSON(options, function (randomPlayer) {
         var options = {
           host: Conf["http.host"],
           port: Conf["http.port"],
-          path: Conf["api.clubs"]+"autocomplete/?longitude="+positions.tupai[0]+"&latitude="+positions.tupai[1]+"&distance=50&q="+nameFilter
+          path: Conf["api.clubs"]+"?playerid="+randomPlayer._id+"&token="+randomPlayer.token
         };
-        
-        http.getJSON(options, function (clubs) {
-          assert.isArray(clubs, 'clubs should be an array');
-          assert(clubs.length === 1, 'must have found at least one club !');
-          assert(clubs[0].id == club.id, 'must have same id :' + club.id + ' vs ' + clubs[0].id);
-        
+
+        var positions = {
+          borabora : [ -151.741305, -16.500436 ],
+          tupai : [ -151.816893, -16.249431 ]
+        };
+
+      var nameFilter = "club"+Math.random();
+
+        var newClub = {
+          name : nameFilter,
+          location: {
+            city: "borabora",
+            pos: positions.borabora
+          }
+        };
+        http.post(options, newClub, function (club) {
+          assert.isClub(club);
+
           var options = {
             host: Conf["http.host"],
             port: Conf["http.port"],
-            path: Conf["api.clubs"]+"autocomplete/?longitude="+positions.tupai[0]+"&latitude="+positions.tupai[1]+"&distance=10&q="+nameFilter
+            path: Conf["api.clubs"]+"autocomplete/?longitude="+positions.tupai[0]+"&latitude="+positions.tupai[1]+"&distance=50&q="+nameFilter
           };
-          
+
           http.getJSON(options, function (clubs) {
             assert.isArray(clubs, 'clubs should be an array');
-            assert(clubs.length === 0, 'cannot find the club (too far away)');
-            done();
+            assert(clubs.length === 1, 'must have found at least one club !');
+            assert(clubs[0].id == club.id, 'must have same id :' + club.id + ' vs ' + clubs[0].id);
+
+            var options = {
+              host: Conf["http.host"],
+              port: Conf["http.port"],
+              path: Conf["api.clubs"]+"autocomplete/?longitude="+positions.tupai[0]+"&latitude="+positions.tupai[1]+"&distance=10&q="+nameFilter
+            };
+
+            http.getJSON(options, function (clubs) {
+              assert.isArray(clubs, 'clubs should be an array');
+              assert(clubs.length === 0, 'cannot find the club (too far away)');
+              done();
+            });
           });
         });
       });

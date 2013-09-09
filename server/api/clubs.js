@@ -1,6 +1,7 @@
 var DB = require("../db.js")
   , Q = require('q')
   , express = require("express")
+  , Authentication = require("../authentication.js")
   , app = require("../app.js");
 
 /**
@@ -152,10 +153,16 @@ app.get('/v2/clubs/:id/games/', function(req, res){
 app.post('/v2/clubs/', express.bodyParser(), function(req, res){
   if (!req.body.name || !req.body.location || !req.body.location.city)
     return app.defaultError(res)("please provide club name & city");
-  Q.nfcall(DB.Models.Club.findOne.bind(DB.Models.Club),
-          { name: req.body.name, 'location.city': req.body.location.city })
-    .then(function (club) {
-      if (club)
+  var data = {};
+  
+  Q.all([
+    Q.ensure(Authentication.Query.getPlayer(req.query))
+     .isNot(null, 'unauthorized')
+     .inject(data, 'player'),
+    Q.ninvoke(DB.Models.Club, 'findOne', { name: req.body.name, 'location.city': req.body.location.city })
+     .inject(data, 'club')
+  ]).then(function () {
+      if (data.club)
         return app.defaultError(res)("club already registered");
       // creating a new club (no owner)
       req.body.location = (req.body.location) ? req.body.location : {};
@@ -170,6 +177,8 @@ app.post('/v2/clubs/', express.bodyParser(), function(req, res){
         },
         ligue: req.body.ligue || ""
       });
+      // owner
+      club.owner = data.player.id;
       // might be undefined
       if (typeof req.body.fedid !== "undefined" && req.body.fedid)
         club.fedid = req.body.fedid;

@@ -24,7 +24,7 @@ var deletePrivatesRec = function (o) {
 
 Schemas.generate = function (DB) {
   // creation order: nested schemas to outer schemas.
-  var schemaNames = ["StreamItem", "Team", "Club", "Player", "Game", "File"];
+  var schemaNames = ["StreamItem", "Team", "Club", "Player", "Game", "File"/*, "Competition"*/];
   schemaNames.forEach(function (name) {
     // generating definition
     DB.Definitions["generate"+name](DB);

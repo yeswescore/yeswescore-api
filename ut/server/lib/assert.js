@@ -230,8 +230,9 @@ assert.isClub = function (club) {
     countPlayers: { _type: "number|undefined" },
     countPlayers1AN: { _type: "number|undefined" },
     countTeams: { _type: "number|undefined" }, 
-    countTeams1AN: { _type: "number|undefined" }, 
-    school: { _type: "string|undefined" }
+    countTeams1AN: { _type: "number|undefined" },
+    school: { _type: "string|undefined" },
+    owner: { _type: "id|undefined" },
   }, club, "isClub: ");
 };
 
