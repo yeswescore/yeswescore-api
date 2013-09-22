@@ -33,6 +33,13 @@
   <canvas id="startupsLastWeek" width="2000" height="800"></canvas>
 
 
+  <h3>PageView des players ayant startup depuis 7 jours</h3>
+  <p>
+    liste des joueurs ayant lancé l'application dans les 7 derniers jours, leurs pages vues par startup
+  </p>
+  <canvas id="startupsLastWeekPV" width="2000" height="800"></canvas>
+
+
   <h3>players ayant startup depuis 7 jours (sur 5 semaines)</h3>
   <p>
     liste des joueurs ayant lancé l'application dans les 7 derniers jours
@@ -127,8 +134,9 @@
       stats.forEach(function (stat) {
         var statTimestamp = parseInt(stat[0], 10);
         var playerid = stat[1];
+        var player;
         if (playerid && players[playerid] && stat[2] === "STARTUP") {
-          var player = players[playerid];
+          player = players[playerid];
           player.startup = (player.startup || 0) + 1;
           player.lastStartup = statTimestamp;
           if (typeof player.startupWeeks === "undefined") {
@@ -142,6 +150,21 @@
           for (var i = 0; i < (months.length - 1); ++i) {
             if (statTimestamp < months[i] && statTimestamp > months[i + 1])
               player.startupMonths[i] = (player.startupMonths[i] || 0) + 1;
+          }
+        } else if (playerid && players[playerid] && stat[2] === "PAGE") {
+          player = players[playerid];
+          player.pageview = (player.pageview || 0) + 1;
+          if (typeof player.pageviewWeeks === "undefined") {
+            player.pageviewWeeks = [];
+            player.pageviewMonths = [];
+          }
+          for (var i = 0; i < (weeks.length - 1); ++i) {
+            if (statTimestamp < weeks[i] && statTimestamp > weeks[i + 1])
+              player.pageviewWeeks[i] = (player.pageviewWeeks[i] || 0) + 1;
+          }
+          for (var i = 0; i < (months.length - 1); ++i) {
+            if (statTimestamp < months[i] && statTimestamp > months[i + 1])
+              player.pageviewMonths[i] = (player.pageviewMonths[i] || 0) + 1;
           }
         }
       });
@@ -282,7 +305,49 @@
 
 
 
+      (function () {
+        var playersSelection = Object.keys(players).map(function (k) { return players[k] }).filter(function (p) {
+          return p.startupWeeks && p.startupWeeks[0] > 0
+        });
+        playersSelection.sort(function (a, b) {
+          if (a.startupWeeks[0] == b.startupWeeks[0])
+            return 0;
+          if (a.startupWeeks[0] > b.startupWeeks[0])
+            return -1;
+          return 1;
+        });
 
+        // 
+        // Nb Startups  ^
+        //              |
+        //              |
+        //              +------------> players
+        //
+        var data = {
+          labels : [/*date 1, date 2, ...*/],
+          datasets : [
+            {
+              fillColor : "rgba(220,220,220,0.5)",
+              strokeColor : "rgba(220,220,220,1)",
+              data : [/*val1, val2*/]
+            }
+          ]
+        };
+        data.labels = playersSelection.map(function (p) {
+          var name = p.name || "";
+          var email = (p.email && p.email.address) ? p.email.address : "";
+          var club = (p.club && p.club.name) ? p.club.name : "";
+          return name + " " + email + " ("+moment(p.lastStartup).format("DD-MM")+'/'+club + ")";
+        });
+        data.datasets[0].data = playersSelection.map(function (p) {
+          if (p.pageviewWeeks)
+            return p.pageviewWeeks[0] / p.startupWeeks[0];
+          return 0;
+        });
+
+        var ctx = document.getElementById("startupsLastWeekPV").getContext("2d");
+        new Chart(ctx).Bar(data);
+      })();
 
 
       (function () {
