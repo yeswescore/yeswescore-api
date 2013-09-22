@@ -58,8 +58,23 @@
   <p id="startupsLastMonth2345AdditionalInfos"></p>
 
 
-  <h3>last startups</h3>
-  <canvas id="lastStartups" width="1600" height="400"></canvas>
+  <h3>startup by clubs last week</h3>
+  <p>
+    nombre de joueurs par club ayant au moins effectué 1 startup dans les 7 derniers jours
+  </p>
+  <canvas id="startupLastWeekByClub" width="1600" height="400"></canvas>
+  <p id="startupLastWeekByClubAdditionalInfos"></p>
+
+
+  <h3>startup by clubs last month</h3>
+  <p>
+    nombre de joueurs par club ayant au moins effectué 1 startup dans les 30 derniers jours
+  </p>
+  <canvas id="startupLastMonthByClub" width="1600" height="400"></canvas>
+  <p id="startupLastMonthByClubAdditionalInfos"></p>
+
+
+
   <script>
     var players = null;
     var p1 = $.getJSON("players.json").then(function (data) { players = data });
@@ -264,6 +279,9 @@
         var ctx = document.getElementById("startupsLastWeek").getContext("2d");
         new Chart(ctx).Bar(data);
       })();
+
+
+
 
 
 
@@ -487,30 +505,150 @@
       })();
 
 
-      // 
-      // Nb Pages  ^
-      //           |
-      //           |
-      //           +------------> Time
-      //
-      data = {
-        labels : [/*date 1, date 2, ...*/],
-        datasets : [
-          {
-            fillColor : "rgba(220,220,220,0.5)",
-            strokeColor : "rgba(220,220,220,1)",
-            data : [/*val1, val2*/]
+      (function () {
+        var playersSelection = Object.keys(players).map(function (k) { return players[k] }).filter(function (p) {
+          return p.startupWeeks && p.startupWeeks[0] > 0
+        });
+        var clubsIds = {}, clubs = [];
+        playersSelection.forEach(function (p) {
+          if (p.club && p.club.id) {
+            if (typeof clubsIds[p.club.id] === "undefined") {
+              var clubInfo = {
+                id: p.club.id,
+                name: p.club.name,
+                players: []
+              };
+              clubsIds[p.club.id] = clubInfo;
+              clubs.push(clubInfo);
+            }
+            clubsIds[p.club.id].players.push(p);
           }
-        ]
-      };
-      // 60 derniers jours
-      for (var i = 60; i >= 0; i--) {
-        data.labels.push(moment().subtract('days', i).format("DD-MM"));
-        data.datasets[0].data.push(10);
-      }
-      //
-      ctx = document.getElementById("lastStartups").getContext("2d");
-      new Chart(ctx).Bar(data);
+        });
+        clubs.sort(function (a, b) {
+          if (a.players.length === b.players.length)
+            return 0;
+          if (a.players.length > b.players.length)
+            return -1;
+          return 1;
+        });
+
+        // 
+        // Nb Startups  ^
+        //              |
+        //              |
+        //              +------------> players
+        //
+        var data = {
+          labels : [/*date 1, date 2, ...*/],
+          datasets : [
+            {
+              fillColor : "rgba(220,220,220,0.5)",
+              strokeColor : "rgba(220,220,220,1)",
+              data : [/*val1, val2*/]
+            }
+          ]
+        };
+        data.labels = clubs.map(function (c) { return c.name });
+        data.datasets[0].data = clubs.map(function (c) { return c.players.length });
+
+        var ctx = document.getElementById("startupLastWeekByClub").getContext("2d");
+        new Chart(ctx).Bar(data);
+
+        // startupLastWeekByClubAdditionalInfos
+        var infos = "";
+        //
+        infos += "<p>";
+        infos += "Liste des joueurs par club : <br/>";
+        clubs.forEach(function (c) {
+          infos += "<b>"+c.name+"</b>:";
+          c.players.forEach(function (p, i) {
+            var name = p.name || "";
+            var email = (p.email && p.email.address) ? p.email.address : "";
+            if (i) infos += ", ";
+            infos += "<i>"+name;
+            if (email) infos += " ("+email+")";
+            infos += "</i> ";
+          });
+          infos += "<br/>";
+        });
+        infos += "</p>";
+
+        $("#startupLastWeekByClubAdditionalInfos").html(infos);
+      })();
+
+
+
+      (function () {
+        var playersSelection = Object.keys(players).map(function (k) { return players[k] }).filter(function (p) {
+          return p.startupMonths && p.startupMonths[0] > 0
+        });
+        var clubsIds = {}, clubs = [];
+        playersSelection.forEach(function (p) {
+          if (p.club && p.club.id) {
+            if (typeof clubsIds[p.club.id] === "undefined") {
+              var clubInfo = {
+                id: p.club.id,
+                name: p.club.name,
+                players: []
+              };
+              clubsIds[p.club.id] = clubInfo;
+              clubs.push(clubInfo);
+            }
+            clubsIds[p.club.id].players.push(p);
+          }
+        });
+        clubs.sort(function (a, b) {
+          if (a.players.length === b.players.length)
+            return 0;
+          if (a.players.length > b.players.length)
+            return -1;
+          return 1;
+        });
+
+        // 
+        // Nb Startups  ^
+        //              |
+        //              |
+        //              +------------> players
+        //
+        var data = {
+          labels : [/*date 1, date 2, ...*/],
+          datasets : [
+            {
+              fillColor : "rgba(220,220,220,0.5)",
+              strokeColor : "rgba(220,220,220,1)",
+              data : [/*val1, val2*/]
+            }
+          ]
+        };
+        data.labels = clubs.map(function (c) { return c.name });
+        data.datasets[0].data = clubs.map(function (c) { return c.players.length });
+
+        var ctx = document.getElementById("startupLastMonthByClub").getContext("2d");
+        new Chart(ctx).Bar(data);
+
+        // startupLastMonthByClubAdditionalInfos
+        var infos = "";
+        //
+        infos += "<p>";
+        infos += "Liste des joueurs par club : <br/>";
+        clubs.forEach(function (c) {
+          infos += "<b>"+c.name+"</b>:";
+          c.players.forEach(function (p, i) {
+            var name = p.name || "";
+            var email = (p.email && p.email.address) ? p.email.address : "";
+            if (i) infos += ", ";
+            infos += "<i>"+name;
+            if (email) infos += " ("+email+")";
+            infos += "</i> ";
+          });
+          infos += "<br/>";
+        });
+        infos += "</p>";
+
+        $("#startupLastMonthByClubAdditionalInfos").html(infos);
+      })();
+
     }
   </script>
 </body>
