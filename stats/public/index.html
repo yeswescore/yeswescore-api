@@ -102,43 +102,32 @@
 
       // Nb startups by player
       var now = Date.now();
-      var lastWeek = Date.now() - 1000 * 3600 * 24 * 7;
-      var lastWeek2 = lastWeek - 1000 * 3600 * 24 * 7;
-      var lastWeek3 = lastWeek2 - 1000 * 3600 * 24 * 7;
-      var lastWeek4 = lastWeek3 - 1000 * 3600 * 24 * 7;
-      var lastWeek5 = lastWeek4 - 1000 * 3600 * 24 * 7;
-      var lastMonth = Date.now() - 1000 * 3600 * 24 * 30;
-      var lastMonth2 = lastMonth - 1000 * 3600 * 24 * 30;
-      var lastMonth3 = lastMonth2 - 1000 * 3600 * 24 * 30;
-      var lastMonth4 = lastMonth3 - 1000 * 3600 * 24 * 30;
-      var lastMonth5 = lastMonth4 - 1000 * 3600 * 24 * 30;
-      var lastStatTimestamp = null;
+      var weeks = [], months = [];
+      for (var i = 0; i <= 5; ++i) {
+        weeks[i] = now - 1000 * 3600 * 24 * 7 * i;
+        months[i] = now - 1000 * 3600 * 24 * 30 * i;
+      }
+
+      //
       stats.forEach(function (stat) {
         var statTimestamp = parseInt(stat[0], 10);
         var playerid = stat[1];
         if (playerid && players[playerid] && stat[2] === "STARTUP") {
-          players[playerid].startup = (players[playerid].startup || 0) + 1;
-          players[playerid].lastStartup = statTimestamp;
-          if (statTimestamp > lastWeek && statTimestamp < now)
-            players[playerid].startupLastWeek = (players[playerid].startupLastWeek || 0) + 1;
-          if (statTimestamp > lastWeek2 && statTimestamp < lastWeek)
-            players[playerid].startupLastWeek2 = (players[playerid].startupLastWeek2 || 0) + 1;
-          if (statTimestamp > lastWeek3 && statTimestamp < lastWeek2)
-            players[playerid].startupLastWeek3 = (players[playerid].startupLastWeek3 || 0) + 1;
-          if (statTimestamp > lastWeek4 && statTimestamp < lastWeek3)
-            players[playerid].startupLastWeek4 = (players[playerid].startupLastWeek4 || 0) + 1;
-          if (statTimestamp > lastWeek5 && statTimestamp < lastWeek4)
-            players[playerid].startupLastWeek5 = (players[playerid].startupLastWeek5 || 0) + 1;
-          if (statTimestamp > lastMonth && statTimestamp < now)
-            players[playerid].startupLastMonth = (players[playerid].startupLastMonth || 0) + 1;
-          if (statTimestamp > lastMonth2 && statTimestamp < lastMonth)
-            players[playerid].startupLastMonth2 = (players[playerid].startupLastMonth2 || 0) + 1;
-          if (statTimestamp > lastMonth3 && statTimestamp < lastMonth2)
-            players[playerid].startupLastMonth3 = (players[playerid].startupLastMonth3 || 0) + 1;
-          if (statTimestamp > lastMonth4 && statTimestamp < lastMonth3)
-            players[playerid].startupLastMonth4 = (players[playerid].startupLastMonth4 || 0) + 1;
-          if (statTimestamp > lastMonth5 && statTimestamp < lastMonth4)
-            players[playerid].startupLastMonth5 = (players[playerid].startupLastMonth5 || 0) + 1;
+          var player = players[playerid];
+          player.startup = (player.startup || 0) + 1;
+          player.lastStartup = statTimestamp;
+          if (typeof player.startupWeeks === "undefined") {
+            player.startupWeeks = [];
+            player.startupMonths = [];
+          }
+          for (var i = 0; i < (weeks.length - 1); ++i) {
+            if (statTimestamp < weeks[i] && statTimestamp > weeks[i + 1])
+              player.startupWeeks[i] = (player.startupWeeks[i] || 0) + 1;
+          }
+          for (var i = 0; i < (months.length - 1); ++i) {
+            if (statTimestamp < months[i] && statTimestamp > months[i + 1])
+              player.startupMonths[i] = (player.startupMonths[i] || 0) + 1;
+          }
         }
       });
 
@@ -238,12 +227,12 @@
 
       (function () {
         var playersSelection = Object.keys(players).map(function (k) { return players[k] }).filter(function (p) {
-          return p.startupLastWeek > 0
+          return p.startupWeeks && p.startupWeeks[0] > 0
         });
         playersSelection.sort(function (a, b) {
-          if (a.startupLastWeek == b.startupLastWeek)
+          if (a.startupWeeks[0] == b.startupWeeks[0])
             return 0;
-          if (a.startupLastWeek > b.startupLastWeek)
+          if (a.startupWeeks[0] > b.startupWeeks[0])
             return -1;
           return 1;
         });
@@ -270,7 +259,7 @@
           var club = (p.club && p.club.name) ? p.club.name : "";
           return name + " " + email + " ("+moment(p.lastStartup).format("DD-MM")+'/'+club + ")";
         });
-        data.datasets[0].data = playersSelection.map(function (p) { return p.startupLastWeek });
+        data.datasets[0].data = playersSelection.map(function (p) { return p.startupWeeks[0] });
 
         var ctx = document.getElementById("startupsLastWeek").getContext("2d");
         new Chart(ctx).Bar(data);
@@ -281,14 +270,11 @@
       (function () {
         var playersSelections = [];
         for (var i = 0; i < 5; ++i) {
-          var startupLastWeek = (i == 0) ? "startupLastWeek" : "startupLastWeek" + (i+1);
-          playersSelections[i] = Object.keys(players).map(function (k) { return players[k] }).filter(function (p) {
-            return p[startupLastWeek] > 0
-          });
+          playersSelections[i] = Object.keys(players).map(function (k) { return players[k] }).filter(function (p) { return p.startupWeeks && p.startupWeeks[i] > 0 });
           playersSelections[i].sort(function (a, b) {
-            if (a[startupLastWeek] == b[startupLastWeek])
+            if (a.startupWeeks[i] == b.startupWeeks[i])
               return 0;
-            if (a[startupLastWeek] > b[startupLastWeek])
+            if (a.startupWeeks[i] > b.startupWeeks[i])
               return -1;
             return 1;
           });
@@ -339,8 +325,7 @@
           data.labels.push(i);
         //
         playersSelections.forEach(function (playersSelection, i) {
-          var startupLastWeek = (i == 0) ? "startupLastWeek" : "startupLastWeek" + (i+1);
-          data.datasets[i].data = playersSelection.map(function (p) { return p[startupLastWeek] });
+          data.datasets[i].data = playersSelection.map(function (p) { return p.startupWeeks[i] });
         });
 
         var ctx = document.getElementById("startupsLastWeek2345").getContext("2d");
@@ -350,11 +335,11 @@
         var infos = "";
         //
         infos += "<p>";
-        infos += "Nombre de startup Week end en cours : " + playersSelections[0].reduce(function (p, c) { return p + c.startupLastWeek }, 0) + "<br/>";
-        infos += "Nombre de startup Week end -1 : " + playersSelections[1].reduce(function (p, c) { return p + c.startupLastWeek2 }, 0) + "<br/>";
-        infos += "Nombre de startup Week end -2 : " + playersSelections[2].reduce(function (p, c) { return p + c.startupLastWeek3 }, 0) + "<br/>";
-        infos += "Nombre de startup Week end -3 : " + playersSelections[3].reduce(function (p, c) { return p + c.startupLastWeek4 }, 0) + "<br/>";
-        infos += "Nombre de startup Week end -4 : " + playersSelections[4].reduce(function (p, c) { return p + c.startupLastWeek5 }, 0) + "<br/>";
+        infos += "Nombre de startup Week end en cours : " + playersSelections[0].reduce(function (p, c) { return p + c.startupWeeks[0] }, 0) + "<br/>";
+        infos += "Nombre de startup Week end -1 : " + playersSelections[1].reduce(function (p, c) { return p + c.startupWeeks[1] }, 0) + "<br/>";
+        infos += "Nombre de startup Week end -2 : " + playersSelections[2].reduce(function (p, c) { return p + c.startupWeeks[2] }, 0) + "<br/>";
+        infos += "Nombre de startup Week end -3 : " + playersSelections[3].reduce(function (p, c) { return p + c.startupWeeks[3] }, 0) + "<br/>";
+        infos += "Nombre de startup Week end -4 : " + playersSelections[4].reduce(function (p, c) { return p + c.startupWeeks[4] }, 0) + "<br/>";
         infos += "</p>";
         //
         infos += "<p>";
@@ -374,12 +359,12 @@
 
       (function () {
         var playersSelection = Object.keys(players).map(function (k) { return players[k] }).filter(function (p) {
-          return p.startupLastMonth > 0
+          return p.startupMonths && p.startupMonths[0] > 0
         });
         playersSelection.sort(function (a, b) {
-          if (a.startupLastMonth == b.startupLastMonth)
+          if (a.startupMonths[0] == b.startupMonths[0])
             return 0;
-          if (a.startupLastMonth > b.startupLastMonth)
+          if (a.startupMonths[0] > b.startupMonths[0])
             return -1;
           return 1;
         });
@@ -405,7 +390,7 @@
           var email = (p.email && p.email.address) ? p.email.address : "";
           return name + " " + email + " ("+moment(p.lastStartup).format("DD-MM")+")";
         });
-        data.datasets[0].data = playersSelection.map(function (p) { return p.startupLastMonth });
+        data.datasets[0].data = playersSelection.map(function (p) { return p.startupMonths[0] });
 
         var ctx = document.getElementById("startupsLastMonth").getContext("2d");
         new Chart(ctx).Bar(data);
@@ -415,14 +400,11 @@
       (function () {
         var playersSelections = [];
         for (var i = 0; i < 5; ++i) {
-          var startupLastMonth = (i == 0) ? "startupLastMonth" : "startupLastMonth" + (i+1);
-          playersSelections[i] = Object.keys(players).map(function (k) { return players[k] }).filter(function (p) {
-            return p[startupLastMonth] > 0
-          });
+          playersSelections[i] = Object.keys(players).map(function (k) { return players[k] }).filter(function (p) { return p.startupMonths && p.startupMonths[i] > 0 });
           playersSelections[i].sort(function (a, b) {
-            if (a[startupLastMonth] == b[startupLastMonth])
+            if (a.startupMonths[i] == b.startupMonths[i])
               return 0;
-            if (a[startupLastMonth] > b[startupLastMonth])
+            if (a.startupMonths[i] > b.startupMonths[i])
               return -1;
             return 1;
           });
@@ -475,8 +457,7 @@
           data.labels.push(i);
         //
         playersSelections.forEach(function (playersSelection, i) {
-          var startupLastMonth = (i == 0) ? "startupLastMonth" : "startupLastMonth" + (i+1);
-          data.datasets[i].data = playersSelection.map(function (p) { return p[startupLastMonth] });
+          data.datasets[i].data = playersSelection.map(function (p) { return p.startupMonths[i] });
         });
 
         var ctx = document.getElementById("startupsLastMonth2345").getContext("2d");
@@ -487,11 +468,11 @@
         var infos = "";
         //
         infos += "<p>";
-        infos += "Nombre de startup mois en cours : " + playersSelections[0].reduce(function (p, c) { return p + c.startupLastMonth }, 0) + "<br/>";
-        infos += "Nombre de startup m -1 : " + playersSelections[1].reduce(function (p, c) { return p + c.startupLastMonth2 }, 0) + "<br/>";
-        infos += "Nombre de startup m -2 : " + playersSelections[2].reduce(function (p, c) { return p + c.startupLastMonth3 }, 0) + "<br/>";
-        infos += "Nombre de startup m -3 : " + playersSelections[3].reduce(function (p, c) { return p + c.startupLastMonth4 }, 0) + "<br/>";
-        infos += "Nombre de startup m -4 : " + playersSelections[4].reduce(function (p, c) { return p + c.startupLastMonth5 }, 0) + "<br/>";
+        infos += "Nombre de startup mois en cours : " + playersSelections[0].reduce(function (p, c) { return p + c.startupMonths[0] }, 0) + "<br/>";
+        infos += "Nombre de startup m -1 : " + playersSelections[1].reduce(function (p, c) { return p + c.startupMonths[1] }, 0) + "<br/>";
+        infos += "Nombre de startup m -2 : " + playersSelections[2].reduce(function (p, c) { return p + c.startupMonths[2] }, 0) + "<br/>";
+        infos += "Nombre de startup m -3 : " + playersSelections[3].reduce(function (p, c) { return p + c.startupMonths[3] }, 0) + "<br/>";
+        infos += "Nombre de startup m -4 : " + playersSelections[4].reduce(function (p, c) { return p + c.startupMonths[4] }, 0) + "<br/>";
         infos += "</p>";
         //
         infos += "<p>";
