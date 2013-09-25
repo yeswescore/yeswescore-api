@@ -40,6 +40,6 @@ fi
 
 # rsync
 echo "sending code to integration environment"
-sudo rsync -rltov --del --ignore-errors --exclude node_modules --exclude .git --force -e 'ssh -p 42' yeswescore-server /opt/web/
-echo "sending code to prod server"
-sudo rsync -rltov --del --ignore-errors --exclude node_modules --exclude .git --force -e 'ssh -p 42' yeswescore-server root@188.165.247.143:/opt/web/
+sudo rsync -rltov --del --ignore-errors --exclude node_modules --exclude .git --force -e 'ssh -p 42' yeswescore-server node@www.yeswescore.com:/opt/web/
+#echo "sending code to prod server"
+#sudo rsync -rltov --del --ignore-errors --exclude node_modules --exclude .git --force -e 'ssh -p 42' yeswescore-server root@188.165.247.143:/opt/web/
