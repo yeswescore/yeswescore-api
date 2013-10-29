@@ -5,6 +5,7 @@ var DB = require("../db.js")
   , Push = require("../push.js")  
   , Resources = require("../strings/resources.js")
   , mongoose = require("mongoose")
+  , Authentication = require("../authentication.js")
   , ObjectId = mongoose.Types.ObjectId;
 
 
@@ -37,7 +38,7 @@ app.get('/v2/games/', function(req, res){
   var offset = req.query.offset || 0;
   var text = req.query.q;
   var club = req.query.club || null;
-  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,streamCommentsSize,streamImagesSize";
+  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,infos.numberOfBestSets,streamCommentsSize,streamImagesSize,infos.winners.teams,infos.winners.status";
   var sort = req.query.sort || "-dates.start";
   var status = req.query.status || "created,ongoing,finished";
   var longitude = req.query.longitude;
@@ -52,7 +53,7 @@ app.get('/v2/games/', function(req, res){
   // process fields
   var fields = app.createPopulateFields(fields, populate);
   // heavy...
-  var query = DB.Model.Game.find({_deleted: false}, fields.select);
+  var query = DB.Models.Game.find({}, fields.select);
   if (text) {
     text = new RegExp("("+text.searchable().pregQuote()+")");
     query.or([
@@ -92,7 +93,13 @@ app.get('/v2/games/', function(req, res){
  *  /v2/games/:id/?populate=teams.players
  */
 app.get('/v2/games/:id', function (req, res){
-  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,teams.players.owner,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,streamCommentsSize,streamImagesSize";
+  var fields = req.query.fields ||
+    "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,"+
+    "location.country,location.city,location.pos,"+
+    "teams,teams.players.name,teams.players.club,teams.players.rank,teams.players.owner,"+
+    "infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,infos.numberOfBestSets,"+
+    "infos.winners,infos.winners.teams,infos.winners.players,infos.winners.status,"+
+    "streamCommentsSize,streamImagesSize";
   // populate option
   var populate = "teams.players";
   if (typeof req.query.populate !== "undefined")
@@ -101,7 +108,7 @@ app.get('/v2/games/:id', function (req, res){
   // preprocess fields
   var fields = app.createPopulateFields(fields, populate);
   // searching player by id.
-  var query = DB.Model.Game.findOne({_id:req.params.id, _deleted: false}, fields.select);
+  var query = DB.Models.Game.findOne({_id:req.params.id, _deleted: false}, fields.select);
   if (populatePaths.indexOf("teams.players") !== -1) {
     query.populate("teams.players", fields["teams.players"]);
   }
@@ -112,6 +119,31 @@ app.get('/v2/games/:id', function (req, res){
       return app.defaultError(res)("no game found");
     // should we hide the owner ?
     res.send(JSON.stringifyModels(game));
+  });
+});
+
+
+/**
+ * Tel if a team or player is winning a specific game.
+ *
+ * Specific options:
+ *  /v2/games/:id/isWinning/?player=:id   (playerId)
+ *  /v2/games/:id/isWinning/?team=:id     (gameId)
+ */
+app.get('/v2/games/:id/isWinning/', function (req, res) {
+  if (typeof req.query.player === "undefined" &&
+      typeof req.query.team === "undefined")
+    return app.defaultError(res)("missing player or a team");
+  
+  var query = DB.Models.Game.findOne({_id:req.params.id, _deleted: false})
+  query.exec(function (err, game) {
+    if (err)
+      return app.defaultError(res)(err);
+    if (game === null)
+      return app.defaultError(res)("no game found");
+    if (req.query.player)
+      return res.send(JSON.stringify({"result": game.isPlayerWinning(req.query.player)}));
+    return res.send(JSON.stringify({"result": game.isTeamWinning(req.query.team)}));
   });
 });
 
@@ -134,7 +166,7 @@ app.get('/v2/games/:id/stream/', function (req, res){
   var after = req.query.after || null;
   var lastid = req.query.lastid || null;
   
-  var query = DB.Model.Game.findOne({_id:req.params.id, _deleted: false})
+  var query = DB.Models.Game.findOne({_id:req.params.id, _deleted: false})
   query.exec(function (err, game) {
     if (err)
       return app.defaultError(res)(err);
@@ -187,7 +219,7 @@ app.get('/v2/games/:id/stream/', function (req, res){
     // FIXME: should be optimized.
     var playersPromises = stream.map(function (streamItem) {
       if (streamItem.owner.player)
-        return Q.nfcall(DB.Model.Player.findById.bind(DB.Model.Player),
+        return Q.nfcall(DB.Models.Player.findById.bind(DB.Models.Player),
                         streamItem.owner.player);
       return Q.resolve(null); // facebook
     });
@@ -260,17 +292,18 @@ app.get('/v2/games/:id/stream/', function (req, res){
  *      surface: String   (default="")
  *      tour: String      (default="")
  *      startTeam: Int    (default=undefined) must be undefined, 0 or 1.
- *      official: Boolean  (default=true)
+ *      official: Boolean (default=true)
+ *      numberOfBestSets: Int      (default=undefined)
  *   }
  * }
  * 
  * result is a redirect to /v2/games/:newid
  */
 app.post('/v2/games/', express.bodyParser(), function (req, res) {
-  var err = DB.Model.Game.checkFields(req.body);
+  var err = DB.Models.Game.checkFields(req.body);
   if (err)
     return app.defaultError(res)(err);
-  DB.isAuthenticatedAsync(req.query)
+  Authentication.Query.getPlayer(req.query)
     .then(function checkPlayersExists(authentifiedPlayer) {
       if (authentifiedPlayer === null)
         throw "unauthorized";
@@ -279,7 +312,7 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
       // => creating game
       req.body.location = (req.body.location) ? req.body.location : {};
       req.body.infos = (req.body.infos) ? req.body.infos : {};
-      var game = new DB.Model.Game({
+      var game = new DB.Models.Game({
         sport: req.body.sport || "tennis",
         owner: authentifiedPlayer.id,
         status: req.body.status || "created",
@@ -294,30 +327,32 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
         ],
         stream: [],
         infos: {
-          type: "singles",
+          type: req.body.infos.type || "singles",
           subtype: req.body.infos.subtype || "A",
           sets: req.body.infos.sets || "",
           score: req.body.infos.score || "",
           court: req.body.infos.court || "",
           surface: req.body.infos.surface || "",
-          tour: req.body.infos.tour || ""          
+          tour: req.body.infos.tour || ""
         }
       });
       //
       if (typeof req.body.infos.official === "string")
         game.infos.official = (req.body.infos.official === "true");
+      if (typeof req.body.infos.numberOfBestSets)
+        game.infos.numberOfBestSets = req.body.infos.numberOfBestSets;
       if (req.body.dates && typeof req.body.dates.expected === "string")
         game.dates.expected = req.body.dates.expected;
       //
-      return DB.Model.Game.updateTeamsAsync(game, req.body.teams);
-    }).then(function saveAsync(game) {
-      return DB.saveAsync(game);
+      return DB.Models.Game.updateTeamsAsync(game, req.body.teams);
+    }).then(function save(game) {
+      return DB.save(game);
     }).then(function saveStartTeam(game) {
       if (req.body.infos.startTeam) {
         var startTeam = parseInt(req.body.infos.startTeam, 10);
         if (startTeam === 0 || startTeam === 1) {
           game.infos.startTeam = game.teams[startTeam].id;
-          return DB.saveAsync(game);
+          return DB.save(game);
         }
       }
       return game;
@@ -365,10 +400,10 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
  * result is a redirect to /v2/games/:newid
  */
 app.post('/v2/games/:id', express.bodyParser(), function(req, res){
-  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,streamCommentsSize,streamImagesSize";
-  var err = DB.Model.Game.checkFields(req.body);
+  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,infos.numberOfBestSets,streamCommentsSize,streamImagesSize";
+  var err = DB.Models.Game.checkFields(req.body);
   var push = {
-    player: {name:"",id:""}
+      player: {name:"",id:""}
     , opponent: {name:"",rank:""}
     , language:""
     , status:""
@@ -381,20 +416,16 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
   if (err)
     return app.defaultError(res)(err);
   // check player is authenticated
-  DB.isAuthenticatedAsync(req.query)
+  Authentication.Query.getPlayer(req.query)
     .then(function searchGame(authentifiedPlayer) {
       if (authentifiedPlayer === null)
         throw "unauthorized";
       push.language = authentifiedPlayer.language;
       push.player.id = authentifiedPlayer.id;
-      push.player.name = authentifiedPlayer.name;     
-
-	  var query = DB.Model.Game.findOne({_id:req.params.id, _deleted: false});
-	  query.populate("teams.players", fields["teams.players"]);
-	  return Q.nfcall(query.exec.bind(query));
-      //return Q.nfcall(DB.Model.Game.findOne.bind(DB.Model.Game),
-      //               {_id:req.params.id, _deleted: false});
-                      
+      push.player.name = authentifiedPlayer.name;
+      var query = DB.Models.Game.findOne({_id:req.params.id, _deleted: false});
+      query.populate("teams.players", fields["teams.players"]);
+      return Q.nfcall(query.exec.bind(query));
     }).then(function checkGameOwner(game) {
       if (game === null)
         throw "no game found";
@@ -402,17 +433,14 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
         throw "you are not the owner of the game";
       return game;
     }).then(function updateFields(game) {
-      // updatable simple fields
-      if (typeof req.body.status !== "undefined") {
-        push.status = game.status;
-        game.status = req.body.status;               
-      }
       if (typeof req.body.location !== "undefined") {
         if (typeof req.body.location.country === "string")
           game.location.country = req.body.location.country;
         if (typeof req.body.location.city === "string")
           game.location.city = req.body.location.city;
-      } 
+      }
+      if (req.body.dates && typeof req.body.dates.expected === "string")
+        game.dates.expected = req.body.dates.expected;
       if (typeof req.body.infos !== "undefined") {
         if (typeof req.body.infos.type === "string")
           game.infos.type = req.body.infos.type;
@@ -428,56 +456,50 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
           game.infos.surface = req.body.infos.surface;
         if (typeof req.body.infos.tour === "string")
           game.infos.tour = req.body.infos.tour;
-        if (typeof req.body.infos.official === "string") {
+        if (typeof req.body.infos.numberOfBestSets !== "undefined")
+          game.infos.numberOfBestSets = req.body.infos.numberOfBestSets;
+        if (typeof req.body.infos.official === "string")
           game.infos.official = (req.body.infos.official === "true");
-          push.official = req.body.infos.official;          
-          if ( game.teams[0].players[0].id === push.player.id ) {           
-            push.opponent.name = game.teams[1].players[0].name;
-            push.opponent.rank = game.teams[1].players[0].rank;
-            push.score = game.infos.score;
-            push.sets = game.infos.sets;            
-            if (Push.getIndexWinningTeam(push.score)==0)
-              push.win = "1";
-            else if (Push.getIndexWinningTeam(push.score)==1)
-              push.win = "0";            
-          }
-          else {
-            push.opponent.name = game.teams[0].players[0].name;
-            push.opponent.rank = game.teams[0].players[0].rank; 
-            push.score = game.infos.score;
-            if (Push.getIndexWinningTeam(push.score)==0)
-              push.win = "0";
-            else if (Push.getIndexWinningTeam(push.score)==1)
-              push.win = "1";                                    
-          }
-          
-          //push.dates.create = Date.now();
-          if (typeof game.dates.start === "undefined") {
-            push.dates.start = "";
-          }
-          else
-            push.dates.start = game.dates.start; 
-        }
       }
+      // WARNING: we must update status at the end (after sets) !
+      if (typeof req.body.status !== "undefined") {
+        push.status = game.status;
+        game.status = req.body.status;
+      }
+      // auto update
       game.dates.update = Date.now();
-      if (req.body.dates && typeof req.body.dates.expected === "string")
-        game.dates.expected = req.body.dates.expected;
-      //
-      return DB.Model.Game.updateTeamsAsync(game, req.body.teams);
+      // now all the data is set, we can update push infos.
+      if (typeof req.body.infos !== "undefined" &&
+          typeof req.body.infos.official === "string") {
+        push.official = req.body.infos.official;
+        push.win = game.isPlayerWinning(push.player.id) ? "1" : "0";
+        // FIXME: que remplir le jour ou N oponents > 1
+        if ( game.teams[0].players[0].id === push.player.id ) {
+          push.opponent.name = game.teams[1].players[0].name;
+          push.opponent.rank = game.teams[1].players[0].rank;
+        } else {
+          push.opponent.name = game.teams[0].players[0].name;
+          push.opponent.rank = game.teams[0].players[0].rank;
+        }
+        push.score = game.infos.score;
+        push.sets = game.infos.sets;
+        push.dates.start = game.dates.start || "";
+      }
+      return DB.Models.Game.updateTeamsAsync(game, req.body.teams);
     }).then(function update(game) {
-      return DB.saveAsync(game);
+      return DB.save(game);
     }).then(function saveStartTeam(game) {
       if (typeof req.body.infos !== "undefined" && 
           req.body.infos.startTeam) {
         var startTeam = parseInt(req.body.infos.startTeam, 10);
         if (startTeam === 0 || startTeam === 1) {
           game.infos.startTeam = game.teams[startTeam].id;
-          return DB.saveAsync(game);
+          return DB.save(game);
         }
         if (req.body.infos.startTeam == game.teams[0].id ||
             req.body.infos.startTeam == game.teams[1].id) {
           game.infos.startTeam = req.body.infos.startTeam;
-          return DB.saveAsync(game);
+          return DB.save(game);
         }
       }
       return game;
@@ -491,8 +513,8 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
           if (push.status !== req.body.status) {
             // change status if finished,created or started, we send notification to followers
             // send new status
-			push.status = req.body.status;
-		    Push.sendPushs(null,push);   		  
+            push.status = req.body.status;
+            Push.sendPushs(null,push);   		  
           }          
         }
       }
@@ -537,11 +559,11 @@ app.post('/v2/games/:id/stream/', express.bodyParser(), function(req, res){
       return app.defaultError(res)("fbid !== owner.facebook.id");
   }
   //
-  DB.isAuthenticatedAsync(req.query, { facebook: true })
+  Authentication.Query.getPlayer(req.query)
     .then(function searchGame(authentifiedPlayer) {
       if (authentifiedPlayer === null)
         throw "unauthorized";
-      return Q.nfcall(DB.Model.Game.findOne.bind(DB.Model.Game),
+      return Q.nfcall(DB.Models.Game.findOne.bind(DB.Models.Game),
                       {_id:req.params.id, _deleted: false});
     }).then(function pushIntoStream(game) {
       if (game === null)
@@ -573,14 +595,14 @@ app.post('/v2/games/:id/stream/', express.bodyParser(), function(req, res){
         
       game.stream.push(streamItem);
       game.dates.update = Date.now();
-      return DB.saveAsync(game);
+      return DB.save(game);
     }).then(function incr(game) {
       if (req.body.type === "comment") {
-        return Q.nfcall(DB.Model.Game.findByIdAndUpdate.bind(DB.Model.Game),
+        return Q.nfcall(DB.Models.Game.findByIdAndUpdate.bind(DB.Models.Game),
                       game.id,
                       { $inc: { streamCommentsSize: 1 } });
       } else {
-        return Q.nfcall(DB.Model.Game.findByIdAndUpdate.bind(DB.Model.Game),
+        return Q.nfcall(DB.Models.Game.findByIdAndUpdate.bind(DB.Models.Game),
                       game.id,
                       { $inc: { streamImagesSize: 1 } });
       }
@@ -603,11 +625,11 @@ app.post('/v2/games/:id/stream/', express.bodyParser(), function(req, res){
  * This code is not performant.
  */
 app.post('/v2/games/:id/stream/:streamid/', express.bodyParser(), function(req, res){
-  DB.isAuthenticatedAsync(req.query, { facebook: true })
+  Authentication.Query.getPlayer(req.query)
     .then(function searchGame(authentifiedPlayer) {
       if (authentifiedPlayer === null)
         throw "unauthorized";
-      return Q.nfcall(DB.Model.Game.findOne.bind(DB.Model.Game),
+      return Q.nfcall(DB.Models.Game.findOne.bind(DB.Models.Game),
                       {_id:req.params.id, _deleted: false});
     }).then(function checkGameOwner(game) {
       if (game === null)
@@ -620,13 +642,17 @@ app.post('/v2/games/:id/stream/:streamid/', express.bodyParser(), function(req, 
       var streamid = req.params.streamid
         , l = game.stream.length;
       for (var i = 0; i < l; ++i) {
-        if (game.stream[i]._id == streamid) {
-          // streamItem found => update it
-          if (req.body.data && req.body.data.text)
-            game.stream[i].data = { text: req.body.data.text };
-          game.stream[i].dates.update = Date.now();
-          return DB.saveAsync(game);
-        }
+        var streamItem = game.stream[i];
+        if (streamItem._id != streamid)
+          continue;
+        // streamItem found => owned ?
+        if (DB.toStringId(req.query.playerid) !== DB.toStringId(streamItem.owner.player))
+          throw "you don't own this streamitem";
+        // update the streamItem
+        if (req.body.data && req.body.data.text)
+          game.stream[i].data = { text: req.body.data.text };
+        game.stream[i].dates.update = Date.now();
+        return DB.save(game);
       }
       throw "no streamItem found";
     }).then(function (game) {
@@ -635,7 +661,7 @@ app.post('/v2/games/:id/stream/:streamid/', express.bodyParser(), function(req, 
       for (var i = 0; i < l; ++i) {
         if (game.stream[i]._id == streamid) {
           var streamItem = game.stream[i].toObject({virtuals: true, transform: true});
-          res.send(JSON.stringify(streamItem));
+          return res.send(JSON.stringify(streamItem));
         }
       }
       // we normaly shouldn't reach this point.
@@ -653,11 +679,11 @@ app.post('/v2/games/:id/stream/:streamid/', express.bodyParser(), function(req, 
  * FIXME: remove from player games.
  */
 app.delete('/v2/games/:id/', function (req, res) {
-  DB.isAuthenticatedAsync(req.query)
+  Authentication.Query.getPlayer(req.query)
     .then(function searchGame(authentifiedPlayer) {
       if (authentifiedPlayer === null)
         throw "unauthorized";
-      return Q.nfcall(DB.Model.Game.findOne.bind(DB.Model.Game),
+      return Q.nfcall(DB.Models.Game.findOne.bind(DB.Models.Game),
                       {_id:req.params.id, _deleted: false});
     }).then(function checkGameOwner(game) {
       if (game === null)
@@ -668,7 +694,7 @@ app.delete('/v2/games/:id/', function (req, res) {
     }).then(function (game) {
       // mark the game as deleted
       game._deleted = true;
-      return DB.saveAsync(game);
+      return DB.save(game);
     }).then(function () {
       res.send('{}'); // smallest json.
     }, app.defaultError(res));
@@ -684,11 +710,11 @@ app.delete('/v2/games/:id/', function (req, res) {
  * FIXME: remove from player games.
  */
 app.delete('/v2/games/:id/stream/:streamid/', function (req, res) {
-  DB.isAuthenticatedAsync(req.query)
+  Authentication.Query.getPlayer(req.query)
     .then(function searchGame(authentifiedPlayer) {
       if (authentifiedPlayer === null)
         throw "unauthorized";
-      return Q.nfcall(DB.Model.Game.findOne.bind(DB.Model.Game),
+      return Q.nfcall(DB.Models.Game.findOne.bind(DB.Models.Game),
                       {_id:req.params.id, _deleted: false});
     }).then(function checkGameOwner(game) {
       if (game === null)
@@ -705,7 +731,7 @@ app.delete('/v2/games/:id/stream/:streamid/', function (req, res) {
           // streamItem found => delete it
           game.stream[i]._deleted = true;
           game.stream[i].dates.update = Date.now();
-          return DB.saveAsync(game);
+          return DB.save(game);
         }
       }
       throw "no streamItem found";
@@ -723,11 +749,11 @@ app.delete('/v2/games/:id/stream/:streamid/', function (req, res) {
       }
       
       if (isComment==true)
-        return Q.nfcall(DB.Model.Game.findByIdAndUpdate.bind(DB.Model.Game),
+        return Q.nfcall(DB.Models.Game.findByIdAndUpdate.bind(DB.Models.Game),
                       game.id,
                       { $inc: { streamCommentsSize: -1 } });
       else 
-        return Q.nfcall(DB.Model.Game.findByIdAndUpdate.bind(DB.Model.Game),
+        return Q.nfcall(DB.Models.Game.findByIdAndUpdate.bind(DB.Models.Game),
                       game.id,
                       { $inc: { streamImagesSize: -1 } });      
                       

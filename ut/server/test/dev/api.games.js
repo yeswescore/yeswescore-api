@@ -277,7 +277,8 @@ describe('dev:games', function(){
             court: "10",
             surface: "GAZ",
             tour: "1er tour",
-            official: "false" // jquery poste du texte et non un boolean
+            official: "false", // jquery poste du texte et non un boolean
+            numberOfBestSets: 3
           },
           status: "ongoing",
           teams: [ { id: null, players: [ { name : "toto" } ] },
@@ -296,6 +297,7 @@ describe('dev:games', function(){
           assert(game.infos.court === newGame.infos.court, "court should be the same");
           assert(game.infos.surface === newGame.infos.surface, "surface should be the same");
           assert(game.infos.official === false, "official should be the same (1) ");
+          assert(game.infos.numberOfBestSets === newGame.infos.numberOfBestSets, "numberOfBestSets should be the same (1) ");
           assert(JSON.parse(JSON.stringify(newGame.dates.expected)) === game.dates.expected, "dates.expected should be the same");
                     
           assert(game.status === newGame.status, "status should be the same " + game.status + " vs " + newGame.status);
@@ -348,6 +350,7 @@ describe('dev:games', function(){
           game.infos.surface = "NVTB";
           game.infos.tour = "2nd tour";
           game.infos.official = true;
+          game.infos.numberOfBestSets = 5;
           game.dates.expected = new Date();
           
           http.post(options, game, function (game) {
@@ -370,12 +373,106 @@ describe('dev:games', function(){
               assert(g.infos.surface === modifiedGame.infos.surface, "surface should be updated in DB");
               assert(g.infos.tour === modifiedGame.infos.tour, "tour should be updated in DB");
               assert(g.infos.official === modifiedGame.infos.official, "official should be updated in DB");                          
+              assert(g.infos.numberOfBestSets === modifiedGame.infos.numberOfBestSets, "numberOfBestSets should be updated in DB");
               
               assert(g.status === modifiedGame.status, "status should be updated");
               assert(typeof g.dates.start !== "undefined", "game should be started (dates.start!== undefined)");
               assert(JSON.parse(JSON.stringify(modifiedGame.dates.expected)) === g.dates.expected, "dates.expected should be updated in DB");  
                             
               done();
+            });
+          });
+        });
+      });
+    });
+  });
+
+
+  describe('create a single game, then modify it to have a winner', function () {
+    it('should create & give the game, have a good winner', function (done){
+      // read a player
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["documents.players"]+"random"
+      };
+      http.getJSON(options, function (randomPlayer) {
+        assert.isObject(randomPlayer, "random player must exist");
+
+        var options = {
+          host: Conf["http.host"],
+          port: Conf["http.port"],
+          path: Conf["api.games"]+"?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+        };
+
+        var newGame = {
+          infos: { score: "0/0" },
+          teams: [ { id: null, players: [ { name : "toto" } ] },
+                   { id: null, players: [ { name : "titi" } ] } ]
+        };
+        http.post(options, newGame, function (game) {
+          assert.isGame(game);
+          assert(game.infos.score === newGame.infos.score, "score should be the same");
+          assert(typeof game.dates.start === "undefined", "game shouldn't be started");
+
+          var options = {
+            host: Conf["http.host"],
+            port: Conf["http.port"],
+            path: Conf["api.games"]+game.id+"/?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+          };
+
+          var newScore = "3/1";
+          var modifiedGame = game;
+          game.status = "ongoing";
+          game.infos.subtype = "B";
+          game.infos.sets = "6/3;6/0;1/6;7/5";
+          game.infos.score = newScore;
+          game.infos.numberOfBestSets = 3;
+          game.dates.expected = new Date();
+
+          http.post(options, game, function (game) {
+            assert.isGame(game);
+            assert(game.infos.score === newScore, "score should be updated ("+game.infos.score+") vs ("+newScore+")");
+
+            var options = {
+              host: Conf["http.host"],
+              port: Conf["http.port"],
+              path: Conf["api.games"]+game.id+"/?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+            };
+
+            var modifiedGame = game;
+            game.status = "finished";
+
+            http.post(options, game, function (game) {
+              assert.isGame(game);
+            
+              // reading the game from DB to be sure !
+              var options = {
+                host: Conf["http.host"],
+                port: Conf["http.port"],
+                path: Conf["api.games"]+game.id
+              };
+              http.getJSON(options, function (g) {
+                assert.isGame(g);
+
+                assert(g.infos.subtype === modifiedGame.infos.subtype, "subtype should be updated in DB");
+                assert(g.infos.sets === modifiedGame.infos.sets, "sets should be updated in DB");
+                assert(g.infos.score === modifiedGame.infos.score, "score should be updated in DB ("+g.infos.score+") vs ("+modifiedGame.infos.score+")");
+                assert(g.infos.numberOfBestSets === modifiedGame.infos.numberOfBestSets, "numberOfBestSets should be updated in DB");
+
+                assert(g.status === modifiedGame.status, "status should be updated");
+                assert(typeof g.dates.start !== "undefined", "game should be started (dates.start!== undefined)");
+                assert(JSON.parse(JSON.stringify(modifiedGame.dates.expected)) === g.dates.expected, "dates.expected should be updated in DB");
+
+                assert(g.infos.winners.teams.length == 1, "must have a team winner");
+                assert(g.infos.winners.players.length == 1, "must have a player winner");
+                assert(g.infos.winners.status == "win", "winners status must be win");
+
+                assert(g.infos.winners.teams[0] == g.teams[0].id, "winning team must be correct");
+                assert(g.infos.winners.players[0] == g.teams[0].players[0].id, "winning team must be correct");
+
+                done();
+              });
             });
           });
         });

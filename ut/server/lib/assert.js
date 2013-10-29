@@ -184,9 +184,15 @@ assert.schema = function (schema, obj, msg) {
         assert(Array.isArray(obj[k]), msg + " field " + k + " should be an array of subschemas");
         obj[k].forEach(value._check);
         break;
+      case "[id]":
+        assert(Array.isArray(obj[k]));
+        obj[k].forEach(function (key) { assert.isId(key); });
+        break;
       case "check":
         assert(typeof value._check === "function", msg + " malformed schema : check on field " + k);
         value._check(obj[k]);
+        break;
+      case "*":
         break;
       default:
         assert(false, msg + " malformed schema : " +value._type + " is unknown on field " + k);
@@ -224,8 +230,9 @@ assert.isClub = function (club) {
     countPlayers: { _type: "number|undefined" },
     countPlayers1AN: { _type: "number|undefined" },
     countTeams: { _type: "number|undefined" }, 
-    countTeams1AN: { _type: "number|undefined" }, 
-    school: { _type: "string|undefined" }
+    countTeams1AN: { _type: "number|undefined" },
+    school: { _type: "string|undefined" },
+    owner: { _type: "id|undefined" },
   }, club, "isClub: ");
 };
 
@@ -244,11 +251,11 @@ assert.isPlayerScheme = function (player, m) {
       update: { _type: "date|undefined" },
       birth: { _type: "date|undefined" }      
     },
-	push: {
-	  platform: { _type: "enum|undefined", _enum: [ "android", "ios", "wp8", "bb" ] },
-	  token: { _type: "string|undefined" }
-	},
-	gender: { _type: "enum|undefined", _enum: [ "man", "woman" ] },    
+    push: {
+      platform: { _type: "enum|undefined", _enum: [ "android", "ios", "wp8", "bb" ] },
+      token: { _type: "string|undefined" }
+    },
+    gender: { _type: "enum|undefined", _enum: [ "man", "woman" ] },
     email: {
       address: { _type: "string|undefined" },
       status: { _type: "enum|undefined", _enum: [ "pending-confirmation", "confirmed" ] }
@@ -341,7 +348,13 @@ assert.isGame = function (game) {
                                                   "NVTB", "PAR", "RES", "TB", "" ] },
       tour: { _type: "undefined|string" },
       startTeam: { _type: "undefined|id" },
-      official: { _type: "boolean" }
+      official: { _type: "boolean" },
+      numberOfBestSets: { _type:"number|undefined" },
+      winners: {
+        teams: { _type: "[id]|undefined" },
+        players: { _type: "[id]|undefined" },
+        status: { _type: "undefined|enum", _enum: ["win", "draw"]}
+      }
     },
     teams: { _type: "[schema]", _check: function (team, i, teams) {
         assert(teams.length === 2, "isGame: game must have 2 teams");
@@ -360,9 +373,10 @@ assert.isGame = function (game) {
 assert.isGameTeam = function (o, m) {
   assert.schema({
     id: { _type: "id|undefined" },
-    points: { _type: "string|undefined" },
+    sport: { _type: "string|undefined" },
+    name: { _type: "string|undefined" },
+    dates: { _type: "*|undefined" },
     players: { _type: "[schema]", _check: function (player, i, players) {
-        assert(players.length === 1, "isGameTeam: only singles are handle yet");
         // player can be a simple ObjectId
         // or an object depending if populate=teams.players was activated
         if (isId(player) || (isObject(player) && isId(player.id))) {
@@ -371,9 +385,21 @@ assert.isGameTeam = function (o, m) {
           assert(false, "isGameTeam: team.players[*] mut be player ids");
         }
       }
-    }
+    },
+    club: { _type: "*|undefined" },
+    substitutes: { _type: "*|undefined" },
+    captain: { _type: "*|undefined" },
+    captainSubstitute: { _type: "*|undefined" },
+    coach: { _type: "*|undefined" },
+    competition: { _type: "*|undefined" },
+    profile: { _type: "*|undefined" },
+    stream: { _type: "*|undefined" },
+    streamCommentsSize: { _type: "*|undefined" },
+    streamImagesSize: { _type: "*|undefined" },
   }, o, "isGameTeam: ");
 };
+// FIXME: temporary for compatibility
+assert.isTeam = assert.isGameTeam;
 
 assert.isStreamObject = function (o, m) {
   assert.schema({

@@ -28,7 +28,7 @@ function start() {
   //  nous stoquons dans un tableau les elements a recalculer / modifier
   //  cette liste pourrait être potentiellement grande à l'avenir.
   var idToSize = {};
-  var stream = DB.Model.Game.find({}).stream();
+  var stream = DB.Models.Game.find({}).stream();
   stream.on("data", function (game) {
     var cachedCommentsSize = game.streamCommentsSize;
     var realCommentsSize = game.stream.length;
@@ -52,7 +52,7 @@ function start() {
     console.log('--------------- FINISHED ---------------');
     var promises = Object.keys(idToSize).map(function (id) {
       Q.nfcall(
-        DB.Model.Game.findByIdAndUpdate.bind(DB.Model.Game),
+        DB.Models.Game.findByIdAndUpdate.bind(DB.Models.Game),
         id,
         { $set: { streamCommentsSize: idToSize[id] } }
       );

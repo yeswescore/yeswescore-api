@@ -3,6 +3,7 @@ var DB = require("../db.js")
   , app = require("../app.js")
   , Email = require("../email.js")
   , Conf = require("../conf.js")
+  , Authentication = require("../authentication.js")
   , Q = require("q");
 
 /**
@@ -17,7 +18,8 @@ var DB = require("../db.js")
  *  /v2/players/?distance=20           (default=undefined)
  *
  * Specific options:
- *  /v2/players/?club=:id   (filter with a club)
+ *  /v2/players/?q=Charlotte (searched text)
+ *  /v2/players/?club=:id    (filter with a club)
  */
 app.get('/v2/players/', function(req, res){
   var limit = req.query.limit || 10;
@@ -29,7 +31,7 @@ app.get('/v2/players/', function(req, res){
   var distance = req.query.distance;
   var text = req.query.q;
 
-  var query = DB.Model.Player.find()
+  var query = DB.Models.Player.find()
   if (fields)
     query.select(fields.replace(/,/g, " "))
   if (longitude && latitude && distance)
@@ -66,7 +68,7 @@ app.get('/v2/players/', function(req, res){
  *  /v2/players/autocomplete/?owner=:id   (autocomplete centered to an owner)
  */
 app.get('/v2/players/autocomplete/', function(req, res){
-  var fields = req.query.fields || "name,type,club";
+  var fields = req.query.fields || "name,type,club,rank,profile,dates.birth";
   var limit = req.query.limit || 5;
   var owner = req.query.owner;
   var sort = req.query.sort || "name";
@@ -79,7 +81,7 @@ app.get('/v2/players/autocomplete/', function(req, res){
     // slow
     text = new RegExp("("+text.searchable().pregQuote()+")");
     // searching
-    var query = DB.Model.Player
+    var query = DB.Models.Player
       .find({
         $and: [
           { _searchableName: text },
@@ -115,9 +117,9 @@ app.get('/v2/players/:id', function(req, res){
 
   var fields = req.query.fields || "following,idlicense,language,name,type,rank,type,games,dates.creation,location.currentPos,id,gender,dates.birth,push.platform,club.id,club.name,email.address,token,profile";
   
-  DB.isAuthenticatedAsync(req.query)
+  Authentication.Query.getPlayer(req.query)
     .then(function (authentifiedPlayer) {
-      var query = DB.Model.Player.findById(req.params.id);
+      var query = DB.Models.Player.findById(req.params.id);
       if (fields)
          query.select(fields.replace(/,/g, " "))
       query.exec(function (err, player) {
@@ -150,7 +152,7 @@ app.get('/players/:id/push', function(req, res){
   if (id) {
   
     // searching
-    var query = DB.Model.Player
+    var query = DB.Models.Player
       .find({
         $and: [
           { 'following': id },
@@ -206,20 +208,20 @@ app.get('/v2/players/:id/games/', function(req, res){
   var populatePaths = (typeof populate === "string") ? populate.split(",") : [];
   // process fields
   var fields = app.createPopulateFields(fields, populate);
-  DB.Model.Player.findById(req.params.id, function (err, club) {
+  DB.Models.Player.findById(req.params.id, function (err, club) {
     if (err)
       return app.defaultError(res)(err);
     if (club === null)
       return app.defaultError(res)("no player found");
     var query;
     if (owned === null)
-      query = DB.Model.Game.find({ $or: [ 
+      query = DB.Models.Game.find({ $or: [
         {owner : req.params.id}, {"teams.players" : req.params.id}
       ] });
     if (owned === true)
-      query = DB.Model.Game.find({ owner : req.params.id});
+      query = DB.Models.Game.find({ owner : req.params.id});
     if (owned === false)
-      query = DB.Model.Game.find({"teams.players" : req.params.id});
+      query = DB.Models.Game.find({"teams.players" : req.params.id});
     query.select(fields.select);
     if (status)
       query.where('status').in(status.split(","));
@@ -246,7 +248,9 @@ app.get('/v2/players/:id/games/', function(req, res){
  *   email: { 
  *     address: String,    (default="")
  *   },
- *   image: String     (default=undefined)
+ *   profile: {
+ *     image: String     (default=undefined)
+ *   }
  *   language: String  (default=cf configuration)
  *   idlicense: String (default="")
  *   club: { id:..., name:... }  (default=null, name: is ignored)
@@ -272,7 +276,7 @@ app.post('/v2/players/', express.bodyParser(), function(req, res){
   
   Q.fcall(function () {
     if (req.body.email && typeof req.body.email.address === "string")
-      return DB.Model.Player.isEmailRegisteredAsync(req.body.email.address);
+      return DB.Models.Player.isEmailRegisteredAsync(req.body.email.address);
     return null;
   }).then(function (emailRegistered) {
     if (emailRegistered)
@@ -280,11 +284,11 @@ app.post('/v2/players/', express.bodyParser(), function(req, res){
   }).then(function () {
     var club = req.body.club;
     if (club && club.id)
-      return Q.nfcall(DB.Model.Club.findById.bind(DB.Model.Club), club.id);
+      return Q.nfcall(DB.Models.Club.findById.bind(DB.Models.Club), club.id);
     return null;
   }).then(function (club) {
     // creating a new player
-    var player = new DB.Model.Player({
+    var player = new DB.Models.Player({
         name: req.body.name || "",
         location : { 
           currentPos: req.body.location.currentPos || [],
@@ -320,7 +324,7 @@ app.post('/v2/players/', express.bodyParser(), function(req, res){
       // might be race condition between check & set. but will be catch by the index.
       player.email.address = req.body.email.address;
       player.email.status = "pending-confirmation";
-      player.email._token = DB.Model.Player.createEmailToken();
+      player.email._token = DB.Models.Player.createEmailToken();
       player.email._dates._created = Date.now();
       // sending token by email.
       emailConfirmationRequired = true;
@@ -332,7 +336,7 @@ app.post('/v2/players/', express.bodyParser(), function(req, res){
     // password
     if (req.body.uncryptedPassword)
       player.uncryptedPassword = req.body.uncryptedPassword;
-    return DB.saveAsync(player);
+    return DB.save(player);
   }).then(function (player) {
     // everything went ok => sending email confirmation
     if (emailConfirmationRequired)
@@ -369,19 +373,17 @@ app.post('/v2/players/:id', express.bodyParser(), function(req, res){
       // 1-st : find the club
       Q.fcall(function () {
         if (club && club.id)
-          return DB.Model.findByIdAsync(DB.Model.Club, club.id);
+          return Q.ninvoke(DB.Models.Club, 'findById', club.id);
         return null;
       }),
       // 2nd : authentify & find the player
-      DB.isAuthenticatedAsync(req.query)
+      Authentication.Query.getPlayer(req.query)
         .then(function (authentifiedPlayer) {
         if (!authentifiedPlayer)
           throw "player not authenticated";
         return authentifiedPlayer;
       }),
-      Q.fcall(function () {      
-          return DB.Model.findByIdAsync(DB.Model.Player, req.params.id);
-      })      
+      Q.ninvoke(DB.Models.Player, 'findById', req.params.id)
     ]
   ).then(function (qall) {
     var club = qall[0];
@@ -464,7 +466,7 @@ app.post('/v2/players/:id', express.bodyParser(), function(req, res){
           // second: update db to use new address.
           player.email.address = req.body.email.address;
           player.email.status = "pending-confirmation";
-          player.email._token = DB.Model.Player.createEmailToken();
+          player.email._token = DB.Models.Player.createEmailToken();
           player.email._dates._created = Date.now();
           player.email._dates._confirmed = undefined;
           emailConfirmationRequired = true;
@@ -476,7 +478,7 @@ app.post('/v2/players/:id', express.bodyParser(), function(req, res){
       player.profile = { image: req.body.profile.image };
     }
     // saving player
-    return DB.saveAsync(player);
+    return DB.save(player);
   }).then(function (player) {
     if (emailConfirmationRequired)
       Email.sendEmailConfirmation(player.email.address, player.email._token, player.language);
@@ -500,7 +502,7 @@ app.post('/v2/players/:id/following/', express.bodyParser(), function(req, res) 
     [
       // doing 2 things in parallel
       // 1-st : authentify the player
-      DB.isAuthenticatedAsync(req.query)
+      Authentication.Query.getPlayer(req.query)
         .then(function (authentifiedPlayer) {
         if (!authentifiedPlayer)
           throw "player not authenticated";
@@ -509,14 +511,14 @@ app.post('/v2/players/:id/following/', express.bodyParser(), function(req, res) 
         return authentifiedPlayer;
       }),
       // find the player followed
-      Q.nfcall(DB.Model.Player.findById.bind(DB.Model.Player),
+      Q.nfcall(DB.Models.Player.findById.bind(DB.Models.Player),
                req.body.id)
     ]
   ).then(function (qall) {
     var player = qall[0];
     var following = qall[1];
     
-    return Q.nfcall(DB.Model.Player.update.bind(DB.Model.Player),
+    return Q.nfcall(DB.Models.Player.update.bind(DB.Models.Player),
       { _id: player.id },
       { $addToSet: { "following" : following.id } }, 
       { multi: false });
@@ -543,7 +545,7 @@ app.delete('/v2/players/:id/following/', express.bodyParser(), function(req, res
     [
       // doing 2 things in parallel
       // 1-st : authentify the player
-      DB.isAuthenticatedAsync(req.query)
+      Authentication.Query.getPlayer(req.query)
         .then(function (authentifiedPlayer) {
         if (!authentifiedPlayer)
           throw "player not authenticated";
@@ -552,14 +554,14 @@ app.delete('/v2/players/:id/following/', express.bodyParser(), function(req, res
         return authentifiedPlayer;
       }),
       // find the player followed
-      Q.nfcall(DB.Model.Player.findById.bind(DB.Model.Player),
+      Q.nfcall(DB.Models.Player.findById.bind(DB.Models.Player),
                req.body.id)
     ]
   ).then(function (qall) {
     var player = qall[0];
     var following = qall[1];
     
-    return Q.nfcall(DB.Model.Player.update.bind(DB.Model.Player),
+    return Q.nfcall(DB.Models.Player.update.bind(DB.Models.Player),
       { _id: player.id },
       { $pull: { "following" : following.id }}
     );

@@ -6,7 +6,7 @@ var Conf = require("../conf.js")
 app.get('/v2/email/confirm/', function (req, res) {
   if (typeof req.query.token !== "string" || !req.query.token)
     return app.defaultError(res)("missing token");
-  DB.Model.Player.findOne(
+  DB.Models.Player.findOne(
     { "email._token" : req.query.token },
     function (err, player) {
       if (err)
@@ -32,7 +32,7 @@ if (Conf.env === "DEV") {
     if (typeof req.query.email !== "string" || !req.query.email)
       return app.defaultError(res)("missing email");
     req.query.email = req.query.email.toLowerCase();
-    var player = new DB.Model.Player({
+    var player = new DB.Models.Player({
         name: "Marc Dassonneville",
         location : { currentPos: [] },
         rank: "",
@@ -41,7 +41,7 @@ if (Conf.env === "DEV") {
         email: {
           address: req.query.email,
           status: "pending-confirmation",
-          _token: DB.Model.Player.createEmailToken()
+          _token: DB.Models.Player.createEmailToken()
         }
     });
     player.save(function (err) {
@@ -56,7 +56,7 @@ if (Conf.env === "DEV") {
       return app.defaultError(res)("missing email");
     req.query.email = req.query.email.toLowerCase();
     var language = req.query.language || "fr";
-    DB.Model.Player.findOne(
+    DB.Models.Player.findOne(
       { "email.address" : req.query.email },
       function (err, player) {
         if (err)

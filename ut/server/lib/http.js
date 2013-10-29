@@ -1,9 +1,11 @@
 var http = require("http")
-  , assert = require("assert");
+  , assert = require("assert")
+  , Q = require("q");
 
 var debug = false;
-  
+
 http.is302OK = function (options, f) {
+  options.agent = false;
   http.get(options, function (res) {
     assert.equal(res.statusCode, 302);
     if (typeof f === "function")
@@ -13,6 +15,7 @@ http.is302OK = function (options, f) {
 
 // simple high level funcs
 http.is200OK = function (options, f) {
+  options.agent = false;
   http.get(options, function (res) {
     assert.equal(res.statusCode, 200);
     if (typeof f === "function")
@@ -21,6 +24,7 @@ http.is200OK = function (options, f) {
 };
 
 http.is404OK = function (options, f) {
+  options.agent = false;
   http.get(options, function (res) {
     assert.equal(res.statusCode, 404);
     if (typeof f === "function")
@@ -33,6 +37,7 @@ http.getJSON = function (options, f) {
   if (debug) {
     console.log('http: GET: ' + options.path);
   }
+  options.agent = false; // @see http://stackoverflow.com/questions/15909884/sockets-dont-appear-to-be-closing-when-using-node-js-http-get
   http.get(options, function (res) {
     var json = "";
     res.on("data", function (chunk) { json += chunk })
@@ -50,10 +55,18 @@ http.getJSON = function (options, f) {
         });
   }).on("error", function (e) { throw e });
 };
+http.getJSONAsync = function (options) {
+  var d = Q.defer();
+  http.getJSON(options, function (result) {
+    d.resolve(result);
+  });
+  return d.promise;
+};
+
 
 http.post = function (options, data, f) {
   if (debug) {
-    console.log('http: POST: ' + options.path + ' data ' + JSON.stringify(data));
+    console.log('=> http: POST: ' + options.path + ' data ' + JSON.stringify(data));
   }
   // node default querystring.stringify doesn't handle nested objects.
   // we post using Content-Type: application/json.
@@ -78,7 +91,7 @@ http.post = function (options, data, f) {
        .on("end", function () {
           try {
             if (debug) {
-              console.log('http: POST: ' + options.path + ' result');
+              console.log('<= http: POST: ' + options.path + ' result');
               console.log(json);
             }
             var data = JSON.parse(json);
@@ -91,6 +104,13 @@ http.post = function (options, data, f) {
   req.on("error", function (e) { throw e });
   req.write(data);
   req.end();
+};
+http.postAsync = function (options, data) {
+  var d = Q.defer();
+  http.post(options, data, function (result) {
+    d.resolve(result);
+  });
+  return d.promise;
 };
 
 module.exports = http;

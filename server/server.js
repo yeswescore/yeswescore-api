@@ -11,7 +11,6 @@ var app = require('./app.js')
 require('./api/auth.js');
 require('./api/bootstrap.js');
 require('./api/clubs.js');
-require('./api/facebook.js');
 require('./api/documents.js');
 require('./api/email.js');
 require('./api/files.js');
@@ -20,6 +19,7 @@ require('./api/players.js');
 require('./api/stats.js');
 require('./api/admin.js');
 require('./api/report.js');
+require('./api/teams.js');
 
 // mongoose parameters
 mongoose.connection.on('error', function () { DB.status = 'disconnected' });

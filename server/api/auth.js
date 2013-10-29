@@ -25,11 +25,11 @@ app.post('/v2/auth/', express.bodyParser(), function(req, res){
   // email should only manipulated lowercase
   req.body.email.address = req.body.email.address.toLowerCase().trim();
   // creating player to hash password.
-  var p = new DB.Model.Player();
+  var p = new DB.Models.Player();
   p.uncryptedPassword = req.body.uncryptedPassword.trim();
   // app.log("/v2/auth: try to find "+req.body.email.address+" with password "+ p.password+ "uncrypted="+req.body.uncryptedPassword, 'error'); // SHOULD NOT BE USED IN PRODUCTION ENV.
   //
-  DB.Model.Player.findOne({
+  DB.Models.Player.findOne({
     'email.address': req.body.email.address,
     password: p.password
   }, function (err, player) {
@@ -52,7 +52,7 @@ app.get('/v2/auth/registered/', function (req, res) {
   if (typeof req.query.email !== "string")
     return app.defaultError(res)("missing email");
     
-  DB.Model.Player.isEmailRegisteredAsync(req.query.email.toLowerCase())
+  DB.Models.Player.isEmailRegisteredAsync(req.query.email.toLowerCase())
   .then(function (emailRegistered) {
       res.send({'registered': emailRegistered || false});
     }, app.defaultError(res));
@@ -76,7 +76,7 @@ app.post('/v2/auth/resetPassword/', express.bodyParser(), function(req, res){
   // email should only manipulated lowercase
   req.body.email.address = req.body.email.address.toLowerCase().trim();
   //
-  DB.Model.Player.findOne({
+  DB.Models.Player.findOne({
     'email.address': req.body.email.address,
     'email.status': 'confirmed'
   }, function (err, player) {

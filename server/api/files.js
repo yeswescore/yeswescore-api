@@ -4,6 +4,7 @@ var DB = require("../db.js")
   , Conf = require("../conf.js")
   , Q = require("q")
   , mkdirp = require('mkdirp')
+  , Authentication = require("../authentication.js")
   , fs = require('fs');  
 
 /**
@@ -15,9 +16,9 @@ var DB = require("../db.js")
 app.get('/v2/files/:id', function(req, res){
   var fields = req.query.fields;
   
-  DB.isAuthenticatedAsync(req.query)
+  Authentication.Query.getPlayer(req.query)
     .then(function (authentifiedPlayer) {
-      var query = DB.Model.File.findById(req.params.id);
+      var query = DB.Models.File.findById(req.params.id);
       if (fields)
          query.select(fields.replace(/,/g, " "))
       query.exec(function (err, file) {
@@ -64,13 +65,13 @@ app.post('/v2/files/', express.bodyParser(), function(req, res){
   if (format === "dataURI" && typeof req.body.data !== "string")
     return app.defaultError(res)("missing data (dataURI)");
   if (!req.query.mimeType ||
-      DB.Definition.File.mimeType.enum.indexOf(req.query.mimeType) === -1)
+      DB.Definitions.File.mimeType.enum.indexOf(req.query.mimeType) === -1)
     return app.defaultError(res)("unknown mimeType");
   if (req.query.mimeType !== "image/jpeg")
     return app.defaultError(res)("mimeType must be image");
   
   var pathInfos, file, buffer;
-  DB.isAuthenticatedAsync(req.query)
+  Authentication.Query.getPlayer(req.query)
     .then(function (authentifiedPlayer) {
         if (!authentifiedPlayer)
           throw "player not authenticated";
@@ -86,9 +87,9 @@ app.post('/v2/files/', express.bodyParser(), function(req, res){
         req.files.file.path);
     }).then(function (buf) {
       buffer = buf;
-      var checksum = DB.Model.File.checksum(buffer);
+      var checksum = DB.Models.File.checksum(buffer);
       
-      file = new DB.Model.File({
+      file = new DB.Models.File({
         _id: checksum + "-" +  req.query.playerid + "-" + Math.round(Math.random() * 1000),
         owner: req.query.playerid,
         mimeType: "image/jpeg",
@@ -96,7 +97,7 @@ app.post('/v2/files/', express.bodyParser(), function(req, res){
         metadata: { }
       });
       // computing path
-      pathInfos = DB.Model.File.idTypeToPathInfos(file.id, file.mimeType);
+      pathInfos = DB.Models.File.idTypeToPathInfos(file.id, file.mimeType);
       file.path = pathInfos.path;
       //
       if (req.query.width)
@@ -110,7 +111,7 @@ app.post('/v2/files/', express.bodyParser(), function(req, res){
           parseFloat(req.query.longitude),
           parseFloat(req.query.latitude)
         ];
-      return DB.saveAsync(file);
+      return DB.save(file);
     }).then(function createDirectory() {
       var directory = Conf.get("files.path")+pathInfos.directory;
       return Q.nfcall(mkdirp, directory);

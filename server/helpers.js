@@ -47,6 +47,26 @@
       }
     }
   );
+
+  // adapted from http://stackoverflow.com/questions/1960473/unique-values-in-an-array
+  Object.defineProperty(
+    Array.prototype,
+    "unique",
+    {
+      enumerable: false,
+      value: function() {
+        var u = {}, a = [], i;
+        
+        for (i = 0, l = this.length; i < l; ++i){
+            if (u.hasOwnProperty(this[i]))
+              continue;
+            a.push(this[i]);
+            u[this[i]] = 1;
+        }
+        return a;
+      }
+    }
+  );
   
   // String
   // @see http://lehelk.com/2011/05/06/script-to-remove-diacritics/
