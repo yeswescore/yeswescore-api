@@ -20,8 +20,8 @@ mongorestore --collection games --db stats dump/prod/games.bson
 mongorestore --collection files --db stats dump/prod/files.bson
 mongorestore --collection players --db stats dump/prod/players.bson
 # IMPORTING PROD STATS
-#sudo rsync -rltov -e 'ssh -p 42' root@188.165.247.143:/var/log/yeswescore-server/stats.log ~/tmp/stats/
-cp /var/log/yeswescore-server/stats.log ~/tmp/stats/
+#sudo rsync -rltov -e 'ssh -p 42' root@188.165.247.143:/var/log/yeswescore-api/stats.log ~/tmp/stats/
+cp /var/log/yeswescore-api/stats.log ~/tmp/stats/
 cat stats.log | cut -c 7- > stats.csv
 # processing data with node
 #cd $BASEDIR;

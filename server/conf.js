@@ -47,7 +47,7 @@ if (env === "DEV") {
     "files.path": "/home/"+process.env.USER+"/tmp/static/files/",
     "mongo.url": "mongodb://localhost/dev",
     "security.secret": "de analysi per aequationes numero terminorum infinitas",
-    "logs.path": "/home/"+process.env.USER+"/tmp/yeswescore-server/",
+    "logs.path": "/home/"+process.env.USER+"/tmp/yeswescore-api/",
     // app www
     "www.logs.path": "/home/"+process.env.USER+"/tmp/yeswescore-www/",
     "www.http.proxy.targethost": "localhost",
@@ -100,7 +100,7 @@ if (env === "DEV") {
     "files.path": "/home/node/static/files/",
     "mongo.url": "mongodb://localhost/prod",
     "security.secret": "de analysi per aequationes numero terminorum infinitas",
-    "logs.path": "/var/log/yeswescore-server/",
+    "logs.path": "/var/log/yeswescore-api/",
     // app www
     "www.logs.path": "/var/log/yeswescore-www/",
     "www.http.proxy.targethost": "localhost",
