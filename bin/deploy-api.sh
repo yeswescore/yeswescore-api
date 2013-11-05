@@ -3,7 +3,7 @@
 # verifying parameters
 if [ $# -ne 1 ]
 then
-  echo "usage : ./deploy.sh branch"
+  echo "usage : ./deploy-api.sh branch"
   exit 1
 fi
 
@@ -24,15 +24,15 @@ fi
 # start checkout
 echo "checkouting $1"
 # cleaning deploy directory
-rm -rf ~/deploy/
-mkdir ~/deploy/
-cd ~/deploy/
+rm -rf ~/deploy-api/
+mkdir ~/deploy-api/
+cd ~/deploy-api/
 # grabbing code from github
 git clone -b $1 git@github.com:yeswescore/yeswescore-api.git
 # analysing result
 if [ $? -eq 0 ]
 then
-  echo "branch $1 is deployed in ~/deploy/yeswescore-api/"
+  echo "branch $1 is deployed in ~/deploy-api/yeswescore-api/"
 else
   echo "error during clone, abort."
   exit 1
