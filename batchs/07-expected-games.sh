@@ -4,7 +4,7 @@ echo -e "\033[32m"
 echo "> Executing batch 07-expected-games.sh"
 echo -e "\033[0m"
 echo " This batch will: "
-echo "  - close all games opened for more than 24h"
+echo "  - close all games opened and expected for more than 24h"
 echo ""
 
 BASEDIR=$(dirname $0)
@@ -38,10 +38,15 @@ fi
 
 # on log la fermeture des games
 # pour pouvoir eventuellement faire un rollback !
-echo "*************** FINISHING GAMES ****************** " >> $logfile
+echo "*************** EXPECTED GAMES ****************** " >> $logfile
 date >> $logfile
 echo "**************************************************" >> $logfile
 mongo $dbname --eval 'db.games.find({status:"created", "dates.expected": { $lt: new Date(Date.now() - 24 * 3600 * 1000) }}).forEach(function (g) { printjson(g); })' 2>&1 >> $logfile
 #db.games.find({status:"created", "dates.expected": { $lt: new Date(Date.now() - 24 * 3600 * 1000) }}).sort({"dates.expected":-1}).limit(2).pretty()
 echo "**************************************************" >> $logfile
 mongo $dbname --eval 'db.games.update({status:"created", "dates.expected": { $lt: new Date(Date.now() - 24 * 3600 * 1000) }},{ $set : { "dates.end": new Date(), "status" : "finished" } }, false, true)' 2>&1 >> $logfile
+echo "**************************************************" >> $logfile
+mongo $dbname --eval 'db.games.find({status:"created", "dates.expected": {$exists:false},"dates.creation": { $lt: new Date(Date.now() - 48 * 3600 * 1000) }}).forEach(function (g) { printjson(g); })' 2>&1 >> $logfile
+#db.games.find({status:"created", "dates.expected": {$exists:false},"dates.creation": { $lt: new Date(Date.now() - 48 * 3600 * 1000) }}).sort({"dates.creation":1}).limit(2).pretty()
+echo "**************************************************" >> $logfile
+mongo $dbname --eval 'db.games.update({status:"created", "dates.expected": {$exists:false},"dates.creation": { $lt: new Date(Date.now() - 48 * 3600 * 1000) }},{ $set : { "dates.end": new Date(), "status" : "finished" } }, false, true)' 2>&1 >> $logfile
