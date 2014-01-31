@@ -94,6 +94,10 @@ Models.generate = function (DB) {
     if (game.infos && game.infos.numberOfBestSets &&
         (parseInt(game.infos.numberOfBestSets, 10) < 0 || parseInt(game.infos.numberOfBestSets, 10) > 10))
       return "numberOfBestSets should be numeric";
+      
+    if (game.infos && game.infos.maxiSets &&
+        (parseInt(game.infos.maxiSets, 10) < 0 || parseInt(game.infos.maxiSets, 10) > 10))
+      return "maxiSets should be numeric";      
 
     return null;
   };
