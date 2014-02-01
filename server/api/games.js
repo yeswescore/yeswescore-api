@@ -294,6 +294,7 @@ app.get('/v2/games/:id/stream/', function (req, res){
  *      startTeam: Int    (default=undefined) must be undefined, 0 or 1.
  *      official: Boolean (default=true)
  *      numberOfBestSets: Int      (default=undefined)
+ *      maxiSets: Int      (default=6)
  *   }
  * }
  * 
@@ -333,7 +334,8 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
           score: req.body.infos.score || "",
           court: req.body.infos.court || "",
           surface: req.body.infos.surface || "",
-          tour: req.body.infos.tour || ""
+          tour: req.body.infos.tour || "",
+          
         }
       });
       //
@@ -341,6 +343,8 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
         game.infos.official = (req.body.infos.official === "true");
       if (typeof req.body.infos.numberOfBestSets)
         game.infos.numberOfBestSets = req.body.infos.numberOfBestSets;
+      if (typeof req.body.infos.maxiSets)
+        game.infos.maxiSets = req.body.infos.maxiSets;        
       if (req.body.dates && typeof req.body.dates.expected === "string")
         game.dates.expected = req.body.dates.expected;
       //
@@ -400,7 +404,7 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
  * result is a redirect to /v2/games/:newid
  */
 app.post('/v2/games/:id', express.bodyParser(), function(req, res){
-  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,infos.numberOfBestSets,streamCommentsSize,streamImagesSize";
+  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,infos.numberOfBestSets,infos.maxiSets,streamCommentsSize,streamImagesSize";
   var err = DB.Models.Game.checkFields(req.body);
   var push = {
       player: {name:"",id:""}
@@ -458,6 +462,8 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
           game.infos.tour = req.body.infos.tour;
         if (typeof req.body.infos.numberOfBestSets !== "undefined")
           game.infos.numberOfBestSets = req.body.infos.numberOfBestSets;
+        if (typeof req.body.infos.maxiSets === "string")
+          game.infos.maxiSets = req.body.infos.maxiSets;          
         if (typeof req.body.infos.official === "string")
           game.infos.official = (req.body.infos.official === "true");
       }

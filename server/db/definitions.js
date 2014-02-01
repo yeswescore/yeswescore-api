@@ -97,6 +97,7 @@ Definitions.generateGame = function (DB) {
       startTeam: { type: Schema.Types.ObjectId },
       official: { type: Boolean, default: true },
       numberOfBestSets: { type: Number },
+      maxiSets: { type: Number },      
       winners: {
         players: [ { type: Schema.Types.ObjectId, ref: "Player" } ],  // AUTO-FIELD (status)
         teams: [ { type: Schema.Types.ObjectId, ref: "Team" } ],      // AUTO-FIELD (status)
