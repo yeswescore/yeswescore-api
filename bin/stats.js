@@ -165,7 +165,7 @@ Q.nfcall(mongoClient.connect.bind(mongoClient), Conf.get('mongo.url'))
       return sendEmailAsync("marcd@yeswescore.com", "YWSTATS", result.replace(/\n/g, "<br/>"));
     }).then(function () {
       // on se fait plaisir ...
-      return sendEmailAsync("marcm@yeswescore.com", "YWSTATS", result.replace(/\n/g, "<br/>"));
+      return sendEmailAsync("damien.caby@free.fr", "YWSTATS", result.replace(/\n/g, "<br/>"));
     }).then(function () {
       // on se fait plaisir ...
       return sendEmailAsync("vincent@yeswescore.com", "YWSTATS", result.replace(/\n/g, "<br/>"));

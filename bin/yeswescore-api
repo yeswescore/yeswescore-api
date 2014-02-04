@@ -1,0 +1,39 @@
+#!/bin/bash
+#
+# YesWeScore startup service script
+# USAGE: start|stop|status|logs
+#
+# INSTALL: sudo cp yeswescore-api /etc/init.d/; sudo chmod +x /etc/init.d/yeswescore-api
+# LAUNCH:  sudo service yeswescore-api start
+# 
+# /!\ depends on node supervisor.
+# npm install supervisor -g
+#
+# [FIXME] restrict this script to root
+case "$1" in
+start)
+echo "Starting yeswescore-api"
+sudo su node -c 'date > /tmp/supervisor.log'
+sudo su node -c 'export NODE_ENV="PROD"; /usr/bin/supervisor -w /opt/web/yeswescore-api/server/ /opt/web/yeswescore-api/server/server.js &>> /tmp/supervisor-api.log &'
+;;
+stop)
+echo "Stopping yeswescore-api"
+sudo pkill -f '^node.*supervisor.*yeswescore-api.*server.js'
+sleep 1
+sudo pkill -9 -f '^node.*supervisor.*yeswescore-api.*server.js'
+;;
+logs)
+echo "yeswescore-api supervisor log."
+sudo cat /tmp/supervisor-api.log
+;;
+status)
+# Check to see if the process is running
+sudo pgrep -f '^node.*supervisor.*yeswescore-api.*server.js' && echo "  ^--- pid of yeswescore-api"
+;;
+ 
+*)
+echo "yeswescore-api service"
+echo "Usage: $0 {start|stop|status|logs}"
+exit 1
+esac
+exit 0
