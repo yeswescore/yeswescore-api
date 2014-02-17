@@ -264,7 +264,7 @@ describe('dev:games', function(){
           location : {
             country: "FRANCE",
             city: "marck",
-            pos: [ 42.4242, 43.4343 ],
+            pos: [ 42.4242, 43.4343 ]
           },
           dates : {
             expected:new Date()
