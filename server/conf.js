@@ -10,7 +10,7 @@ if (env === "DEV") {
   //  http://plic.no-ip.org:10080/   www (proxy)          <= The website should use this URL
   //  http://plic.no-ip.org:18080/   www static
   Conf = {
-    "http.host" : "91.121.184.177",
+    "http.host" : "176.31.108.85",
     "http.port" : parseInt(process.env.YESWESCORE_PORT, 10) || "28080",
     "api.games" : "/v2/games/",
     "api.players" : "/v2/players/",

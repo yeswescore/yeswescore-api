@@ -62,6 +62,8 @@ var Push = {
 
     app.log(' msg:'+msg);
 
+    app.log(' host:'+Conf.get('http.host')+ ' port:'+Conf.get('http.port')+''+"/players/" +push.player.id+ "/push");
+
     if (msg!=="") {
       http.get({
         host: Conf.get('http.host'),
