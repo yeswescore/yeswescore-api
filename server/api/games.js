@@ -408,8 +408,11 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
   var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,infos.numberOfBestSets,infos.maxiSets,streamCommentsSize,streamImagesSize";
   var err = DB.Models.Game.checkFields(req.body);
   var push = {
+      //TODO : change by table
       player: {name:"",id:""}
+    , player2: {name:"",id:""}
     , opponent: {name:"",rank:""}
+    , opponent2: {name:"",rank:""}
     , language:""
     , status:""
     , dates: {create:"",start:""}
@@ -481,12 +484,30 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
         push.official = req.body.infos.official;
         push.win = game.isPlayerWinning(push.player.id) ? "1" : "0";
         // FIXME: que remplir le jour ou N oponents > 1
-        if ( game.teams[0].players[0].id === push.player.id ) {
-          push.opponent.name = game.teams[1].players[0].name;
-          push.opponent.rank = game.teams[1].players[0].rank;
-        } else {
-          push.opponent.name = game.teams[0].players[0].name;
-          push.opponent.rank = game.teams[0].players[0].rank;
+        if (game.infos.type === "singles")
+        {
+          if ( game.teams[0].players[0].id === push.player.id ) {
+            push.opponent.name = game.teams[1].players[0].name;
+            push.opponent.rank = game.teams[1].players[0].rank;
+          } else {
+            push.opponent.name = game.teams[0].players[0].name;
+            push.opponent.rank = game.teams[0].players[0].rank;
+          }
+        }
+        else {
+          if ( game.teams[0].players[0].id === push.player.id ) {
+            push.player2.name  = game.teams[0].players[1].name;
+            push.opponent.name = game.teams[1].players[0].name;
+            push.opponent.rank = game.teams[1].players[0].rank;
+            push.opponent2.name = game.teams[1].players[1].name;
+            push.opponent2.rank = game.teams[1].players[1].rank;
+          } else {
+            push.player2.name  = game.teams[1].players[1].name;
+            push.opponent.name = game.teams[0].players[0].name;
+            push.opponent.rank = game.teams[0].players[0].rank;
+            push.opponent2.name = game.teams[0].players[1].name;
+            push.opponent2.rank = game.teams[0].players[1].rank;
+          }
         }
         push.score = game.infos.score;
         push.sets = game.infos.sets;

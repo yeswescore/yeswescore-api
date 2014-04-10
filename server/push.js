@@ -21,43 +21,128 @@ var Push = {
     var that = this;
     var msg = "";
 
-    if (push.status.indexOf('ongoing')!=-1) {
-      msg = Resources.getString(push.language, "game.push.started");
-      msg = msg.replace(/%PLAYER1%/g, push.player.name);
-      if (typeof push.opponent.name !== "undefined")
-        msg = msg.replace(/%PLAYER2%/g, push.opponent.name);
-      if (typeof push.opponent.rank !== "undefined")
-        msg = msg.replace(/%RANK2%/g, push.opponent.rank);
-    } else if (push.status.indexOf('created')!=-1) {
-      msg = Resources.getString(push.language, "game.push.created");
-      msg = msg.replace(/%PLAYER1%/g, push.player.name);
-      if (typeof push.opponent.name !== "undefined")
-        msg = msg.replace(/%PLAYER2%/g, push.opponent.name);
-      if (typeof push.opponent.rank !== "undefined")
-        msg = msg.replace(/%RANK2%/g, push.opponent.rank);
-      msg = msg.replace(/%DATE%/g, push.dates.create);
-    } else if (push.status.indexOf('finished')!=-1) {
-      app.log('state finished win:'+push.win);
-      if (push.win === "1")
-      {
-        msg = Resources.getString(push.language, "game.push.finished.win");
+    if ( push.infos.type.indexOf('singles')!=-1) {
+      if (push.status.indexOf('ongoing')!=-1) {
+        msg = Resources.getString(push.language, "game.push.started");
         msg = msg.replace(/%PLAYER1%/g, push.player.name);
         if (typeof push.opponent.name !== "undefined")
           msg = msg.replace(/%PLAYER2%/g, push.opponent.name);
         if (typeof push.opponent.rank !== "undefined")
           msg = msg.replace(/%RANK2%/g, push.opponent.rank);
-        msg = msg.replace(/%SCORE%/g, push.sets);
-      }
-      else
-      {
-        msg = Resources.getString(push.language, "game.push.finished.loose");
+      } else if (push.status.indexOf('created')!=-1) {
+        msg = Resources.getString(push.language, "game.push.created");
         msg = msg.replace(/%PLAYER1%/g, push.player.name);
         if (typeof push.opponent.name !== "undefined")
           msg = msg.replace(/%PLAYER2%/g, push.opponent.name);
         if (typeof push.opponent.rank !== "undefined")
           msg = msg.replace(/%RANK2%/g, push.opponent.rank);
-        msg = msg.replace(/%SCORE%/g, push.sets);
+        msg = msg.replace(/%DATE%/g, push.dates.create);
+      } else if (push.status.indexOf('finished')!=-1) {
+        app.log('state finished win:'+push.win);
+        if (push.win === "1")
+        {
+          msg = Resources.getString(push.language, "game.push.finished.win");
+          msg = msg.replace(/%PLAYER1%/g, push.player.name);
+          if (typeof push.opponent.name !== "undefined")
+            msg = msg.replace(/%PLAYER2%/g, push.opponent.name);
+          if (typeof push.opponent.rank !== "undefined")
+            msg = msg.replace(/%RANK2%/g, push.opponent.rank);
+          msg = msg.replace(/%SCORE%/g, push.sets);
+        }
+        else
+        {
+          msg = Resources.getString(push.language, "game.push.finished.loose");
+          msg = msg.replace(/%PLAYER1%/g, push.player.name);
+          if (typeof push.opponent.name !== "undefined")
+            msg = msg.replace(/%PLAYER2%/g, push.opponent.name);
+          if (typeof push.opponent.rank !== "undefined")
+            msg = msg.replace(/%RANK2%/g, push.opponent.rank);
+          msg = msg.replace(/%SCORE%/g, push.sets);
+        }
       }
+    }
+    //if double
+    else {
+
+        if (push.status.indexOf('ongoing')!=-1) {
+            msg = Resources.getString(push.language, "game.push.double.started");
+            msg = msg.replace(/%PLAYER1%/g, push.player.name);
+
+            if (typeof push.player2.name !== "undefined")
+                msg = msg.replace(/%PLAYER2%/g, push.player2.name);
+            if (typeof push.player2.rank !== "undefined")
+                msg = msg.replace(/%RANK2%/g, push.player2.rank);
+            if (typeof push.opponent.name !== "undefined")
+                msg = msg.replace(/%PLAYER3%/g, push.opponent.name);
+            if (typeof push.opponent.rank !== "undefined")
+                msg = msg.replace(/%RANK3%/g, push.opponent.rank);
+            if (typeof push.opponent2.name !== "undefined")
+                msg = msg.replace(/%PLAYER4%/g, push.opponent2.name);
+            if (typeof push.opponent2.rank !== "undefined")
+                msg = msg.replace(/%RANK4%/g, push.opponent2.rank);
+
+
+        } else if (push.status.indexOf('created')!=-1) {
+            msg = Resources.getString(push.language, "game.push.double.created");
+            msg = msg.replace(/%PLAYER1%/g, push.player.name);
+            if (typeof push.player2.name !== "undefined")
+                msg = msg.replace(/%PLAYER2%/g, push.player2.name);
+            if (typeof push.player2.rank !== "undefined")
+                msg = msg.replace(/%RANK2%/g, push.player2.rank);
+            if (typeof push.opponent.name !== "undefined")
+                msg = msg.replace(/%PLAYER3%/g, push.opponent.name);
+            if (typeof push.opponent.rank !== "undefined")
+                msg = msg.replace(/%RANK3%/g, push.opponent.rank);
+            if (typeof push.opponent2.name !== "undefined")
+                msg = msg.replace(/%PLAYER4%/g, push.opponent2.name);
+            if (typeof push.opponent2.rank !== "undefined")
+                msg = msg.replace(/%RANK4%/g, push.opponent2.rank);
+
+
+            msg = msg.replace(/%DATE%/g, push.dates.create);
+        } else if (push.status.indexOf('finished')!=-1) {
+            app.log('state finished win:'+push.win);
+            if (push.win === "1")
+            {
+                msg = Resources.getString(push.language, "game.push.double.finished.win");
+                msg = msg.replace(/%PLAYER1%/g, push.player.name);
+                if (typeof push.player2.name !== "undefined")
+                    msg = msg.replace(/%PLAYER2%/g, push.player2.name);
+                if (typeof push.player2.rank !== "undefined")
+                    msg = msg.replace(/%RANK2%/g, push.player2.rank);
+                if (typeof push.opponent.name !== "undefined")
+                    msg = msg.replace(/%PLAYER3%/g, push.opponent.name);
+                if (typeof push.opponent.rank !== "undefined")
+                    msg = msg.replace(/%RANK3%/g, push.opponent.rank);
+                if (typeof push.opponent2.name !== "undefined")
+                    msg = msg.replace(/%PLAYER4%/g, push.opponent2.name);
+                if (typeof push.opponent2.rank !== "undefined")
+                    msg = msg.replace(/%RANK4%/g, push.opponent2.rank);
+
+                msg = msg.replace(/%SCORE%/g, push.sets);
+            }
+            else
+            {
+                msg = Resources.getString(push.language, "game.push.double.finished.loose");
+                msg = msg.replace(/%PLAYER1%/g, push.player.name);
+
+                if (typeof push.player2.name !== "undefined")
+                    msg = msg.replace(/%PLAYER2%/g, push.player2.name);
+                if (typeof push.player2.rank !== "undefined")
+                    msg = msg.replace(/%RANK2%/g, push.player2.rank);
+                if (typeof push.opponent.name !== "undefined")
+                    msg = msg.replace(/%PLAYER3%/g, push.opponent.name);
+                if (typeof push.opponent.rank !== "undefined")
+                    msg = msg.replace(/%RANK3%/g, push.opponent.rank);
+                if (typeof push.opponent2.name !== "undefined")
+                    msg = msg.replace(/%PLAYER4%/g, push.opponent2.name);
+                if (typeof push.opponent2.rank !== "undefined")
+                    msg = msg.replace(/%RANK4%/g, push.opponent2.rank);
+
+                msg = msg.replace(/%SCORE%/g, push.sets);
+            }
+        }
+
     }
 
     app.log(' msg:'+msg);
