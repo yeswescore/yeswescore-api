@@ -350,6 +350,7 @@ assert.isGame = function (game) {
       startTeam: { _type: "undefined|id" },
       official: { _type: "boolean" },
       numberOfBestSets: { _type:"number|undefined" },
+      maxiSets: { _type:"number|undefined" },
       winners: {
         teams: { _type: "[id]|undefined" },
         players: { _type: "[id]|undefined" },

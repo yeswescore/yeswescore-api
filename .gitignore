@@ -2,6 +2,7 @@
 node_modules
 # excluding port file in server 
 .port
+conf.js
 #
 nohup.out
 # documentation
