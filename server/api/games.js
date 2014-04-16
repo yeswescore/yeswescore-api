@@ -67,7 +67,7 @@ app.get('/v2/games/', function(req, res){
   if (status)
     query.where('status').in(status.split(","));
   if (longitude && latitude && distance)
-    query.where('location.pos').within.centerSphere({ center: [ parseFloat(longitude), parseFloat(latitude) ], radius: parseFloat(distance) / 6378.137 });
+    query.where('location.pos').within().circle({ center: [ parseFloat(longitude), parseFloat(latitude) ], radius: parseFloat(distance) / 6378.137, unique: true });
   query.where('_deleted', false);
   if (populatePaths.indexOf("teams.players") !== -1) {
     query.populate("teams.players", fields["teams.players"]);
@@ -334,8 +334,7 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
           score: req.body.infos.score || "",
           court: req.body.infos.court || "",
           surface: req.body.infos.surface || "",
-          tour: req.body.infos.tour || "",
-          
+          tour: req.body.infos.tour || ""
         }
       });
       //
