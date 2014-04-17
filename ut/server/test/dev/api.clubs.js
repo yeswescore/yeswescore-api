@@ -76,7 +76,7 @@ describe('dev:clubs', function(){
           countPlayers1AN: Math.round(Math.random() * 100),
           countTeams: Math.round(Math.random() * 10),
           countTeams1AN: Math.round(Math.random() * 10),
-          school: "school"+Math.random(),
+          school: "school"+Math.random()
         };
         http.post(options, newClub, function (club) {
           assert.isClub(club);

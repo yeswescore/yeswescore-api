@@ -35,7 +35,7 @@ app.get('/v2/players/', function(req, res){
   if (fields)
     query.select(fields.replace(/,/g, " "))
   if (longitude && latitude && distance)
-    query.where('location.currentPos').within.centerSphere({ center: [ parseFloat(longitude), parseFloat(latitude) ], radius: parseFloat(distance) / 6378.137 });
+    query.where('location.currentPos').within().circle({ center: [ parseFloat(longitude), parseFloat(latitude) ], radius: parseFloat(distance) / 6378.137, unique: true });
   if (club)
     query.where("club.id", club);
   if (text) {
@@ -89,7 +89,8 @@ app.get('/v2/players/autocomplete/', function(req, res){
         ]
       });
     if (longitude && latitude && distance)
-      query.where('location.currentPos').within.centerSphere({ center: [ parseFloat(longitude), parseFloat(latitude) ], radius: parseFloat(distance) / 6378.137 });
+      query.where('location.currentPos').within().circle({ center: [ parseFloat(longitude), parseFloat(latitude) ], radius: parseFloat(distance) / 6378.137, unique: true });
+
     query.select(fields.replace(/,/g, " "))
       .sort(sort.replace(/,/g, " "))
       .limit(limit)
@@ -155,7 +156,7 @@ app.get('/players/:id/push', function(req, res){
     var query = DB.Models.Player
       .find({
         $and: [
-          { 'following': id },
+          { 'following': id }
         ]
       });
       
