@@ -156,7 +156,7 @@ app.get('/players/:id/push', function(req, res){
     var query = DB.Models.Player
       .find({
         $and: [
-          { 'following': id },
+          { 'following': id }
         ]
       });
       

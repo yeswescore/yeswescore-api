@@ -51,9 +51,9 @@ app.get('/v2/clubs/autocomplete/', function(req, res){
       .select(fields.replace(/,/g, " "));
 
     if (longitude && latitude && distance)
-      //query.where('location.pos').within().circle({ center: [ parseFloat(longitude), parseFloat(latitude) ], radius: parseFloat(distance) / 6378.137, unique: true });
+      query.where('location.pos').within().circle({ center: [ parseFloat(longitude), parseFloat(latitude) ], radius: parseFloat(distance) / 6378.137, unique: true });
 
-      query.where({'location.pos': { $geoWithin : { $center :  [ [ parseFloat(longitude), parseFloat(latitude) ] , parseFloat(distance)/ 6378.137 ] } } });
+      //query.where({'location.pos': { $geoWithin : { $center :  [ [ parseFloat(longitude), parseFloat(latitude) ] , parseFloat(distance)/ 6378.137 ] } } });
 
     query.sort(sort.replace(/,/g, " "))
       .limit(limit)
