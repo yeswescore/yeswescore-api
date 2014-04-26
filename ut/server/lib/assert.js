@@ -349,6 +349,7 @@ assert.isGame = function (game) {
       tour: { _type: "undefined|string" },
       startTeam: { _type: "undefined|id" },
       official: { _type: "boolean" },
+      pro: { _type: "boolean" },
       numberOfBestSets: { _type:"number|undefined" },
       maxiSets: { _type:"number|undefined" },
       winners: {

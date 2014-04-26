@@ -38,7 +38,7 @@ app.get('/v2/games/', function(req, res){
   var offset = req.query.offset || 0;
   var text = req.query.q;
   var club = req.query.club || null;
-  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,infos.numberOfBestSets,infos.maxiSets,streamCommentsSize,streamImagesSize,infos.winners.teams,infos.winners.status";
+  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,infos.pro,infos.numberOfBestSets,infos.maxiSets,streamCommentsSize,streamImagesSize,infos.winners.teams,infos.winners.status";
   var sort = req.query.sort || "-dates.start";
   var status = req.query.status || "created,ongoing,finished";
   var longitude = req.query.longitude;
@@ -97,7 +97,7 @@ app.get('/v2/games/:id', function (req, res){
     "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,"+
     "location.country,location.city,location.pos,"+
     "teams,teams.players.name,teams.players.club,teams.players.rank,teams.players.owner,"+
-    "infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,infos.numberOfBestSets,infos.maxiSets,"+
+    "infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,infos.pro,infos.numberOfBestSets,infos.maxiSets,"+
     "infos.winners,infos.winners.teams,infos.winners.players,infos.winners.status,"+
     "streamCommentsSize,streamImagesSize";
   // populate option
@@ -293,6 +293,7 @@ app.get('/v2/games/:id/stream/', function (req, res){
  *      tour: String      (default="")
  *      startTeam: Int    (default=undefined) must be undefined, 0 or 1.
  *      official: Boolean (default=true)
+ *      pro: Boolean      (default=false)
  *      numberOfBestSets: Int      (default=undefined)
  *      maxiSets: Int      (default=6)
  *   }
@@ -340,6 +341,8 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
       //
       if (typeof req.body.infos.official === "string")
         game.infos.official = (req.body.infos.official === "true");
+      if (typeof req.body.infos.pro === "string")
+        game.infos.pro = (req.body.infos.pro === "false");
       if (typeof req.body.infos.numberOfBestSets)
         game.infos.numberOfBestSets = req.body.infos.numberOfBestSets;
       if (typeof req.body.infos.maxiSets)
@@ -405,7 +408,7 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
  * result is a redirect to /v2/games/:newid
  */
 app.post('/v2/games/:id', express.bodyParser(), function(req, res){
-  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,infos.numberOfBestSets,infos.maxiSets,streamCommentsSize,streamImagesSize";
+  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,infos.pro,infos.numberOfBestSets,infos.maxiSets,streamCommentsSize,streamImagesSize";
   var err = DB.Models.Game.checkFields(req.body);
   var push = {
       //TODO : change by table
@@ -417,6 +420,7 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
     , status:""
     , dates: {create:"",start:""}
     , official:""
+    , pro:""
     , score:""
     , sets:""
     , win:"0"
@@ -470,6 +474,8 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
           game.infos.maxiSets = req.body.infos.maxiSets;          
         if (typeof req.body.infos.official === "string")
           game.infos.official = (req.body.infos.official === "true");
+        if (typeof req.body.infos.pro === "string")
+          game.infos.pro = (req.body.infos.pro === "false");
       }
       // WARNING: we must update status at the end (after sets) !
       if (typeof req.body.status !== "undefined") {

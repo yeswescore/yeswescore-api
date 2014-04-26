@@ -11,3 +11,7 @@ doc/
 # scripts stuff..
 scripts/clubs/clubs.in.csv
 scripts/clubs/clubs.out.csv
+
+# old
+node_modulesOLD
+/bin/deploy-api.sh~alpha
