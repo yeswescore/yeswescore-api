@@ -342,7 +342,7 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
       if (typeof req.body.infos.official === "string")
         game.infos.official = (req.body.infos.official === "true");
       if (typeof req.body.infos.pro === "string")
-        game.infos.pro = (req.body.infos.pro === "false");
+        game.infos.pro = (req.body.infos.pro === "true");
       if (typeof req.body.infos.numberOfBestSets)
         game.infos.numberOfBestSets = req.body.infos.numberOfBestSets;
       if (typeof req.body.infos.maxiSets)
@@ -458,10 +458,6 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
           game.infos.type = req.body.infos.type;
         if (typeof req.body.infos.subtype === "string")
           game.infos.subtype = req.body.infos.subtype;
-        if (typeof req.body.infos.sets === "string")
-          game.infos.sets = req.body.infos.sets;
-        if (typeof req.body.infos.score === "string")
-          game.infos.score = req.body.infos.score;
         if (typeof req.body.infos.court === "string")
           game.infos.court = req.body.infos.court;
         if (typeof req.body.infos.surface === "string")
@@ -481,12 +477,22 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
       if (typeof req.body.status !== "undefined") {
         push.status = game.status;
         //hack : bug ios
-        //si modification du score et du status alors erreur
-        if (game.status === "finished" && game.sets !== req.body.infos.sets)
-          throw "game update impossible";
+        //si modification des sets et du status alors erreur
+        if (req.body.status !== "canceled") {
+          if (typeof req.body.infos !== "undefined") {
+            if (game.status === "finished" && game.infos.sets !== req.body.infos.sets)
+                throw "game update impossible";
+          }
+        }
         game.status = req.body.status;
       }
-
+      // WARNING : we must update score/sets after control status
+      if (typeof req.body.infos !== "undefined") {
+        if (typeof req.body.infos.score === "string")
+          game.infos.score = req.body.infos.score;
+        if (typeof req.body.infos.sets === "string")
+          game.infos.sets = req.body.infos.sets;
+      }
       // auto update
       game.dates.update = Date.now();
       // now all the data is set, we can update push infos.
