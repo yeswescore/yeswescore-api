@@ -480,8 +480,13 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
       // WARNING: we must update status at the end (after sets) !
       if (typeof req.body.status !== "undefined") {
         push.status = game.status;
+        //hack : bug ios
+        //si modification du score et du status alors erreur
+        if (game.status === "finished" && game.sets !== req.body.infos.sets)
+          throw "game update impossible";
         game.status = req.body.status;
       }
+
       // auto update
       game.dates.update = Date.now();
       // now all the data is set, we can update push infos.
