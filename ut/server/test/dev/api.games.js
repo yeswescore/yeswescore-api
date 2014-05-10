@@ -278,6 +278,7 @@ describe('dev:games', function(){
             surface: "GAZ",
             tour: "1er tour",
             official: "false", // jquery poste du texte et non un boolean
+            pro: "false", // jquery poste du texte et non un boolean
             numberOfBestSets: 3,
             maxiSets: 6
           },
@@ -286,6 +287,8 @@ describe('dev:games', function(){
                    { id: null, players: [ { name : "titi" } ] } ]
         };
         http.post(options, newGame, function (game) {
+          console.log("game control pro",game);
+
           assert.isGame(game);
           assert(game.location.country === newGame.location.country, "country should be the same");
           assert(game.location.city === newGame.location.city, "city should be the same");
@@ -297,7 +300,8 @@ describe('dev:games', function(){
           assert(game.infos.score === newGame.infos.score, "score should be the same");
           assert(game.infos.court === newGame.infos.court, "court should be the same");
           assert(game.infos.surface === newGame.infos.surface, "surface should be the same");
-          assert(game.infos.official === false, "official should be the same (1) ");
+          assert(game.infos.official === false, "official should be the same");
+          assert(game.infos.pro === false, "pro should be the same");
           assert(game.infos.numberOfBestSets === newGame.infos.numberOfBestSets, "numberOfBestSets should be the same (1) ");
           assert(game.infos.maxiSets === newGame.infos.maxiSets, "maxiSets should be the same (1) ");
           assert(JSON.parse(JSON.stringify(newGame.dates.expected)) === game.dates.expected, "dates.expected should be the same");
@@ -352,6 +356,7 @@ describe('dev:games', function(){
           game.infos.surface = "NVTB";
           game.infos.tour = "2nd tour";
           game.infos.official = true;
+          game.infos.pro = false;
           game.infos.numberOfBestSets = 5;
           game.infos.maxiSets = 6;
           game.dates.expected = new Date();
@@ -375,10 +380,10 @@ describe('dev:games', function(){
               assert(g.infos.court === modifiedGame.infos.court, "court should be updated in DB");
               assert(g.infos.surface === modifiedGame.infos.surface, "surface should be updated in DB");
               assert(g.infos.tour === modifiedGame.infos.tour, "tour should be updated in DB");
-              assert(g.infos.official === modifiedGame.infos.official, "official should be updated in DB");                          
+              assert(g.infos.official === modifiedGame.infos.official, "official should be updated in DB");
+              assert(g.infos.pro === modifiedGame.infos.pro, "pro should be updated in DB");
               assert(g.infos.numberOfBestSets === modifiedGame.infos.numberOfBestSets, "numberOfBestSets should be updated in DB");
               assert(g.infos.maxiSets === modifiedGame.infos.maxiSets, "maxiSets should be updated in DB");
-
               assert(g.status === modifiedGame.status, "status should be updated");
               assert(typeof g.dates.start !== "undefined", "game should be started (dates.start!== undefined)");
               assert(JSON.parse(JSON.stringify(modifiedGame.dates.expected)) === g.dates.expected, "dates.expected should be updated in DB");  
@@ -596,9 +601,72 @@ describe('dev:games', function(){
             });
           });
         });
+
       });
     });
   });
+
+    describe('create a single game, finish, then try change sets on finished game', function () {
+        it('should create & give the game (not empty & valid)', function (done){
+            // read a player
+            var options = {
+                host: Conf["http.host"],
+                port: Conf["http.port"],
+                path: Conf["documents.players"]+"random"
+            };
+            http.getJSON(options, function (randomPlayer) {
+                assert.isObject(randomPlayer, "random player must exist");
+
+                var options = {
+                    host: Conf["http.host"],
+                    port: Conf["http.port"],
+                    path: Conf["api.games"]+"?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+                };
+
+                var newGame = {
+                    status: "finished",
+                    infos: { sets: "6/0" },
+                    teams: [ { id: null, players: [ { name : "toto" } ] },
+                        { id: null, players: [ { name : "titi" } ] } ]
+                };
+                http.post(options, newGame, function (game) {
+                    assert.isGame(game);
+                    assert(game.status === "finished", "game should be finished");
+                    assert(game.infos.sets === "6/0", "score should be the same");
+
+                    var options = {
+                        host: Conf["http.host"],
+                        port: Conf["http.port"],
+                        path: Conf["api.games"]+game.id+"/?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+                    };
+
+                    var modifiedGame = game;
+                    modifiedGame.status = "finished";
+                    modifiedGame.infos.sets = "3/0";
+
+                    // control error
+                    http.post(options, modifiedGame, function (g) {
+                        assert.isError(g);
+                        assert(g.error === "game update impossible", "error should be game update impossible");
+
+                        // reading the game from DB to be sure !
+                        var options = {
+                            host: Conf["http.host"],
+                            port: Conf["http.port"],
+                            path: Conf["api.games"]+modifiedGame.id
+                        };
+                        http.getJSON(options, function (g) {
+                            assert.isGame(g);
+                            assert(g.status === "finished", "game should be finished");
+                            assert(g.infos.sets === "6/0", "score should be the same");
+
+                            done();
+                        });
+                    });
+                });
+            });
+        });
+    });
   
   describe('create a single game, then change startTeam using 0/1', function () {
     it('should create & give the game (not empty & valid)', function (done){
