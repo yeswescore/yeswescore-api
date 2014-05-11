@@ -287,8 +287,6 @@ describe('dev:games', function(){
                    { id: null, players: [ { name : "titi" } ] } ]
         };
         http.post(options, newGame, function (game) {
-          console.log("game control pro",game);
-
           assert.isGame(game);
           assert(game.location.country === newGame.location.country, "country should be the same");
           assert(game.location.city === newGame.location.city, "city should be the same");

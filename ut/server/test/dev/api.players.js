@@ -499,8 +499,6 @@ describe('dev:players', function(){
             language: language
           };
           
-          console.log(modifiedPlayer);
-          
           // saving
           var options = {
             host: Conf["http.host"],
