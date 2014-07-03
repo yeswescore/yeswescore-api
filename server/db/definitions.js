@@ -96,7 +96,6 @@ Definitions.generateGame = function (DB) {
       tour: String,
       startTeam: { type: Schema.Types.ObjectId },
       official: { type: Boolean, default: true },
-      pro: { type: Boolean, default: false },
       numberOfBestSets: { type: Number },
       maxiSets: { type: Number },      
       winners: {

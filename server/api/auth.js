@@ -94,7 +94,7 @@ app.post('/v2/auth/resetPassword/', express.bodyParser(), function(req, res){
         return app.defaultError(res)("internal error");
       // everything went ok => sending email
       app.log('sending new password to '+req.body.email.address);
-      Email.sendPasswordReset(player.email.address, newUncryptedPassword, player.language);
+        Email.sendPasswordReset(player.email.address, newUncryptedPassword, player.language);
       res.send(JSON.stringify({ message: "email send"}));
     });
   });

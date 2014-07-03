@@ -1,5 +1,6 @@
 var assert = require("../../lib/assert.js")
   , http = require("../../lib/http.js")
+  , Push = require("../../../../server/push.js")
   , Conf = require("../../../../server/conf.js");
   
 if (Conf.env !== "DEV")
@@ -30,7 +31,8 @@ describe('dev:players', function(){
       });
     });
   });
-  
+
+
   describe('create basic player, then read it.', function () {
     it('should create the player (not empty & valid)', function (done) {
       var options = {
@@ -328,7 +330,7 @@ describe('dev:players', function(){
       var oldMail = "marcd-"+Math.random()+"@yeswescore.com";
       var newPlayer = {
         name: "TU-"+Math.random(),
-        email: { address: oldMail },
+        email: { address: oldMail }
       };
       http.post(options, newPlayer, function (player) {
         assert.isPlayerWithToken(player);
@@ -498,7 +500,7 @@ describe('dev:players', function(){
             location : { city : city, address: address, zip : zip },            
             language: language
           };
-          
+
           // saving
           var options = {
             host: Conf["http.host"],
@@ -742,7 +744,9 @@ describe('dev:players', function(){
             name: "TU-"+Math.random(),
             rank: "15/2",
             email: { address: "marcd-"+Math.random()+"@yeswescore.com" },
-            club: { id: randomClub._id, name: randomClub.name }
+            club: { id: randomClub._id, name: randomClub.name },
+            //push: { platform: "ios",token:"8FBD694A0D96E3EA5C1A70E8B8271E288546B3BFD3831B05896FFCF15D1C39EC" },
+            push: { platform: "android",token:"7368b9e5-c61c-43dd-bf09-fbcc838db111" }
           };
           http.post(options, newPlayer, function (player) {
             assert.isPlayerWithToken(player);
@@ -766,36 +770,89 @@ describe('dev:players', function(){
                 port: Conf["http.port"],
                 path: Conf["api.players"]+player.id+"/?playerid="+player.id+"&token="+player.token
               };
+
+              var follower = {id:player.id};
               
               http.getJSON(options, function (playerUpdated) {
                 assert.isPlayerWithToken(playerUpdated, "must be a player");
                 
                 assert(playerUpdated.following.indexOf(randomPlayer._id) !== -1, "playerUpdated following must contain id " + randomPlayer._id);
-                
-                // on supprime le following
-                var following = { id : randomPlayer._id };
+
                 var options = {
                   host: Conf["http.host"],
                   port: Conf["http.port"],
-                  path: Conf["api.players"]+player.id+"/following/?playerid="+player.id+"&token="+player.token+"&_method=delete"
+                  path: "/players/"+playerUpdated.following+"/push"
                 };
-                http.post(options, following, function (result) {
-                  assert.isObject(result, "must be an object");
-                  
-                  // reading from DB
-                  var options = {
-                    host: Conf["http.host"],
-                    port: Conf["http.port"],
-                    path: Conf["api.players"]+player.id+"/?playerid="+player.id+"&token="+player.token
-                  };
-                  
-                  http.getJSON(options, function (playerUpdated) {
-                    assert.isPlayerWithToken(playerUpdated, "must be a player");
-                    
-                    assert(playerUpdated.following.indexOf(randomPlayer._id) === -1, "playerUpdated following cannot contain id " + randomPlayer._id);
-                    done();
+
+                http.getJSON(options, function (players) {
+
+                  assert.isArray(players, 'players must be an array of player');
+                  assert(players.length > 0, 'must have at least 1 player in result');
+
+                  var found = false;
+                  players.forEach(function (p) {
+                    if (p.id === follower.id)
+                        found = true;
                   });
+                  assert(found, 'must have found team id ' + follower.id + ' in team list teams ' + JSON.stringify(players));
+
+                  //send Notification
+                  var push = {
+                    //TODO : change by table
+                    player: {name:"Vincent",id:playerUpdated.following}
+                    , player2: {name:"Lucas",id:"4654351351351351"}
+                    , opponent: {name:"Benjamin",rank:"15/5"}
+                    , opponent2: {name:"Loic",rank:"15/2"}
+                    , language:"fr"
+                    , status:"finished"
+                    , dates: {create:"",start:""}
+                    , infos: {type:"double"}
+                    , official:"true"
+                    , score:"6/1;6/1"
+                    , sets:"2/0"
+                    , win:"0"
+                  };
+
+
+                  Push.sendPushs(null,push,function(err, status){
+
+                      //console.log('status', status);
+                      assert(status.indexOf('error') === -1, "UrbanAirShip Error. Check configuration or New API");
+                      // DONE() INSIDE to wait push
+
+                      // on supprime le following
+
+                       var following = { id : randomPlayer._id };
+                       var options = {
+                       host: Conf["http.host"],
+                       port: Conf["http.port"],
+                       path: Conf["api.players"]+player.id+"/following/?playerid="+player.id+"&token="+player.token+"&_method=delete"
+                       };
+                       http.post(options, following, function (result) {
+                       assert.isObject(result, "must be an object");
+
+                       // reading from DB
+                       var options = {
+                       host: Conf["http.host"],
+                       port: Conf["http.port"],
+                       path: Conf["api.players"]+player.id+"/?playerid="+player.id+"&token="+player.token
+                       };
+
+                       http.getJSON(options, function (playerUpdated) {
+                       assert.isPlayerWithToken(playerUpdated, "must be a player");
+
+                       assert(playerUpdated.following.indexOf(randomPlayer._id) === -1, "playerUpdated following cannot contain id " + randomPlayer._id);
+                         done();
+                       });
+                       });
+
+
+                      //done();
+                  });
+
+
                 });
+
               });
             });
           });
@@ -815,4 +872,11 @@ describe('dev:players', function(){
       done(/* FIXME */);
     });
   });
+
+    describe('FIXME: read players filtering by sport', function() {
+        it('should read players using filter ?sport=tennis', function (done) {
+            done(/* FIXME */);
+        });
+    });
+
 });

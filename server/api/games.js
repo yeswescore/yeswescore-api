@@ -66,11 +66,10 @@ app.get('/v2/games/', function(req, res){
     query.where('_searchablePlayersClubsIds', club);
   if (status)
     query.where('status').in(status.split(","));
-
   if (longitude && latitude && distance)
     query.where({'location.pos': {$within:{ $centerSphere :[[ parseFloat(longitude), parseFloat(latitude) ], parseFloat(distance) / 6378.137]}}});
 
-  query.where('_deleted', false);
+    query.where('_deleted', false);
   if (populatePaths.indexOf("teams.players") !== -1) {
     query.populate("teams.players", fields["teams.players"]);
   }
@@ -295,7 +294,6 @@ app.get('/v2/games/:id/stream/', function (req, res){
  *      tour: String      (default="")
  *      startTeam: Int    (default=undefined) must be undefined, 0 or 1.
  *      official: Boolean (default=true)
- *      pro: Boolean      (default=false)
  *      numberOfBestSets: Int      (default=undefined)
  *      maxiSets: Int      (default=6)
  *   }
@@ -410,7 +408,7 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
  * result is a redirect to /v2/games/:newid
  */
 app.post('/v2/games/:id', express.bodyParser(), function(req, res){
-  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,infos.pro,infos.numberOfBestSets,infos.maxiSets,streamCommentsSize,streamImagesSize";
+  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,infos.numberOfBestSets,infos.maxiSets,streamCommentsSize,streamImagesSize";
   var err = DB.Models.Game.checkFields(req.body);
   var push = {
       //TODO : change by table
@@ -421,8 +419,8 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
     , language:""
     , status:""
     , dates: {create:"",start:""}
+    , infos: {type:"singles"}
     , official:""
-    , pro:""
     , score:""
     , sets:""
     , win:"0"
@@ -473,28 +471,29 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
         if (typeof req.body.infos.official === "string")
           game.infos.official = (req.body.infos.official === "true");
         if (typeof req.body.infos.pro === "string")
-          game.infos.pro = (req.body.infos.pro === "false");
+          game.infos.pro = (req.body.infos.pro === "true");
       }
       // WARNING: we must update status at the end (after sets) !
       if (typeof req.body.status !== "undefined") {
         push.status = game.status;
-        //hack : bug ios
         //si modification des sets et du status alors erreur
         if (req.body.status !== "canceled") {
           if (typeof req.body.infos !== "undefined") {
             if (game.status === "finished" && game.infos.sets !== req.body.infos.sets)
-                throw "game update impossible";
-          }
+              throw "game update impossible";
+            }
         }
         game.status = req.body.status;
       }
+
       // WARNING : we must update score/sets after control status
       if (typeof req.body.infos !== "undefined") {
         if (typeof req.body.infos.score === "string")
           game.infos.score = req.body.infos.score;
-        if (typeof req.body.infos.sets === "string")
-          game.infos.sets = req.body.infos.sets;
-      }
+            if (typeof req.body.infos.sets === "string")
+              game.infos.sets = req.body.infos.sets;
+       }
+
       // auto update
       game.dates.update = Date.now();
       // now all the data is set, we can update push infos.
@@ -505,6 +504,7 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
         // FIXME: que remplir le jour ou N oponents > 1
         if (game.infos.type === "singles")
         {
+          push.infos.type = "singles";
           if ( game.teams[0].players[0].id === push.player.id ) {
             push.opponent.name = game.teams[1].players[0].name;
             push.opponent.rank = game.teams[1].players[0].rank;
@@ -514,6 +514,7 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
           }
         }
         else {
+          push.infos.type = "double";
           if ( game.teams[0].players[0].id === push.player.id ) {
             push.player2.name  = game.teams[0].players[1].name;
             push.opponent.name = game.teams[1].players[0].name;
@@ -565,7 +566,7 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
           }          
         }
       }
-    
+
      app.internalRedirect('/v2/games/:id')(
      {
        query: { },

@@ -93,7 +93,7 @@ var generateClubsAsync = function () {
       countPlayers1AN: Math.round(Math.random() * 100),
       countTeams: Math.round(Math.random() * 10),
       countTeams1AN: Math.round(Math.random() * 10),
-      school: "school"+Math.random(),
+      school: "school"+Math.random()
     });
   });
   return DB.save(clubs);
@@ -153,7 +153,7 @@ var generatePlayersAsync = function () {
             name: generateFakeFirstName() + " " + generateFakeName(),
             location: {
               country: "",
-              pos: [],
+              pos: []
             },
             rank: "15/2",
             club: clubInfo,
@@ -172,7 +172,7 @@ var generateGamesAsync = function () {
     Q.nfcall(DB.Models.Player.find.bind(DB.Models.Player), {type:"default"})
      .then(function (result) { players = result }),
     Q.nfcall(DB.Models.Player.find.bind(DB.Models.Player), {type:"owned"})
-     .then(function (result) { owned = result }),
+     .then(function (result) { owned = result })
   ]).then(function () {
     var nbGames = 20;
 
@@ -200,8 +200,8 @@ var generateGamesAsync = function () {
           surface: ["BP", "EP", "EPDM", "GAS", "GAZ", "MOQ",
                       "NVTB", "PAR", "RES", "TB", "" ].random(),
           tour: [ "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"  ].random(),
+          pro : [true, false].random(),
           official : [true, false].random(),
-          pro : [true, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false].random(),
           numberOfBestSets: [3,5,undefined].random()
         }
       });
