@@ -44,7 +44,8 @@ app.get('/v2/games/', function(req, res){
   var longitude = req.query.longitude;
   var latitude = req.query.latitude;
   var distance = req.query.distance;
-  
+  var sport = req.query.sport;
+
   // populate option
   var populate = "teams.players";
   if (typeof req.query.populate !== "undefined")
@@ -62,6 +63,10 @@ app.get('/v2/games/', function(req, res){
       { _searchablePlayersClubsNames: text }
     ]);
   }
+  if (sport)
+    query.where('sport', sport);
+  else
+    query.where('sport', 'tennis');
   if (club)
     query.where('_searchablePlayersClubsIds', club);
   if (status)

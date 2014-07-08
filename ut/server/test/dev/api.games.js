@@ -1347,4 +1347,10 @@ describe('dev:games', function(){
       });
     });
   });
+
+    describe('FIXME: read games filtering by sport', function() {
+        it('should read games using filter ?sport=tennis', function (done) {
+            done(/* FIXME */);
+        });
+    });
 });

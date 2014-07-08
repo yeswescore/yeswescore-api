@@ -322,7 +322,7 @@ assert.isFile = function (file) {
 assert.isGame = function (game) {
   assert.schema({
     id : { _type: "id" },
-    sport: { _type: "enum", _enum: [ "tennis" ] },
+    sport: { _type: "enum", _enum: [ "tennis", "badminton", "paddle", "table tennis", "squash", "speedminton" ] },
     owner: { _type: "id" },
     status: { _type : "enum|undefined", _enum: ["created", "ongoing", "finished", "canceled", "aborted" ] },
     dates: {

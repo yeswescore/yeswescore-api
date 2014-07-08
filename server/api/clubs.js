@@ -34,14 +34,15 @@ var DB = require("../db.js")
  *  /v2/clubs/autocomplete/?q=Charlotte (searched text)
 **/
 app.get('/v2/clubs/autocomplete/', function(req, res){
-  var fields = req.query.fields || "name,location.city";
+  var fields = req.query.fields || "name,location.city,sport";
   var limit = req.query.limit || 5;
   var sort = req.query.sort || "name";
   var text = req.query.q;
   var longitude = req.query.longitude;
   var latitude = req.query.latitude;
   var distance = req.query.distance;
-  
+  var sport = req.query.sport;
+
   if (text) {
     // slow
     text = new RegExp("("+text.searchable().pregQuote()+")");
@@ -52,6 +53,9 @@ app.get('/v2/clubs/autocomplete/', function(req, res){
 
     if (longitude && latitude && distance)
       query.where({'location.pos': {$within:{ $centerSphere :[[ parseFloat(longitude), parseFloat(latitude) ], parseFloat(distance) / 6378.137]}}});
+
+    if (sport)
+      query.where('sport', sport);
 
     query.sort(sort.replace(/,/g, " "))
       .limit(limit)

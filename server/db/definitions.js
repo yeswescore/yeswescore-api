@@ -65,7 +65,7 @@ Definitions.generateFile = function (DB) {
 
 Definitions.generateGame = function (DB) {
   Definitions.Game = {
-    sport: { type: String, enum: ["tennis"], default: "tennis" },
+    sport: { type: String, enum: ["tennis", "badminton", "paddle", "table tennis", "squash", "speedminton"], default: "tennis" },
     status: { type: String, enum: [ "created", "ongoing", "finished", "canceled", "aborted" ], default: "created" },
     owner: { type: Schema.Types.ObjectId, ref: "Player" },
     dates : {

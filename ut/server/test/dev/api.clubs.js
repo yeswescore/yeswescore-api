@@ -213,5 +213,12 @@ describe('dev:clubs', function(){
       });
     });
   });
+
+    describe('FIXME: read clubs filtering by sport', function() {
+        it('should read clubs using filter ?sport=tennis', function (done) {
+            done(/* FIXME */);
+        });
+    });
+
 });
 

@@ -179,7 +179,7 @@ var generateGamesAsync = function () {
     for (var i = 0; i < nbGames; ++i) {
       var owner = players.random().id;
       var game = new DB.Models.Game({
-        sport: "tennis",
+        sport: ["tennis", "tennis", "tennis", "tennis", "tennis", "tennis", "tennis", "tennis", "tennis", "squash"].random(),
         status: ["ongoing", "finished"].random(),
         owner: owner, // utilisateur ayant saisi le match.
         location: {
