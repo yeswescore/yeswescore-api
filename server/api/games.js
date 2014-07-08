@@ -495,6 +495,11 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
               game.infos.sets = req.body.infos.sets;
        }
 
+      // detect if game is finished
+      if (game.isFinished()) {
+          game.status = "finished";
+      }
+
       // auto update
       game.dates.update = Date.now();
       // now all the data is set, we can update push infos.

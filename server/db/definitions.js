@@ -66,7 +66,7 @@ Definitions.generateFile = function (DB) {
 Definitions.generateGame = function (DB) {
   Definitions.Game = {
     sport: { type: String, enum: ["tennis"], default: "tennis" },
-    status: { type: String, enum: [ "created", "ongoing", "finished", "canceled" ], default: "created" },
+    status: { type: String, enum: [ "created", "ongoing", "finished", "canceled", "aborted" ], default: "created" },
     owner: { type: Schema.Types.ObjectId, ref: "Player" },
     dates : {
       creation: { type: Date, default: Date.now },
@@ -126,23 +126,34 @@ Definitions.generateGame = function (DB) {
       this.dates.start = Date.now();
     if (status === "ongoing" && oldStatus === "finished")
       this.dates.end = undefined;
-    if ((status === "finished" && oldStatus === "created") ||
-        (status === "finished" && oldStatus === "ongoing")) {
+    if ((status === "finished" && oldStatus === "created")
+        || (status === "finished" && oldStatus === "ongoing")
+        || (status === "aborted" && oldStatus === "created")
+        || (status === "aborted" && oldStatus === "ongoing")
+        ) {
       // end of game
       this.dates.end = Date.now();
-      // updating winners, only if possible
-      var winningTeamIndexes = this.getWinningTeamIndexes();
-      this.infos.winners.status = "win";
-      this.infos.winners.teams = [];
-      this.infos.winners.players = [];
-      winningTeamIndexes.forEach(function (winningTeamIndex, i) {
-        if (i == 1)
-          this.infos.winners.status = "draw";
-        this.infos.winners.teams.push(DB.toStringId(this.teams[winningTeamIndex]));
-        this.teams[winningTeamIndex].players.forEach(function (player) {
-          this.infos.winners.players.push(DB.toStringId(player));
+
+      if (status === "finished") {
+        // updating winners, only if possible
+        var winningTeamIndexes = this.getWinningTeamIndexes();
+        this.infos.winners.status = "win";
+        this.infos.winners.teams = [];
+        this.infos.winners.players = [];
+        winningTeamIndexes.forEach(function (winningTeamIndex, i) {
+          if (i == 1)
+            this.infos.winners.status = "draw";
+          this.infos.winners.teams.push(DB.toStringId(this.teams[winningTeamIndex]));
+          this.teams[winningTeamIndex].players.forEach(function (player) {
+            this.infos.winners.players.push(DB.toStringId(player));
+          }, this);
         }, this);
-      }, this);
+      }
+
+      if (status === "aborted") {
+        //TODO : choose winner
+      }
+
     }
     return status;
   };

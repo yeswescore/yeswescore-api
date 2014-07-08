@@ -324,7 +324,7 @@ assert.isGame = function (game) {
     id : { _type: "id" },
     sport: { _type: "enum", _enum: [ "tennis" ] },
     owner: { _type: "id" },
-    status: { _type : "enum|undefined", _enum: ["created", "ongoing", "finished", "canceled" ] },
+    status: { _type : "enum|undefined", _enum: ["created", "ongoing", "finished", "canceled", "aborted" ] },
     dates: {
       creation: { _type: "date" },
       update:  { _type: "date|undefined" },
@@ -355,7 +355,7 @@ assert.isGame = function (game) {
       winners: {
         teams: { _type: "[id]|undefined" },
         players: { _type: "[id]|undefined" },
-        status: { _type: "undefined|enum", _enum: ["win", "draw"]}
+        status: { _type: "undefined|enum", _enum: ["win", "draw", "abort"]}
       }
     },
     teams: { _type: "[schema]", _check: function (team, i, teams) {

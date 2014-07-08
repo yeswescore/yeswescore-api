@@ -331,6 +331,27 @@ Schemas.generate = function (DB) {
       return [1]; // team B is winning
     return [0]; // team A is winning
   };
+
+
+  Schemas.Game.methods.isFinished = function () {
+    if (!this.infos)
+        return false;
+    if (typeof this.infos.score !== "string")
+        return false;
+    var scoreDetails = this.infos.score.split("/");
+    if (scoreDetails.length !== 2)
+        return false;
+    var scoreTeamA = parseInt(scoreDetails[0], 10);
+    var scoreTeamB = parseInt(scoreDetails[1], 10)
+    if (scoreTeamA == NaN || scoreTeamB == NaN)
+        return false;
+    var nbSets = scoreTeamA  + scoreTeamB;
+    if (scoreTeamA >= this.infos.numberOfBestSets)
+        return true;
+    else
+        return false;
+  };
+
 };
 
 module.exports = Schemas;
