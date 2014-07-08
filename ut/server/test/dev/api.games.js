@@ -673,6 +673,8 @@ describe('dev:games', function(){
           };
           
           var modifiedGame = game;
+
+          /*
           game.status = "finished";
           
           http.post(options, game, function (game) {
@@ -686,12 +688,12 @@ describe('dev:games', function(){
             };
             http.getJSON(options, function (g) {
               assert.isGame(g);
-              assert(g.status === "finished", "game should be finished");
+              assert(g.status === "finished", "1 game should be finished");
               assert(typeof g.dates.end !== "undefined", "game should have and end date");
               
 
             });
-          });
+          });*/
 
             game.status = "aborted";
 
@@ -706,7 +708,7 @@ describe('dev:games', function(){
                 };
                 http.getJSON(options, function (g) {
                     assert.isGame(g);
-                    assert(g.status === "aborted", "game should be aborted");
+                    assert(g.status === "aborted", "2 game should be aborted");
                     assert(typeof g.dates.end !== "undefined", "game should have and end date");
 
                     done();

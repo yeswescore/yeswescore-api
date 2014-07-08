@@ -58,8 +58,10 @@ Models.generate = function (DB) {
     // check status
     if (game.status &&
         game.status !== "created" && game.status !== "ongoing" &&
-        game.status !== "finished" && game.status !== "canceled")
-      return "wrong status (created/ongoing/finished/canceled)";
+        game.status !== "finished" && game.status !== "canceled" &&
+        game.status !== "aborted"
+        )
+      return "wrong status (created/ongoing/finished/canceled/aborted)";
     // check teams
     if (game.teams) {
       if (!Array.isArray(game.teams) || game.teams.length !== 2)
