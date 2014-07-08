@@ -847,9 +847,10 @@ describe('dev:players', function(){
                        });
 
 
-                      //done();
+
                   });
 
+                  done();
 
                 });
 

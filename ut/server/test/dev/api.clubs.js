@@ -191,6 +191,7 @@ describe('dev:clubs', function(){
           };
 
           http.getJSON(options, function (clubs) {
+            console.log('clubs1',clubs);
             assert.isArray(clubs, 'clubs should be an array');
             assert(clubs.length === 1, 'must have found at least one club !');
             assert(clubs[0].id == club.id, 'must have same id :' + club.id + ' vs ' + clubs[0].id);
@@ -202,6 +203,7 @@ describe('dev:clubs', function(){
             };
 
             http.getJSON(options, function (clubs) {
+              console.log('clubs2',clubs);
               assert.isArray(clubs, 'clubs should be an array');
               assert(clubs.length === 0, 'cannot find the club (too far away)');
               done();

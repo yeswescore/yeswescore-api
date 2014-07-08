@@ -294,6 +294,7 @@ app.get('/v2/games/:id/stream/', function (req, res){
  *      tour: String      (default="")
  *      startTeam: Int    (default=undefined) must be undefined, 0 or 1.
  *      official: Boolean (default=true)
+ *      pro: Boolean (default=false)
  *      numberOfBestSets: Int      (default=undefined)
  *      maxiSets: Int      (default=6)
  *   }
@@ -408,7 +409,7 @@ app.post('/v2/games/', express.bodyParser(), function (req, res) {
  * result is a redirect to /v2/games/:newid
  */
 app.post('/v2/games/:id', express.bodyParser(), function(req, res){
-  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,infos.numberOfBestSets,infos.maxiSets,streamCommentsSize,streamImagesSize";
+  var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,infos.pro,infos.numberOfBestSets,infos.maxiSets,streamCommentsSize,streamImagesSize";
   var err = DB.Models.Game.checkFields(req.body);
   var push = {
       //TODO : change by table

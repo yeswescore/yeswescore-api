@@ -91,6 +91,10 @@ Models.generate = function (DB) {
         (typeof game.infos.official !== "boolean" && game.infos.official !== "true" && game.infos.official !== "false") )
       return "wrong official ( true or false only )";
 
+    if (game.infos && game.infos.pro &&
+       (typeof game.infos.pro !== "boolean" && game.infos.pro !== "true" && game.infos.pro !== "false") )
+      return "wrong pro ( true or false only )";
+
     if (game.infos && game.infos.numberOfBestSets &&
         (parseInt(game.infos.numberOfBestSets, 10) < 0 || parseInt(game.infos.numberOfBestSets, 10) > 10))
       return "numberOfBestSets should be numeric";

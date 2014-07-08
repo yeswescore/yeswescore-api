@@ -59,7 +59,7 @@ Definitions.generateFile = function (DB) {
     metadata: Schema.Types.Mixed, // { usage: "profil/streamitem/...", id: }
     // private
     _deleted: { type: Boolean, default: false },  // FIXME: unused
-    _reported: { type: Boolean, default: false }, // FIXME: unused
+    _reported: { type: Boolean, default: false } // FIXME: unused
   };
 };
 
@@ -96,6 +96,7 @@ Definitions.generateGame = function (DB) {
       tour: String,
       startTeam: { type: Schema.Types.ObjectId },
       official: { type: Boolean, default: true },
+      pro: { type: Boolean, default: false },
       numberOfBestSets: { type: Number },
       maxiSets: { type: Number },      
       winners: {
