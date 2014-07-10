@@ -21,6 +21,7 @@ var DB = require("../db.js")
  *  /v2/games/?longitude=40.234      (default=undefined)
  *  /v2/games/?latitude=40.456       (default=undefined)
  *  /v2/games/?distance=20           (default=undefined)
+ *  /v2/games/?sport=tennis          (default=undefined)
  *
  * Specific options:
  *  /v2/games/?q=text                (Mandatory)
@@ -502,6 +503,7 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
 
       // detect if game is finished
       if (game.isFinished()) {
+          //console.log('auto finished mode');
           game.status = "finished";
       }
 

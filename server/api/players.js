@@ -16,7 +16,7 @@ var DB = require("../db.js")
  *  /v2/players/?longitude=40.234      (default=undefined)
  *  /v2/players/?latitude=40.456       (default=undefined)
  *  /v2/players/?distance=20           (default=undefined)
- *  /v2/players/?sport=                (default=tennis)
+ *  /v2/players/?sport=tennis                (default=undefined)
  *
  * Specific options:
  *  /v2/players/?q=Charlotte (searched text)
@@ -300,6 +300,7 @@ app.post('/v2/players/', express.bodyParser(), function(req, res){
     // creating a new player
     var player = new DB.Models.Player({
         name: req.body.name || "",
+        sport: req.body.sport || "tennis",
         location : { 
           currentPos: req.body.location.currentPos || [],
           city: req.body.location.city || "",

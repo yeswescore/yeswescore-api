@@ -50,8 +50,11 @@ Models.generate = function (DB) {
 
   // FIXME: use definition to automate theses tests.
   Models.Game.checkFields = function (game) {
-    if (game.sport && game.sport !== "tennis")
-      return "wrong sport (tennis only)";
+    if (game.sport && game.sport !== "tennis"
+        && game.sport !== "tennistable" && game.sport !== "squash"
+        && game.sport !== "badminton"
+    )
+      return "wrong sport (tennis, tennistable, squash, badminton only)";
     // check type
     if (game.type && game.type !== "singles")
       return "wrong type (singles only)";

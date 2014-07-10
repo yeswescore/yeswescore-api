@@ -133,10 +133,12 @@ describe('dev:games', function(){
         
         var newGame = {
           teams: [ { id: null, players: [ { name : "toto", email: { address: "foo"+Math.random()+"@yeswescore.com" }, rank: "15/2" } ] },
-                   { id: null, players: [ { name : "titi" } ] } ]
+                   { id: null, players: [ { name : "titi" } ] } ],
+          sport: "tennis"
         };
         http.post(options, newGame, function (game) {
           assert.isGame(game, "game was correctly created");
+          assert(game.sport === "tennis", "sport must be tennis");
           assert(Array.isArray(game.teams) && game.teams.length === 2, "two teams");
           assert(game.teams[0].players[0].name === "toto", "first player is toto");
           assert(game.teams[1].players[0].name === "titi", "second player is titi");
@@ -150,7 +152,105 @@ describe('dev:games', function(){
       });
     });
   });
-  
+
+/*
+    describe('create a single game between 2 teams of anonymous players, then read it with sport tennistable', function () {
+        it('should create & give the game (not empty & valid)', function (done){
+            // read a player
+            var options = {
+                host: Conf["http.host"],
+                port: Conf["http.port"],
+                path: Conf["documents.players"]+"random"
+            };
+            http.getJSON(options, function (randomPlayer) {
+                assert.isObject(randomPlayer, "random player must exist");
+
+                var options = {
+                    host: Conf["http.host"],
+                    port: Conf["http.port"],
+                    path: Conf["api.games"]+"?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+                };
+
+                var newGame = {
+                    teams: [ { id: null, players: [ { name : "toto", email: { address: "foo"+Math.random()+"@yeswescore.com" }, rank: "15/2" } ] },
+                        { id: null, players: [ { name : "titi" } ] } ],
+                    sport: "tennistable"
+                };
+                http.post(options, newGame, function (game) {
+                    assert.isGame(game, "game was correctly created");
+                    assert(game.sport === "tennistable", "sport must be tennistable");
+
+                    done();
+                });
+            });
+        });
+    });
+*/
+
+    describe('create a single game between 2 teams of anonymous players, then read it with sport badminton', function () {
+        it('should create & give the game (not empty & valid)', function (done){
+            // read a player
+            var options = {
+                host: Conf["http.host"],
+                port: Conf["http.port"],
+                path: Conf["documents.players"]+"random"
+            };
+            http.getJSON(options, function (randomPlayer) {
+                assert.isObject(randomPlayer, "random player must exist");
+
+                var options = {
+                    host: Conf["http.host"],
+                    port: Conf["http.port"],
+                    path: Conf["api.games"]+"?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+                };
+
+                var newGame = {
+                    teams: [ { id: null, players: [ { name : "toto", email: { address: "foo"+Math.random()+"@yeswescore.com" }, rank: "15/2" } ] },
+                        { id: null, players: [ { name : "titi" } ] } ],
+                    sport: "badminton"
+                };
+                http.post(options, newGame, function (game) {
+                    assert.isGame(game, "game was correctly created");
+                    assert(game.sport === "badminton", "sport must be badminton");
+
+                    done();
+                });
+            });
+        });
+    });
+
+    describe('create a single game between 2 teams of anonymous players, then read it with sport squash', function () {
+        it('should create & give the game (not empty & valid)', function (done){
+            // read a player
+            var options = {
+                host: Conf["http.host"],
+                port: Conf["http.port"],
+                path: Conf["documents.players"]+"random"
+            };
+            http.getJSON(options, function (randomPlayer) {
+                assert.isObject(randomPlayer, "random player must exist");
+
+                var options = {
+                    host: Conf["http.host"],
+                    port: Conf["http.port"],
+                    path: Conf["api.games"]+"?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+                };
+
+                var newGame = {
+                    teams: [ { id: null, players: [ { name : "toto", email: { address: "foo"+Math.random()+"@yeswescore.com" }, rank: "15/2" } ] },
+                        { id: null, players: [ { name : "titi" } ] } ],
+                    sport: "squash"
+                };
+                http.post(options, newGame, function (game) {
+                    assert.isGame(game, "game was correctly created");
+                    assert(game.sport === "squash", "sport must be squash");
+
+                    done();
+                });
+            });
+        });
+    });
+
   describe('create a single game between 2 existing players, then read it', function () {
     it('should create & give the game (not empty & valid)', function (done){
       // read a player
@@ -543,7 +643,7 @@ describe('dev:games', function(){
                         };
 
                         var modifiedGame = game;
-                        game.status = "finished";
+                        //game.status = "finished";
 
                         http.post(options, game, function (game) {
                             assert.isGame(game);
@@ -557,12 +657,14 @@ describe('dev:games', function(){
                             http.getJSON(options, function (g) {
                                 assert.isGame(g);
 
+                                //assert(g.status === modifiedGame.status, "status should be updated");
+                                assert(g.status === "finished", "status should be finished by autofinished mode");
+                                assert(typeof g.dates.end !== "undefined", "game should be ended (dates.end!== undefined)");
                                 assert(g.infos.subtype === modifiedGame.infos.subtype, "subtype should be updated in DB");
                                 assert(g.infos.sets === modifiedGame.infos.sets, "sets should be updated in DB");
                                 assert(g.infos.score === modifiedGame.infos.score, "score should be updated in DB ("+g.infos.score+") vs ("+modifiedGame.infos.score+")");
                                 assert(g.infos.numberOfBestSets === modifiedGame.infos.numberOfBestSets, "numberOfBestSets should be updated in DB");
                                 assert(g.infos.maxiSets === modifiedGame.infos.maxiSets, "maxiSets should be updated in DB");
-                                assert(g.status === modifiedGame.status, "status should be updated");
                                 assert(typeof g.dates.start !== "undefined", "game should be started (dates.start!== undefined)");
                                 assert(JSON.parse(JSON.stringify(modifiedGame.dates.expected)) === g.dates.expected, "dates.expected should be updated in DB");
 

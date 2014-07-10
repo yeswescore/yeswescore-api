@@ -343,7 +343,7 @@ var generateTeamsAsync = function () {
             Math.round(Math.random() * players.length / 5)
         );
         team = new DB.Models.Team({
-          sport: 'tennis',
+          sport: ["tennis", "tennis", "tennis", "tennis", "tennis", "tennis", "tennis", "tennis", "tennis", "squash"].random(),
           name: ['Equipe A', 'Equipe B', 'Equipe C'].random(),
           players: teamPlayers,
           captain: teamPlayers.random(),

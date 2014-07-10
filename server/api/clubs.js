@@ -173,7 +173,7 @@ app.post('/v2/clubs/', express.bodyParser(), function(req, res){
       // creating a new club (no owner)
       req.body.location = (req.body.location) ? req.body.location : {};
       var club = new DB.Models.Club({
-        sport: "tennis",
+        sport: req.body.sport || "tennis",
         name: req.body.name,
         location : {
           pos: req.body.location.pos || [],
