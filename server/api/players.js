@@ -194,7 +194,7 @@ app.get('/players/:id/push', function(req, res){
  * 
  * Specific options:
  *  /v2/players/:id/games/?owned=true  (default=undefined)
- *  /v2/players/:id/games/?status=ongoing   (default=created,ongoing,finished)
+ *  /v2/players/:id/games/?status=ongoing   (default=created,ongoing,finished,aborted)
  *  /v2/players/:id/games/?populate=teams.players (default=teams.players)
  * 
  * owned=undefined games owned or played by the player
@@ -203,7 +203,7 @@ app.get('/players/:id/push', function(req, res){
  * NON STANDARD URL
  */
 app.get('/v2/players/:id/games/', function(req, res){
-  var status = req.query.status || "created,ongoing,finished";
+  var status = req.query.status || "created,ongoing,finished,aborted";
   var sort = req.query.sort || "-dates.start";
   var limit = req.query.limit || 10;
   var offset = req.query.offset || 0;

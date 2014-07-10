@@ -674,7 +674,7 @@ describe('dev:games', function(){
           
           var modifiedGame = game;
 
-          /*
+
           game.status = "finished";
           
           http.post(options, game, function (game) {
@@ -688,32 +688,40 @@ describe('dev:games', function(){
             };
             http.getJSON(options, function (g) {
               assert.isGame(g);
-              assert(g.status === "finished", "1 game should be finished");
+              assert(g.status === "finished", "game should be finished");
               assert(typeof g.dates.end !== "undefined", "game should have and end date");
-              
 
-            });
-          });*/
+              var options = {
+                host: Conf["http.host"],
+                port: Conf["http.port"],
+                path: Conf["api.games"]+g.id+"/?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+              };
 
-            game.status = "aborted";
+              g.status = "aborted";
 
-            http.post(options, game, function (game) {
-                assert.isGame(game);
+
+              http.post(options, g, function (g2) {
+                assert.isGame(g2);
 
                 // reading the game from DB to be sure !
                 var options = {
                     host: Conf["http.host"],
                     port: Conf["http.port"],
-                    path: Conf["api.games"]+game.id
+                    path: Conf["api.games"]+g2.id
                 };
-                http.getJSON(options, function (g) {
-                    assert.isGame(g);
-                    assert(g.status === "aborted", "2 game should be aborted");
-                    assert(typeof g.dates.end !== "undefined", "game should have and end date");
+                http.getJSON(options, function (g3) {
+                    assert.isGame(g3);
+                    assert(g3.status === "aborted", "game should be aborted");
+                    assert(typeof g3.dates.end !== "undefined", "game should have and end date");
 
                     done();
                 });
+
+
+              });
+
             });
+          });
 
         });
       });

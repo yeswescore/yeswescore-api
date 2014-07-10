@@ -26,7 +26,7 @@ var DB = require("../db.js")
  *  /v2/games/?q=text                (Mandatory)
  *  /v2/games/?club=:id
  *  /v2/games/?populate=teams.players (default=teams.players)
- *  /v2/games/?status=finished        (default=created,ongoing,finished)
+ *  /v2/games/?status=finished        (default=created,ongoing,finished,aborted)
  * 
  * only query games with teams
  * auto-populate teams.players
@@ -40,7 +40,7 @@ app.get('/v2/games/', function(req, res){
   var club = req.query.club || null;
   var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,infos.pro,infos.numberOfBestSets,infos.maxiSets,streamCommentsSize,streamImagesSize,infos.winners.teams,infos.winners.status";
   var sort = req.query.sort || "-dates.start";
-  var status = req.query.status || "created,ongoing,finished";
+  var status = req.query.status || "created,ongoing,finished,aborted";
   var longitude = req.query.longitude;
   var latitude = req.query.latitude;
   var distance = req.query.distance;
