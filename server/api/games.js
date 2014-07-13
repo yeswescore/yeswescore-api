@@ -432,6 +432,7 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
     , sets:""
     , win:"0"
   };
+  var oldstatus = '';
   if (err)
     return app.defaultError(res)(err);
   // check player is authenticated
@@ -490,6 +491,7 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
               throw "game update impossible";
             }
         }
+        oldstatus = game.status;
         game.status = req.body.status;
       }
 
@@ -502,9 +504,11 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
        }
 
       // detect if game is finished
-      if (game.isFinished()) {
-          //console.log('auto finished mode');
+      if (game.isFinishedTennis() ) {
+        //if finished one time, we don't autofinish again
+        if (oldstatus!=="finished") {
           game.status = "finished";
+        }
       }
 
       // auto update

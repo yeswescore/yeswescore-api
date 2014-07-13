@@ -535,7 +535,7 @@ describe('dev:games', function(){
           game.infos.subtype = "B";
           game.infos.sets = "6/3;6/0;1/6;2/6;6/3";
           game.infos.score = newScore;
-          game.infos.numberOfBestSets = 3;
+          game.infos.numberOfBestSets = 5;
           game.infos.maxiSets = 6;
           game.dates.expected = new Date();
 
@@ -622,13 +622,13 @@ describe('dev:games', function(){
                         path: Conf["api.games"]+game.id+"/?playerid="+randomPlayer._id+"&token="+randomPlayer.token
                     };
 
-                    var newScore = "2/1";
+                    var newScore = "2/0";
                     var modifiedGame = game;
                     game.status = "ongoing";
                     game.infos.subtype = "B";
                     game.infos.sets = "6/3;6/0;1/6";
                     game.infos.score = newScore;
-                    game.infos.numberOfBestSets = 2;
+                    game.infos.numberOfBestSets = 3;
                     game.infos.maxiSets = 6;
                     game.dates.expected = new Date();
 
