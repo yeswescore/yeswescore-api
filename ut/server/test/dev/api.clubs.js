@@ -45,7 +45,7 @@ describe('dev:clubs', function(){
     });
   });
   
-  describe('create random club, read it', function() {
+  describe('create random club, read it, sport tennis', function() {
     it('should create the club', function (done) {
       var options = {
         host: Conf["http.host"],
@@ -76,10 +76,12 @@ describe('dev:clubs', function(){
           countPlayers1AN: Math.round(Math.random() * 100),
           countTeams: Math.round(Math.random() * 10),
           countTeams1AN: Math.round(Math.random() * 10),
-          school: "school"+Math.random()
+          school: "school"+Math.random(),
+          sport: "tennis"
         };
         http.post(options, newClub, function (club) {
           assert.isClub(club);
+          assert(club.sport === newClub.sport, "should have same sport");
           assert(club.name === newClub.name, "should have same name");
           assert(club.location.address == newClub.location.address);
           assert(club.location.city == newClub.location.city);
@@ -103,7 +105,142 @@ describe('dev:clubs', function(){
       });
     });
   });
-  
+
+    describe('create random club, read it, sport tennistable', function() {
+        it('should create the club', function (done) {
+            var options = {
+                host: Conf["http.host"],
+                port: Conf["http.port"],
+                path: Conf["documents.players"]+"random"
+            };
+
+            http.getJSON(options, function (randomPlayer) {
+                var options = {
+                    host: Conf["http.host"],
+                    port: Conf["http.port"],
+                    path: Conf["api.clubs"]+"?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+                };
+
+                var newClub = {
+                    name : "club-"+Math.random(),
+                    location: {
+                        address: "Hotel de ville",
+                        city: "Lyon",
+                        zip: "zip"+Math.random(),
+                        pos: [ 42, 43 ]
+                    },
+                    fedid: String(Math.random()),
+                    ligue: "ligue"+Math.random(),
+                    outdoor: Math.round(Math.random() * 10),
+                    indoor: Math.round(Math.random() * 10),
+                    countPlayers: Math.round(Math.random() * 100),
+                    countPlayers1AN: Math.round(Math.random() * 100),
+                    countTeams: Math.round(Math.random() * 10),
+                    countTeams1AN: Math.round(Math.random() * 10),
+                    school: "school"+Math.random(),
+                    sport: "tennistable"
+                };
+                http.post(options, newClub, function (club) {
+                    assert.isClub(club);
+                    assert(club.sport === newClub.sport, "should have same sport");
+
+
+                    done();
+                });
+            });
+        });
+    });
+
+    describe('create random club, read it, sport squash', function() {
+        it('should create the club', function (done) {
+            var options = {
+                host: Conf["http.host"],
+                port: Conf["http.port"],
+                path: Conf["documents.players"]+"random"
+            };
+
+            http.getJSON(options, function (randomPlayer) {
+                var options = {
+                    host: Conf["http.host"],
+                    port: Conf["http.port"],
+                    path: Conf["api.clubs"]+"?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+                };
+
+                var newClub = {
+                    name : "club-"+Math.random(),
+                    location: {
+                        address: "Hotel de ville",
+                        city: "Lyon",
+                        zip: "zip"+Math.random(),
+                        pos: [ 42, 43 ]
+                    },
+                    fedid: String(Math.random()),
+                    ligue: "ligue"+Math.random(),
+                    outdoor: Math.round(Math.random() * 10),
+                    indoor: Math.round(Math.random() * 10),
+                    countPlayers: Math.round(Math.random() * 100),
+                    countPlayers1AN: Math.round(Math.random() * 100),
+                    countTeams: Math.round(Math.random() * 10),
+                    countTeams1AN: Math.round(Math.random() * 10),
+                    school: "school"+Math.random(),
+                    sport: "squash"
+                };
+                http.post(options, newClub, function (club) {
+                    assert.isClub(club);
+                    assert(club.sport === newClub.sport, "should have same sport");
+
+
+                    done();
+                });
+            });
+        });
+    });
+
+    describe('create random club, read it, sport badminton', function() {
+        it('should create the club', function (done) {
+            var options = {
+                host: Conf["http.host"],
+                port: Conf["http.port"],
+                path: Conf["documents.players"]+"random"
+            };
+
+            http.getJSON(options, function (randomPlayer) {
+                var options = {
+                    host: Conf["http.host"],
+                    port: Conf["http.port"],
+                    path: Conf["api.clubs"]+"?playerid="+randomPlayer._id+"&token="+randomPlayer.token
+                };
+
+                var newClub = {
+                    name : "club-"+Math.random(),
+                    location: {
+                        address: "Hotel de ville",
+                        city: "Lyon",
+                        zip: "zip"+Math.random(),
+                        pos: [ 42, 43 ]
+                    },
+                    fedid: String(Math.random()),
+                    ligue: "ligue"+Math.random(),
+                    outdoor: Math.round(Math.random() * 10),
+                    indoor: Math.round(Math.random() * 10),
+                    countPlayers: Math.round(Math.random() * 100),
+                    countPlayers1AN: Math.round(Math.random() * 100),
+                    countTeams: Math.round(Math.random() * 10),
+                    countTeams1AN: Math.round(Math.random() * 10),
+                    school: "school"+Math.random(),
+                    sport: "badminton"
+                };
+                http.post(options, newClub, function (club) {
+                    assert.isClub(club);
+                    assert(club.sport === newClub.sport, "should have same sport");
+
+
+                    done();
+                });
+            });
+        });
+    });
+
   describe('create random club, create a second one with same name+city', function() {
     it('should create the club', function (done) {
       var options = {
@@ -191,6 +328,7 @@ describe('dev:clubs', function(){
           };
 
           http.getJSON(options, function (clubs) {
+            console.log('clubs1',clubs);
             assert.isArray(clubs, 'clubs should be an array');
             assert(clubs.length === 1, 'must have found at least one club !');
             assert(clubs[0].id == club.id, 'must have same id :' + club.id + ' vs ' + clubs[0].id);
@@ -202,6 +340,7 @@ describe('dev:clubs', function(){
             };
 
             http.getJSON(options, function (clubs) {
+              console.log('clubs2',clubs);
               assert.isArray(clubs, 'clubs should be an array');
               assert(clubs.length === 0, 'cannot find the club (too far away)');
               done();
@@ -211,5 +350,12 @@ describe('dev:clubs', function(){
       });
     });
   });
+
+    describe('FIXME: read clubs filtering by sport', function() {
+        it('should read clubs using filter ?sport=tennis', function (done) {
+            done(/* FIXME */);
+        });
+    });
+
 });
 

@@ -211,7 +211,7 @@ assert.schema = function (schema, obj, msg) {
 assert.isClub = function (club) {
   assert.schema({
     id: { _type: "id" },
-    sport: { _type: "enum", _enum: [ "tennis" ] },
+    sport: { _type: "enum", _enum: [ "tennis", "badminton", "paddle", "tennistable", "squash", "speedminton" ] },
     dates: {
       creation: { _type: "date" },
       update: { _type: "date" }
@@ -322,9 +322,9 @@ assert.isFile = function (file) {
 assert.isGame = function (game) {
   assert.schema({
     id : { _type: "id" },
-    sport: { _type: "enum", _enum: [ "tennis" ] },
+    sport: { _type: "enum", _enum: [ "tennis", "badminton", "paddle", "tennistable", "squash", "speedminton" ] },
     owner: { _type: "id" },
-    status: { _type : "enum|undefined", _enum: ["created", "ongoing", "finished", "canceled" ] },
+    status: { _type : "enum|undefined", _enum: ["created", "ongoing", "finished", "canceled", "aborted" ] },
     dates: {
       creation: { _type: "date" },
       update:  { _type: "date|undefined" },
@@ -348,14 +348,14 @@ assert.isGame = function (game) {
                                                   "NVTB", "PAR", "RES", "TB", "" ] },
       tour: { _type: "undefined|string" },
       startTeam: { _type: "undefined|id" },
-      official: { _type: "boolean" },
       pro: { _type: "boolean" },
+      official: { _type: "boolean" },
       numberOfBestSets: { _type:"number|undefined" },
       maxiSets: { _type:"number|undefined" },
       winners: {
         teams: { _type: "[id]|undefined" },
         players: { _type: "[id]|undefined" },
-        status: { _type: "undefined|enum", _enum: ["win", "draw"]}
+        status: { _type: "undefined|enum", _enum: ["win", "draw", "abort"]}
       }
     },
     teams: { _type: "[schema]", _check: function (team, i, teams) {

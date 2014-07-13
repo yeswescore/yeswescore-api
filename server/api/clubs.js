@@ -34,14 +34,15 @@ var DB = require("../db.js")
  *  /v2/clubs/autocomplete/?q=Charlotte (searched text)
 **/
 app.get('/v2/clubs/autocomplete/', function(req, res){
-  var fields = req.query.fields || "name,location.city";
+  var fields = req.query.fields || "name,location.city,sport";
   var limit = req.query.limit || 5;
   var sort = req.query.sort || "name";
   var text = req.query.q;
   var longitude = req.query.longitude;
   var latitude = req.query.latitude;
   var distance = req.query.distance;
-  
+  var sport = req.query.sport;
+
   if (text) {
     // slow
     text = new RegExp("("+text.searchable().pregQuote()+")");
@@ -52,6 +53,9 @@ app.get('/v2/clubs/autocomplete/', function(req, res){
 
     if (longitude && latitude && distance)
       query.where({'location.pos': {$within:{ $centerSphere :[[ parseFloat(longitude), parseFloat(latitude) ], parseFloat(distance) / 6378.137]}}});
+
+    if (sport)
+      query.where('sport', sport);
 
     query.sort(sort.replace(/,/g, " "))
       .limit(limit)
@@ -103,7 +107,7 @@ app.get('/v2/clubs/:id', function(req, res){
  * no params
  */
 app.get('/v2/clubs/:id/games/', function(req, res){
-  var status = req.query.status || "created,ongoing,finished";
+  var status = req.query.status || "created,ongoing,finished,aborted";
   var sort = req.query.sort || "-dates.start";
   var limit = req.query.limit || 10;
   var offset = req.query.offset || 0;
@@ -169,7 +173,7 @@ app.post('/v2/clubs/', express.bodyParser(), function(req, res){
       // creating a new club (no owner)
       req.body.location = (req.body.location) ? req.body.location : {};
       var club = new DB.Models.Club({
-        sport: "tennis",
+        sport: req.body.sport || "tennis",
         name: req.body.name,
         location : {
           pos: req.body.location.pos || [],

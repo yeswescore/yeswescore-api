@@ -50,16 +50,21 @@ Models.generate = function (DB) {
 
   // FIXME: use definition to automate theses tests.
   Models.Game.checkFields = function (game) {
-    if (game.sport && game.sport !== "tennis")
-      return "wrong sport (tennis only)";
+    if (game.sport && game.sport !== "tennis"
+        && game.sport !== "tennistable" && game.sport !== "squash"
+        && game.sport !== "badminton"
+    )
+      return "wrong sport (tennis, tennistable, squash, badminton only)";
     // check type
     if (game.type && game.type !== "singles")
       return "wrong type (singles only)";
     // check status
     if (game.status &&
         game.status !== "created" && game.status !== "ongoing" &&
-        game.status !== "finished" && game.status !== "canceled")
-      return "wrong status (created/ongoing/finished/canceled)";
+        game.status !== "finished" && game.status !== "canceled" &&
+        game.status !== "aborted"
+        )
+      return "wrong status (created/ongoing/finished/canceled/aborted)";
     // check teams
     if (game.teams) {
       if (!Array.isArray(game.teams) || game.teams.length !== 2)
@@ -92,7 +97,7 @@ Models.generate = function (DB) {
       return "wrong official ( true or false only )";
 
     if (game.infos && game.infos.pro &&
-        (typeof game.infos.pro !== "boolean" && game.infos.pro !== "true" && game.infos.pro !== "false") )
+       (typeof game.infos.pro !== "boolean" && game.infos.pro !== "true" && game.infos.pro !== "false") )
       return "wrong pro ( true or false only )";
 
     if (game.infos && game.infos.numberOfBestSets &&

@@ -331,6 +331,133 @@ Schemas.generate = function (DB) {
       return [1]; // team B is winning
     return [0]; // team A is winning
   };
+
+  Schemas.Game.methods.getSets = function (padding) {
+    var sets = this.infos.sets || "0/0";
+    sets = sets.split(';').map(function (set) {
+      return set.split('/').map(function (num) {
+        return parseInt(num, 10);
+      });
+    });
+
+    if (typeof padding !== "undefined") {
+      for (var i = 0; i < 5; ++i) {
+        if (typeof sets[i] === "undefined")
+          sets[i] = [padding, padding];
+        }
+    }
+    return sets;
+  };
+
+  Schemas.Game.methods.isFinishedTennis = function () {
+    if (!this.infos)
+      return false;
+    if (typeof this.infos.score !== "string")
+      return false;
+    var scoreDetails = this.infos.score.split("/");
+    if (scoreDetails.length !== 2)
+      return false;
+    var scoreTeamA = parseInt(scoreDetails[0], 10);
+    var scoreTeamB = parseInt(scoreDetails[1], 10)
+    if (scoreTeamA == NaN || scoreTeamB == NaN)
+      return false;
+    if (typeof this.infos.sets !== "string")
+      return false;
+    var sets = this.getSets(0);
+    // declinable en 5 ou 6 jeux
+    // si score à 1 et ( second set à 6 ou 7 )
+    // si score à 1 et troisieme set à 6 ou avec diff de 2
+    if (this.infos.numberOfBestSets==3) {
+      if(scoreTeamA>=1) {
+        var diff_sets3 = parseInt(sets[2][0], 10)-parseInt(sets[2][1], 10);
+        if(sets[0][0]>=sets[0][1] && ((sets[1][0]==this.infos.maxiSets && sets[1][1] <(this.infos.maxiSets-1)) || sets[1][0]>this.infos.maxiSets)) {
+          this.infos.score = "2/0";
+          return true;
+        }
+        else if (this.infos.maxiSets<=5) {
+          if(sets[2][0]>=this.infos.maxiSets) {
+            this.infos.score = "2/1";
+            return true;
+          }
+        }
+        //no tiebreak in last set
+        else if (sets[2][0]>=this.infos.maxiSets && diff_sets3>=2) {
+         this.infos.score = "2/1";
+         return true;
+        }
+      }
+      if(scoreTeamB>=1) {
+        var diff_sets3 = parseInt(sets[2][1], 10)-parseInt(sets[2][0], 10);
+        if(sets[0][1]>=sets[0][0] && ((sets[1][1]==this.infos.maxiSets && sets[1][0] <(this.infos.maxiSets-1)) || sets[1][1]>this.infos.maxiSets)) {
+          this.infos.score = "0/2";
+          return true;
+        }
+        else if (this.infos.maxiSets<=5) {
+          if(sets[2][1]>=this.infos.maxiSets) {
+            this.infos.score = "1/2";
+            return true;
+          }
+        }
+        //no tiebreak in last set
+        else if (sets[2][1]>=this.infos.maxiSets && diff_sets3>=2) {
+          this.infos.score = "1/2";
+          return true;
+        }
+      }
+    }
+    // si score à 2 et troisieme set à 6
+    // si score à 2 et quatrieme set à 6
+    // si score à 2 et cinquieme set à 6 ou difference de 2
+    if (this.infos.numberOfBestSets==5) {
+
+      if(scoreTeamA==2) {
+        var diff_sets4 = parseInt(sets[4][0], 10)-parseInt(sets[4][1], 10);
+
+        if( ((sets[2][0]==6 && sets[2][1] <5) || sets[2][0]>6)
+              && sets[3][0]==0  && sets[4][0]==0
+              && sets[3][1]==0  && sets[4][1]==0
+          ) {
+          this.infos.score = "3/0";
+          return true;
+        }
+        else if(((sets[3][0]==6 && sets[3][1] <5) || sets[3][0]>6)
+            && sets[4][0]==0  && sets[4][1]==0
+        ) {
+          this.infos.score = "3/1";
+          return true;
+        }
+        else if(sets[4][0]>=6 && diff_sets4>=2) {
+          this.infos.score = "3/2";
+          return true;
+        }
+      }
+      if(scoreTeamB==2) {
+        var diff_sets4 = parseInt(sets[4][1], 10)-parseInt(sets[4][0], 10);
+
+        if( ((sets[2][1]==6 && sets[2][0] <5) || sets[2][1]>6)
+            && sets[3][0]==0  && sets[4][0]==0
+            && sets[3][1]==0  && sets[4][1]==0
+          ) {
+          this.infos.score = "0/3";
+          return true;
+        }
+        else if(((sets[3][1]==6 && sets[3][0] <5) || sets[3][1]>6)
+            && sets[4][0]==0  && sets[4][1]==0
+        ) {
+            this.infos.score = "1/3";
+            return true;
+        }
+        else if(sets[4][1]>=6 && diff_sets4>=2) {
+          this.infos.score = "2/3";
+          return true;
+        }
+      }
+
+    }
+
+    return false;
+  };
+
 };
 
 module.exports = Schemas;

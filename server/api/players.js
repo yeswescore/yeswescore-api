@@ -16,6 +16,7 @@ var DB = require("../db.js")
  *  /v2/players/?longitude=40.234      (default=undefined)
  *  /v2/players/?latitude=40.456       (default=undefined)
  *  /v2/players/?distance=20           (default=undefined)
+ *  /v2/players/?sport=tennis                (default=undefined)
  *
  * Specific options:
  *  /v2/players/?q=Charlotte (searched text)
@@ -25,11 +26,12 @@ app.get('/v2/players/', function(req, res){
   var limit = req.query.limit || 10;
   var offset = req.query.offset || 0;
   var club = req.query.club;
-  var fields = req.query.fields || "following,idlicense,language,name,type,rank,type,games,dates.creation,location.currentPos,id,gender,dates.birth,push.platform,club.id,club.name,email.address,token,profile";
+  var fields = req.query.fields || "sport,following,idlicense,language,name,type,rank,type,games,dates.creation,location.currentPos,id,gender,dates.birth,push.platform,club.id,club.name,email.address,token,profile";
   var longitude = req.query.longitude;
   var latitude = req.query.latitude;
   var distance = req.query.distance;
   var text = req.query.q;
+  var sport = req.query.sport;
 
   var query = DB.Models.Player.find()
   if (fields)
@@ -38,6 +40,8 @@ app.get('/v2/players/', function(req, res){
     query.where({'location.currentPos': {$within:{ $centerSphere :[[ parseFloat(longitude), parseFloat(latitude) ], parseFloat(distance) / 6378.137]}}});
   if (club)
     query.where("club.id", club);
+  if (sport)
+    query.where('sport', sport);
   if (text) {
     text = new RegExp("("+text.searchable().pregQuote()+")");
     query.where("_searchableName", text);
@@ -62,6 +66,7 @@ app.get('/v2/players/', function(req, res){
  *  /v2/players/autocomplete/?longitude=40.234      (default=undefined)
  *  /v2/players/autocomplete/?latitude=40.456       (default=undefined)
  *  /v2/players/autocomplete/?distance=20           (default=undefined)
+ *  /v2/players/autocomplete/?sport=                (default=tennis)
  *
  * Specific options:
  *  /v2/players/autocomplete/?q=Charlotte (searched text)
@@ -76,7 +81,8 @@ app.get('/v2/players/autocomplete/', function(req, res){
   var longitude = req.query.longitude;
   var latitude = req.query.latitude;
   var distance = req.query.distance;
-  
+  var sport = req.query.sport;
+
   if (text) {
     // slow
     text = new RegExp("("+text.searchable().pregQuote()+")");
@@ -90,6 +96,9 @@ app.get('/v2/players/autocomplete/', function(req, res){
       });
     if (longitude && latitude && distance)
       query.where({'location.currentPos': {$within:{ $centerSphere :[[ parseFloat(longitude), parseFloat(latitude) ], parseFloat(distance) / 6378.137]}}});
+
+    if (sport)
+      query.where('sport', sport);
 
     query.select(fields.replace(/,/g, " "))
       .sort(sort.replace(/,/g, " "))
@@ -185,7 +194,7 @@ app.get('/players/:id/push', function(req, res){
  * 
  * Specific options:
  *  /v2/players/:id/games/?owned=true  (default=undefined)
- *  /v2/players/:id/games/?status=ongoing   (default=created,ongoing,finished)
+ *  /v2/players/:id/games/?status=ongoing   (default=created,ongoing,finished,aborted)
  *  /v2/players/:id/games/?populate=teams.players (default=teams.players)
  * 
  * owned=undefined games owned or played by the player
@@ -194,7 +203,7 @@ app.get('/players/:id/push', function(req, res){
  * NON STANDARD URL
  */
 app.get('/v2/players/:id/games/', function(req, res){
-  var status = req.query.status || "created,ongoing,finished";
+  var status = req.query.status || "created,ongoing,finished,aborted";
   var sort = req.query.sort || "-dates.start";
   var limit = req.query.limit || 10;
   var offset = req.query.offset || 0;
@@ -291,6 +300,7 @@ app.post('/v2/players/', express.bodyParser(), function(req, res){
     // creating a new player
     var player = new DB.Models.Player({
         name: req.body.name || "",
+        sport: req.body.sport || "tennis",
         location : { 
           currentPos: req.body.location.currentPos || [],
           city: req.body.location.city || "",

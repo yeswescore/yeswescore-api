@@ -21,12 +21,13 @@ var DB = require("../db.js")
  *  /v2/games/?longitude=40.234      (default=undefined)
  *  /v2/games/?latitude=40.456       (default=undefined)
  *  /v2/games/?distance=20           (default=undefined)
+ *  /v2/games/?sport=tennis          (default=undefined)
  *
  * Specific options:
  *  /v2/games/?q=text                (Mandatory)
  *  /v2/games/?club=:id
  *  /v2/games/?populate=teams.players (default=teams.players)
- *  /v2/games/?status=finished        (default=created,ongoing,finished)
+ *  /v2/games/?status=finished        (default=created,ongoing,finished,aborted)
  * 
  * only query games with teams
  * auto-populate teams.players
@@ -40,11 +41,12 @@ app.get('/v2/games/', function(req, res){
   var club = req.query.club || null;
   var fields = req.query.fields || "sport,status,owner,dates.creation,dates.start,dates.update,dates.end,dates.expected,location.country,location.city,location.pos,teams,teams.players.name,teams.players.club,teams.players.rank,infos.type,infos.subtype,infos.sets,infos.score,infos.court,infos.surface,infos.tour,infos.startTeam,infos.official,infos.pro,infos.numberOfBestSets,infos.maxiSets,streamCommentsSize,streamImagesSize,infos.winners.teams,infos.winners.status";
   var sort = req.query.sort || "-dates.start";
-  var status = req.query.status || "created,ongoing,finished";
+  var status = req.query.status || "created,ongoing,finished,aborted";
   var longitude = req.query.longitude;
   var latitude = req.query.latitude;
   var distance = req.query.distance;
-  
+  var sport = req.query.sport;
+
   // populate option
   var populate = "teams.players";
   if (typeof req.query.populate !== "undefined")
@@ -62,15 +64,18 @@ app.get('/v2/games/', function(req, res){
       { _searchablePlayersClubsNames: text }
     ]);
   }
+  if (sport)
+    query.where('sport', sport);
+  else
+    query.where('sport', 'tennis');
   if (club)
     query.where('_searchablePlayersClubsIds', club);
   if (status)
     query.where('status').in(status.split(","));
-
   if (longitude && latitude && distance)
     query.where({'location.pos': {$within:{ $centerSphere :[[ parseFloat(longitude), parseFloat(latitude) ], parseFloat(distance) / 6378.137]}}});
 
-  query.where('_deleted', false);
+    query.where('_deleted', false);
   if (populatePaths.indexOf("teams.players") !== -1) {
     query.populate("teams.players", fields["teams.players"]);
   }
@@ -295,7 +300,7 @@ app.get('/v2/games/:id/stream/', function (req, res){
  *      tour: String      (default="")
  *      startTeam: Int    (default=undefined) must be undefined, 0 or 1.
  *      official: Boolean (default=true)
- *      pro: Boolean      (default=false)
+ *      pro: Boolean (default=false)
  *      numberOfBestSets: Int      (default=undefined)
  *      maxiSets: Int      (default=6)
  *   }
@@ -421,12 +426,13 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
     , language:""
     , status:""
     , dates: {create:"",start:""}
+    , infos: {type:"singles"}
     , official:""
-    , pro:""
     , score:""
     , sets:""
     , win:"0"
   };
+  var oldstatus = '';
   if (err)
     return app.defaultError(res)(err);
   // check player is authenticated
@@ -473,28 +479,38 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
         if (typeof req.body.infos.official === "string")
           game.infos.official = (req.body.infos.official === "true");
         if (typeof req.body.infos.pro === "string")
-          game.infos.pro = (req.body.infos.pro === "false");
+          game.infos.pro = (req.body.infos.pro === "true");
       }
       // WARNING: we must update status at the end (after sets) !
       if (typeof req.body.status !== "undefined") {
         push.status = game.status;
-        //hack : bug ios
         //si modification des sets et du status alors erreur
         if (req.body.status !== "canceled") {
           if (typeof req.body.infos !== "undefined") {
             if (game.status === "finished" && game.infos.sets !== req.body.infos.sets)
-                throw "game update impossible";
-          }
+              throw "game update impossible";
+            }
         }
+        oldstatus = game.status;
         game.status = req.body.status;
       }
+
       // WARNING : we must update score/sets after control status
       if (typeof req.body.infos !== "undefined") {
         if (typeof req.body.infos.score === "string")
           game.infos.score = req.body.infos.score;
-        if (typeof req.body.infos.sets === "string")
-          game.infos.sets = req.body.infos.sets;
+            if (typeof req.body.infos.sets === "string")
+              game.infos.sets = req.body.infos.sets;
+       }
+
+      // detect if game is finished
+      if (game.isFinishedTennis() ) {
+        //if finished one time, we don't autofinish again
+        if (oldstatus!=="finished") {
+          game.status = "finished";
+        }
       }
+
       // auto update
       game.dates.update = Date.now();
       // now all the data is set, we can update push infos.
@@ -505,6 +521,7 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
         // FIXME: que remplir le jour ou N oponents > 1
         if (game.infos.type === "singles")
         {
+          push.infos.type = "singles";
           if ( game.teams[0].players[0].id === push.player.id ) {
             push.opponent.name = game.teams[1].players[0].name;
             push.opponent.rank = game.teams[1].players[0].rank;
@@ -514,6 +531,7 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
           }
         }
         else {
+          push.infos.type = "double";
           if ( game.teams[0].players[0].id === push.player.id ) {
             push.player2.name  = game.teams[0].players[1].name;
             push.opponent.name = game.teams[1].players[0].name;
@@ -565,7 +583,7 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
           }          
         }
       }
-    
+
      app.internalRedirect('/v2/games/:id')(
      {
        query: { },

@@ -1,377 +1,300 @@
 var Conf = require("./conf.js")
-  , http = require('http')
-  , https = require('https')
-  , DB = require("./db.js")
-  , app = require("./app.js")
-  , Resources = require("./strings/resources.js")
-  , winston = require("winston");
+    , http = require('http')
+    , https = require('https')
+    , DB = require("./db.js")
+    , app = require("./app.js")
+    , Resources = require("./strings/resources.js")
+    , winston = require("winston");
 
 var pushLogger = winston.loggers.get('push');
-TEST_DEVICE = "2e86eb31-b552-4c4b-a02f-f7d532f550c4";
-  
+
+
+
+var Push = {
 // using urbanairship
 // cf. https://github.com/cojohn/node-urban-airship/blob/master/lib/urban-airship.js
-var Push = {
-  _auth : null,
-  _key : Conf.get("push.urbanairship.key"),
-  _secret : Conf.get("push.urbanairship.secret"),
-  _master : Conf.get("push.urbanairship.master"),
+    sendPushMessage: function(payload, callback) {
 
-  sendPushs : function(err,push) {
-    var that = this;
-    var msg = "";
-
-    if ( push.infos.type.indexOf('singles')!=-1) {
-      if (push.status.indexOf('ongoing')!=-1) {
-        msg = Resources.getString(push.language, "game.push.started");
-        msg = msg.replace(/%PLAYER1%/g, push.player.name);
-        if (typeof push.opponent.name !== "undefined")
-          msg = msg.replace(/%PLAYER2%/g, push.opponent.name);
-        if (typeof push.opponent.rank !== "undefined")
-          msg = msg.replace(/%RANK2%/g, push.opponent.rank);
-      } else if (push.status.indexOf('created')!=-1) {
-        msg = Resources.getString(push.language, "game.push.created");
-        msg = msg.replace(/%PLAYER1%/g, push.player.name);
-        if (typeof push.opponent.name !== "undefined")
-          msg = msg.replace(/%PLAYER2%/g, push.opponent.name);
-        if (typeof push.opponent.rank !== "undefined")
-          msg = msg.replace(/%RANK2%/g, push.opponent.rank);
-        msg = msg.replace(/%DATE%/g, push.dates.create);
-      } else if (push.status.indexOf('finished')!=-1) {
-        app.log('state finished win:'+push.win);
-        if (push.win === "1")
-        {
-          msg = Resources.getString(push.language, "game.push.finished.win");
-          msg = msg.replace(/%PLAYER1%/g, push.player.name);
-          if (typeof push.opponent.name !== "undefined")
-            msg = msg.replace(/%PLAYER2%/g, push.opponent.name);
-          if (typeof push.opponent.rank !== "undefined")
-            msg = msg.replace(/%RANK2%/g, push.opponent.rank);
-          msg = msg.replace(/%SCORE%/g, push.sets);
-        }
-        else
-        {
-          msg = Resources.getString(push.language, "game.push.finished.loose");
-          msg = msg.replace(/%PLAYER1%/g, push.player.name);
-          if (typeof push.opponent.name !== "undefined")
-            msg = msg.replace(/%PLAYER2%/g, push.opponent.name);
-          if (typeof push.opponent.rank !== "undefined")
-            msg = msg.replace(/%RANK2%/g, push.opponent.rank);
-          msg = msg.replace(/%SCORE%/g, push.sets);
-        }
-      }
-    }
-    //if double
-    else {
-
-        if (push.status.indexOf('ongoing')!=-1) {
-            msg = Resources.getString(push.language, "game.push.double.started");
-            msg = msg.replace(/%PLAYER1%/g, push.player.name);
-
-            if (typeof push.player2.name !== "undefined")
-                msg = msg.replace(/%PLAYER2%/g, push.player2.name);
-            if (typeof push.player2.rank !== "undefined")
-                msg = msg.replace(/%RANK2%/g, push.player2.rank);
-            if (typeof push.opponent.name !== "undefined")
-                msg = msg.replace(/%PLAYER3%/g, push.opponent.name);
-            if (typeof push.opponent.rank !== "undefined")
-                msg = msg.replace(/%RANK3%/g, push.opponent.rank);
-            if (typeof push.opponent2.name !== "undefined")
-                msg = msg.replace(/%PLAYER4%/g, push.opponent2.name);
-            if (typeof push.opponent2.rank !== "undefined")
-                msg = msg.replace(/%RANK4%/g, push.opponent2.rank);
+        var response_data="";
+        var rd="";
 
 
-        } else if (push.status.indexOf('created')!=-1) {
-            msg = Resources.getString(push.language, "game.push.double.created");
-            msg = msg.replace(/%PLAYER1%/g, push.player.name);
-            if (typeof push.player2.name !== "undefined")
-                msg = msg.replace(/%PLAYER2%/g, push.player2.name);
-            if (typeof push.player2.rank !== "undefined")
-                msg = msg.replace(/%RANK2%/g, push.player2.rank);
-            if (typeof push.opponent.name !== "undefined")
-                msg = msg.replace(/%PLAYER3%/g, push.opponent.name);
-            if (typeof push.opponent.rank !== "undefined")
-                msg = msg.replace(/%RANK3%/g, push.opponent.rank);
-            if (typeof push.opponent2.name !== "undefined")
-                msg = msg.replace(/%PLAYER4%/g, push.opponent2.name);
-            if (typeof push.opponent2.rank !== "undefined")
-                msg = msg.replace(/%RANK4%/g, push.opponent2.rank);
-
-
-            msg = msg.replace(/%DATE%/g, push.dates.create);
-        } else if (push.status.indexOf('finished')!=-1) {
-            app.log('state finished win:'+push.win);
-            if (push.win === "1")
-            {
-                msg = Resources.getString(push.language, "game.push.double.finished.win");
-                msg = msg.replace(/%PLAYER1%/g, push.player.name);
-                if (typeof push.player2.name !== "undefined")
-                    msg = msg.replace(/%PLAYER2%/g, push.player2.name);
-                if (typeof push.player2.rank !== "undefined")
-                    msg = msg.replace(/%RANK2%/g, push.player2.rank);
-                if (typeof push.opponent.name !== "undefined")
-                    msg = msg.replace(/%PLAYER3%/g, push.opponent.name);
-                if (typeof push.opponent.rank !== "undefined")
-                    msg = msg.replace(/%RANK3%/g, push.opponent.rank);
-                if (typeof push.opponent2.name !== "undefined")
-                    msg = msg.replace(/%PLAYER4%/g, push.opponent2.name);
-                if (typeof push.opponent2.rank !== "undefined")
-                    msg = msg.replace(/%RANK4%/g, push.opponent2.rank);
-
-                msg = msg.replace(/%SCORE%/g, push.sets);
+        var opts = {
+            "host": "go.urbanairship.com",
+            "port": 443,
+            "path": "/api/push/",
+            "method": "POST",
+            "auth": Conf.get("push.urbanairship.key")+":"+Conf.get("push.urbanairship.master"),
+            "headers": {
+                "Accept": "application/vnd.urbanairship+json; version=3;",
+                "Content-Type": "application/json"
             }
-            else
-            {
-                msg = Resources.getString(push.language, "game.push.double.finished.loose");
-                msg = msg.replace(/%PLAYER1%/g, push.player.name);
+        };
 
-                if (typeof push.player2.name !== "undefined")
-                    msg = msg.replace(/%PLAYER2%/g, push.player2.name);
-                if (typeof push.player2.rank !== "undefined")
-                    msg = msg.replace(/%RANK2%/g, push.player2.rank);
-                if (typeof push.opponent.name !== "undefined")
-                    msg = msg.replace(/%PLAYER3%/g, push.opponent.name);
-                if (typeof push.opponent.rank !== "undefined")
-                    msg = msg.replace(/%RANK3%/g, push.opponent.rank);
-                if (typeof push.opponent2.name !== "undefined")
-                    msg = msg.replace(/%PLAYER4%/g, push.opponent2.name);
-                if (typeof push.opponent2.rank !== "undefined")
-                    msg = msg.replace(/%RANK4%/g, push.opponent2.rank);
+        opts.headers["Content-Type"] = "application/json";
+        rd = JSON.stringify(payload);
+        opts.headers["Content-Length"] = Buffer.byteLength(rd, "utf8");
 
-                msg = msg.replace(/%SCORE%/g, push.sets);
-            }
-        }
 
-    }
 
-    app.log(' msg:'+msg);
+        var request = https.request(opts, function (response) {
 
-    app.log(' host:'+Conf.get('http.host')+ ' port:'+Conf.get('http.port')+''+"/players/" +push.player.id+ "/push");
+            response.setEncoding("utf8");
 
-    if (msg!=="") {
-      http.get({
-        host: Conf.get('http.host'),
-        port: Conf.get('http.port'),
-        path: "/players/" +push.player.id+ "/push"
-      },
-      function(res) {
-        var data = '';
+            response.on("data", function (chunk) {
+                response_data += chunk;
+            });
 
-        res.on('data', function (chunk) { data += chunk; });
+            response.on("end", function () {
 
-        //get followers
-        res.on('end',function(){
-          var followers = JSON.parse(data);
-          var android=false;
-          var android_tab=[];
-          var ios=false;
-          var ios_tab=[];
+                if ([200, 201, 202, 204].indexOf(response.statusCode) >= 0) {
+                    try {
+                        switch (true) {
+                            case /application\/json/.test(response.headers["content-type"]):
+                                callback(null, JSON.parse(response_data));
+                                break;
+                            default:
+                                callback(null, response_data);
+                        }
 
-          followers.forEach(function (follower) {
-            app.log( follower.name+' '+follower.push.token+' '+follower.push.platform );
+                    }
+                    catch (ex) {
+                        callback(null, "error");
 
-            if (follower.push.platform.indexOf('android')!=-1) {
-              android=true;
-              android_tab.push(follower.push.token);
-            }
+                    }
+                }
+                else {
+                    callback(null, "error");
 
-            if (follower.push.platform.indexOf('ios')!=-1) {
-              ios=true;
-              ios_tab.push(follower.push.token);
-            }
+                }
+            });
 
-            if (android == true)
-            {
-              var payload = {"android": {"alert": msg}, "apids": android_tab};
-              that.pushNotification("/api/push/", payload, function(error) {
-                app.log(error);
-              });
-            }
+            response.on("error", function (error) {
+                callback(null, "error");
 
-            if (ios == true)
-            {
-              var payload = {"aps": {"alert": msg,"sound":"default"}, "device_tokens": ios_tab};
-              that.pushNotification("/api/push/", payload, function(error) {
-                app.log(error);
-              });
-            }
-          });
+            });
         });
-      });
-    }
-  },
-
-  /**
-  * Gets the number of devices tokens authenticated with the application.
-  *
-  * @params callback(error, total, active)
-  */
-  getDeviceTokenCounts : function(callback) {
-    this._auth = new Buffer(this._key + ":" + this._master, "utf8").toString("base64");
-
-    this._transport("/api/device_tokens/count/", "GET", function(error, response_data) {
-      callback(error, response_data.device_tokens_count || 0, response_data.active_device_tokens_count || 0);
-    });
-  },
 
 
-  /**
-  * Push a notification to a registered device.
-  *
-  * @params
-  *	path of the push Notification.
-  *	payload the object being sent to Urban Airship as specified http://urbanairship.com/docs/push.html
-  *	callback
-  */
-  pushNotification : function(path, payload, callback) {
-    this._auth = new Buffer(this._key + ":" + this._master, "utf8").toString("base64");
-    this._transport(path, "POST", payload, callback);
-  },
 
-  /**
-  * Register a new device.
-  *
-  * @params
-  *	device_id - The device identifier
-  *	data - The JSON payload (optional)
-  *	callback
-  */
-  registerDevice : function(device_id, data, callback) {
-    this._auth = new Buffer(this._key + ":" + this._secret, "utf8").toString("base64");
+        request.on("error", function (error) {
+            callback(null, "error");
 
-    var path = "/api/device_tokens/" + device_id;
+        });
 
-    app.log("PUSH: registerDevice "+path+' avec '+this._key+' '+this._secret);
-
-    if (data) {
-      // Registration with optional data
-      this._transport(path, "PUT", data, callback);
-    } else {
-      // Simple registration with no additional data
-      this._transport(path, "PUT", callback);
-    }
-  },
-
-  /**
-  * Unregister a device.
-  *
-  * @params
-  *	device_id - The device identifier
-  *	callback
-  */
-  unregisterDevice : function(device_id, callback) {
-    this._auth = new Buffer(this._key + ":" + this._secret, "utf8").toString("base64");
-    this._transport("/api/device_tokens/" + device_id, "DELETE", callback);
-  },
-
-  /*
-  * Send things to UA!
-  *
-  * @params
-  *	path - API route
-  *	method - The HTTPS method to employ
-  *	request_data - The JSON data we are sending (optional)
-  *	callback
-  */
-  _transport : function(path, method, request_data, callback) {
-
-    //app.log('PUSH: sending notification path ['+path+'] method ['+method+'] request_data ['+request_data+']');
-
-    var self = this,
-      rd = "",
-      response_data = "",
-      https_opts = {
-        "host": "go.urbanairship.com",
-        "port": 443,
-        "path": path,
-        "method": method,
-        "headers": {
-          "Authorization": "Basic " + this._auth,
-          "User-Agent": "node-urban-airship/0.2"
+        if (payload) {
+            request.write(rd);
         }
-      };
+
+        request.end();
+    },
+
+    sendPushs: function (err, push, callback) {
+        var that = this;
+        var msg = "";
 
 
-    // We don't necessarily send data
-    if (request_data instanceof Function) {
-      callback = request_data;
-      request_data = null;
-    }
-
-    // Set a Content-Type and Content-Length header if we are sending data
-    if (request_data) {
-      rd = JSON.stringify(request_data);
-
-      https_opts.headers["Content-Type"] = "application/json";
-      https_opts.headers["Content-Length"] = Buffer.byteLength(rd, "utf8");
-    }
-    else {
-      https_opts.headers["Content-Length"] = 0;
-    }
-
-    // dedicated loggers
-    pushLogger.info(https_opts);
-
-    var request = https.request(https_opts, function(response) {
-      response.setEncoding("utf8");
-
-      response.on("data", function(chunk) { response_data += chunk; });
-
-      response.on("end", function() {
-        // You probably forget the trailing '/'
-        if ((response.statusCode == 301 || response.statusCode == 302) && response.headers && response.headers.location) {
-          var url = require("url"),
-            parsed_url = url.parse(response.headers.location);
-
-          self._transport(parsed_url.pathname + (parsed_url.search || ""), method, request_data, callback);
+        if (push.infos.type.indexOf('singles') != -1) {
+            if (push.status.indexOf('ongoing') != -1) {
+                msg = Resources.getString(push.language, "game.push.started");
+                msg = msg.replace(/%PLAYER1%/g, push.player.name);
+                if (typeof push.opponent.name !== "undefined")
+                    msg = msg.replace(/%PLAYER2%/g, push.opponent.name);
+                if (typeof push.opponent.rank !== "undefined")
+                    msg = msg.replace(/%RANK2%/g, push.opponent.rank);
+            } else if (push.status.indexOf('created') != -1) {
+                msg = Resources.getString(push.language, "game.push.created");
+                msg = msg.replace(/%PLAYER1%/g, push.player.name);
+                if (typeof push.opponent.name !== "undefined")
+                    msg = msg.replace(/%PLAYER2%/g, push.opponent.name);
+                if (typeof push.opponent.rank !== "undefined")
+                    msg = msg.replace(/%RANK2%/g, push.opponent.rank);
+                msg = msg.replace(/%DATE%/g, push.dates.create);
+            } else if (push.status.indexOf('finished') != -1) {
+                if (push.win === "1") {
+                    msg = Resources.getString(push.language, "game.push.finished.win");
+                    msg = msg.replace(/%PLAYER1%/g, push.player.name);
+                    if (typeof push.opponent.name !== "undefined")
+                        msg = msg.replace(/%PLAYER2%/g, push.opponent.name);
+                    if (typeof push.opponent.rank !== "undefined")
+                        msg = msg.replace(/%RANK2%/g, push.opponent.rank);
+                    msg = msg.replace(/%SCORE%/g, push.sets);
+                }
+                else {
+                    msg = Resources.getString(push.language, "game.push.finished.loose");
+                    msg = msg.replace(/%PLAYER1%/g, push.player.name);
+                    if (typeof push.opponent.name !== "undefined")
+                        msg = msg.replace(/%PLAYER2%/g, push.opponent.name);
+                    if (typeof push.opponent.rank !== "undefined")
+                        msg = msg.replace(/%RANK2%/g, push.opponent.rank);
+                    msg = msg.replace(/%SCORE%/g, push.sets);
+                }
+            }
         }
-        // Success on 200 or 204, 201 on new device registration
-        else if ([200,201,204].indexOf(response.statusCode) >= 0) {
-          try {
-            switch (true) {
-              case /application\/json/.test(response.headers["content-type"]):
-                callback(null, JSON.parse(response_data));
-                break;
-              default:
-                callback(null, response_data);
+        //if double
+        else {
+
+            if (push.status.indexOf('ongoing') != -1) {
+                msg = Resources.getString(push.language, "game.push.double.started");
+                msg = msg.replace(/%PLAYER1%/g, push.player.name);
+
+                if (typeof push.player2.name !== "undefined")
+                    msg = msg.replace(/%PLAYER2%/g, push.player2.name);
+                if (typeof push.player2.rank !== "undefined")
+                    msg = msg.replace(/%RANK2%/g, push.player2.rank);
+                if (typeof push.opponent.name !== "undefined")
+                    msg = msg.replace(/%PLAYER3%/g, push.opponent.name);
+                if (typeof push.opponent.rank !== "undefined")
+                    msg = msg.replace(/%RANK3%/g, push.opponent.rank);
+                if (typeof push.opponent2.name !== "undefined")
+                    msg = msg.replace(/%PLAYER4%/g, push.opponent2.name);
+                if (typeof push.opponent2.rank !== "undefined")
+                    msg = msg.replace(/%RANK4%/g, push.opponent2.rank);
+
+
+            } else if (push.status.indexOf('created') != -1) {
+                msg = Resources.getString(push.language, "game.push.double.created");
+                msg = msg.replace(/%PLAYER1%/g, push.player.name);
+                if (typeof push.player2.name !== "undefined")
+                    msg = msg.replace(/%PLAYER2%/g, push.player2.name);
+                if (typeof push.player2.rank !== "undefined")
+                    msg = msg.replace(/%RANK2%/g, push.player2.rank);
+                if (typeof push.opponent.name !== "undefined")
+                    msg = msg.replace(/%PLAYER3%/g, push.opponent.name);
+                if (typeof push.opponent.rank !== "undefined")
+                    msg = msg.replace(/%RANK3%/g, push.opponent.rank);
+                if (typeof push.opponent2.name !== "undefined")
+                    msg = msg.replace(/%PLAYER4%/g, push.opponent2.name);
+                if (typeof push.opponent2.rank !== "undefined")
+                    msg = msg.replace(/%RANK4%/g, push.opponent2.rank);
+
+
+                msg = msg.replace(/%DATE%/g, push.dates.create);
+            } else if (push.status.indexOf('finished') != -1) {
+                if (push.win === "1") {
+                    msg = Resources.getString(push.language, "game.push.double.finished.win");
+                    msg = msg.replace(/%PLAYER1%/g, push.player.name);
+                    if (typeof push.player2.name !== "undefined")
+                        msg = msg.replace(/%PLAYER2%/g, push.player2.name);
+                    if (typeof push.player2.rank !== "undefined")
+                        msg = msg.replace(/%RANK2%/g, push.player2.rank);
+                    if (typeof push.opponent.name !== "undefined")
+                        msg = msg.replace(/%PLAYER3%/g, push.opponent.name);
+                    if (typeof push.opponent.rank !== "undefined")
+                        msg = msg.replace(/%RANK3%/g, push.opponent.rank);
+                    if (typeof push.opponent2.name !== "undefined")
+                        msg = msg.replace(/%PLAYER4%/g, push.opponent2.name);
+                    if (typeof push.opponent2.rank !== "undefined")
+                        msg = msg.replace(/%RANK4%/g, push.opponent2.rank);
+
+                    msg = msg.replace(/%SCORE%/g, push.sets);
+                }
+                else {
+                    msg = Resources.getString(push.language, "game.push.double.finished.loose");
+                    msg = msg.replace(/%PLAYER1%/g, push.player.name);
+
+                    if (typeof push.player2.name !== "undefined")
+                        msg = msg.replace(/%PLAYER2%/g, push.player2.name);
+                    if (typeof push.player2.rank !== "undefined")
+                        msg = msg.replace(/%RANK2%/g, push.player2.rank);
+                    if (typeof push.opponent.name !== "undefined")
+                        msg = msg.replace(/%PLAYER3%/g, push.opponent.name);
+                    if (typeof push.opponent.rank !== "undefined")
+                        msg = msg.replace(/%RANK3%/g, push.opponent.rank);
+                    if (typeof push.opponent2.name !== "undefined")
+                        msg = msg.replace(/%PLAYER4%/g, push.opponent2.name);
+                    if (typeof push.opponent2.rank !== "undefined")
+                        msg = msg.replace(/%RANK4%/g, push.opponent2.rank);
+
+                    msg = msg.replace(/%SCORE%/g, push.sets);
+                }
             }
 
-            app.log("PUSH: notification sended ");
-                  pushLogger.info(response_data);
-          }
-          catch (ex) {
-            callback(ex);
-            app.log("PUSH: "+ex, "error 1");
-                  pushLogger.error(ex);
-          }
         }
-        else {
-          callback(new Error(response_data));
-          app.log("PUSH: "+new Error(response_data), "error 2");
-                pushLogger.error(new Error(response_data));
+
+
+        if (msg !== "") {
+
+            var android = false;
+            var android_tab = [];
+            var ios = false;
+            var ios_tab = [];
+
+            http.get({
+                    host: Conf.get('http.host'),
+                    port: Conf.get('http.port'),
+                    path: "/players/" + push.player.id + "/push"
+                },
+                function (res) {
+                    var data = '';
+
+                    res.on('data', function (chunk) {
+                        data += chunk;
+                    });
+
+                    //get followers
+                    res.on('end', function () {
+                        var followers = JSON.parse(data);
+
+
+                        followers.forEach(function (follower) {
+                            //register
+                            if (follower.push.platform.indexOf('android') != -1) {
+                                android = true;
+                                android_tab.push(follower.push.token);
+
+                            }
+
+                            if (follower.push.platform.indexOf('ios') != -1) {
+                                ios = true;
+                                ios_tab.push(follower.push.token);
+
+                            }
+
+                        });
+
+                        //send
+                        if (android == true) {
+
+                            var payload = {"audience": {
+                                "apid": android_tab },
+                                "notification": {"alert": msg},
+                                "device_types": ["android"]
+                            };
+
+                            Push.sendPushMessage(payload, function(err){
+                              if(err)
+                                console.log('err',err);
+                            });
+
+
+                        }
+
+                        if (ios == true) {
+
+                            var payload = {"audience": {
+                                "device_tokens": ios_tab },
+                                "notification": {"alert": msg},
+                                "device_types": ["ios"]
+                            };
+
+                            Push.sendPushMessage(payload, function(err){
+                              if(err)
+                                console.log('err',err);
+                            });
+                        }
+                    });
+                });
+
+
+            /***************/
+
+
         }
-      });
 
-      response.on("error", function(error) {
-        callback(error);
-        app.log("PUSH: "+error, "error 3");
-              pushLogger.error(e);
-      });
-    });
 
-    request.on("error", function(error) {
-      callback(error);
-      app.log("PUSH: "+error, "error 4");
-          pushLogger.error(e);
-    });
-
-    if (request_data) {
-      request.write(rd);
     }
 
-    request.end();
-  }
 };
 
 module.exports = Push;
