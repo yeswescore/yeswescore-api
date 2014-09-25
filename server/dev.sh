@@ -40,6 +40,10 @@ then
     echo "debug mode activated"
     echo " please launch 'node-inspector' to debug."
     node --debug server.js
+  if [ "$1" = "nohup" ]
+  then
+    nohup node server.js > my.log 2>&1&
+    echo $! > save_pid.txt
   else
     echo "to debug, use> ./dev.sh debug"
     node server.js
