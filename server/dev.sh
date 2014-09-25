@@ -42,8 +42,7 @@ then
     node --debug server.js
   if [ "$1" = "nohup" ]
   then
-    nohup node server.js > my.log 2>&1&
-    echo $! > save_pid.txt
+    nohup node server.js
   else
     echo "to debug, use> ./dev.sh debug"
     node server.js
