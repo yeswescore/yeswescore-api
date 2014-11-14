@@ -42,6 +42,7 @@ then
     node --debug server.js
   else
     echo "to debug, use> ./dev.sh debug"
+    echo "to nohup, use> ./dev.sh nohup"
     node server.js
   fi
 else

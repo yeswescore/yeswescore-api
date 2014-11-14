@@ -56,7 +56,7 @@ app.get('/v2/clubs/autocomplete/', function(req, res){
 
     if (sport)
       query.where('sport', sport);
-
+    query.where('_deleted', false);
     query.sort(sort.replace(/,/g, " "))
       .limit(limit)
       .exec(function (err, clubs) {
