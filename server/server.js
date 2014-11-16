@@ -6,7 +6,8 @@ var app = require('./app.js')
   , express = require('express')
   , mongoose = require('mongoose')
   , Conf = require('./conf.js')
-  , DB = require('./db.js');
+  , DB = require('./db.js')
+  , cluster = require('cluster');
 
 require('./api/auth.js');
 require('./api/bootstrap.js');
@@ -30,4 +31,16 @@ mongoose.connection.once('open', function () {
 mongoose.connect(Conf.get('mongo.url'));
 
 // bind server
-app.listen(Conf.get('http.port'));
+if (cluster.isMaster) {
+  var nbWorkers = Conf.get('cluster.nbWorkers') || 1;
+  for (var i = 0; i < nbWorkers; i++) {
+    console.log('spawning worker');
+    cluster.fork();
+  }
+  cluster.on('disconnect', function(worker) {
+    console.log('The worker #' + worker.id + ' has disconnected');
+    process.exit(1);
+  });
+} else {
+  app.listen(Conf.get('http.port'));
+}
