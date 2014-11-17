@@ -8,6 +8,9 @@ var DB = require("../db.js")
   , Authentication = require("../authentication.js")
   , ObjectId = mongoose.Types.ObjectId;
 
+var cacheData = { };
+var cacheTimeouts = { };
+var cacheTimeout = 2 * 1000; // 2 sec
 
 /**
  * Read games
@@ -47,6 +50,16 @@ app.get('/v2/games/', function(req, res){
   var distance = req.query.distance;
   var sport = req.query.sport;
 
+  // calculating cache string.
+  var cachekey = Object.keys(req.query)
+    .filter(function (k) { return k !== '_'; })
+    .map(function (k) { return req.query[k]; })
+    .join(':');
+  if (cacheData[cachekey] && cacheTimeouts[cachekey] > Date.now())
+    return res.send(cacheData[cachekey]);
+  if (cacheData[cachekey])
+    cacheData[cachekey] = null;
+
   // populate option
   var populate = "teams.players";
   if (typeof req.query.populate !== "undefined")
@@ -85,7 +98,10 @@ app.get('/v2/games/', function(req, res){
        .exec(function (err, games) {
       if (err)
         return app.defaultError(res)(err);
-      res.send(JSON.stringifyModels(games));
+      // saving into cache
+      cacheData[cachekey] = JSON.stringifyModels(games);
+      cacheTimeouts[cachekey] = Date.now() + cacheTimeout;
+      res.send(cacheData[cachekey]);
     });
 });
 
