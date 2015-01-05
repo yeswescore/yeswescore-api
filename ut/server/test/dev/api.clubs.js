@@ -99,6 +99,8 @@ describe('dev:clubs', function(){
           assert(club.countTeams === newClub.countTeams, "should have same countTeams");
           assert(club.countTeams1AN === newClub.countTeams1AN, "should have same countTeams1AN");
           assert(club.school === newClub.school, "should have same school");
+          assert(club.sport === newClub.sport, "should have same sport");
+
 
           done();
         });

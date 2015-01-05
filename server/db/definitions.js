@@ -65,7 +65,7 @@ Definitions.generateFile = function (DB) {
 
 Definitions.generateGame = function (DB) {
   Definitions.Game = {
-    sport: { type: String, enum: ["tennis", "badminton", "padel", "racquetball", "tabletennis", "squash", "speedminton"], default: "tennis" },
+    sport: { type: String, enum: ["tennis", "badminton", "padel", "racquetball", "tabletennis", "squash", "speedbadminton"], default: "tennis" },
     status: { type: String, enum: [ "created", "ongoing", "finished", "canceled", "aborted" ], default: "created" },
     owner: { type: Schema.Types.ObjectId, ref: "Player" },
     dates : {
@@ -242,7 +242,7 @@ Definitions.generateStreamItem = function (DB) {
 
 Definitions.generateTeam = function (DB) {
   Definitions.Team = {
-    sport: { type: String, enum: ["tennis", "badminton", "padel", "racquetball", "tabletennis", "squash", "speedminton"], default: "tennis" },
+    sport: { type: String, enum: ["tennis", "badminton", "padel", "racquetball", "tabletennis", "squash", "speedbadminton"], default: "tennis" },
     name: String,
     dates : {
       creation: { type: Date, default: Date.now },

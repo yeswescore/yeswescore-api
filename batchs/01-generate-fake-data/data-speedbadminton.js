@@ -78,7 +78,7 @@ var generateClubsAsync = function () {
   var names = ["CAEN TC", "CAEN LA BUTTE", "LOUVIGNY TC", "MONDEVILLE USO", "CONDE SUR NOIREAU TC", "ARROMANCHE speedminton", "FLEURY speedminton"];
   var clubs = names.map(function (clubName) {
     return new DB.Models.Club({
-      sport: "speedminton",
+      sport: "speedbadminton",
       name: clubName,
       location: {
         address: "random adress " + Math.random(),
@@ -179,7 +179,7 @@ var generateGamesAsync = function () {
     for (var i = 0; i < nbGames; ++i) {
       var owner = players.random().id;
       var game = new DB.Models.Game({
-        sport: "speedminton",
+        sport: "speedbadminton",
         status: ["ongoing", "finished"].random(),
         owner: owner, // utilisateur ayant saisi le match.
         location: {
@@ -343,7 +343,7 @@ var generateTeamsAsync = function () {
             Math.round(Math.random() * players.length / 5)
         );
         team = new DB.Models.Team({
-          sport: "speedminton",
+          sport: "speedbadminton",
           name: ['Equipe A', 'Equipe B', 'Equipe C'].random(),
           players: teamPlayers,
           captain: teamPlayers.random(),

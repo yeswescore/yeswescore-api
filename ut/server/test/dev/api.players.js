@@ -222,7 +222,7 @@ describe('dev:players', function(){
         var newPlayer = {
           name: "TU-"+Math.random(),
           rank: "15/2",
-          club: { id: randomClub._id, name: randomClub.name }
+          club: { id: randomClub._id, name: randomClub.name, sport: randomClub.sport }
         };
         http.post(options, newPlayer, function (player) {
           assert.isPlayerWithToken(player);
@@ -241,6 +241,7 @@ describe('dev:players', function(){
             assert.isObject(newPlayer.club, "newPlayer.club must be an object");
             assert(newPlayer.club.id === p.club.id, "must be same club");
             assert(newPlayer.club.name === p.club.name, "must have same club name");
+            //assert(newPlayer.club.sport === p.club.sport, "must have same sport");
             done();
           });
         });
