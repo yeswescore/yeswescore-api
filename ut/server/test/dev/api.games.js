@@ -153,7 +153,7 @@ describe('dev:games', function(){
     });
   });
 
-/*
+
     describe('create a single game between 2 teams of anonymous players, then read it with sport tennistable', function () {
         it('should create & give the game (not empty & valid)', function (done){
             // read a player
@@ -185,7 +185,7 @@ describe('dev:games', function(){
             });
         });
     });
-*/
+
 
     describe('create a single game between 2 teams of anonymous players, then read it with sport badminton', function () {
         it('should create & give the game (not empty & valid)', function (done){
