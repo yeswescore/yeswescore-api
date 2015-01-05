@@ -3,7 +3,13 @@
 require('../../server/helpers.js');
 
 var Conf = require('../../server/conf.js')
-  , Data = require('./data.js')
+  , DataBadminton = require('./data-badminton.js')
+  , DataPadel = require('./data-padel.js')
+  , DataRacquetball = require('./data-racquetball.js')
+  , DataSpeedbadminton = require('./data-speedbadminton.js')
+  , DataSquash = require('./data-squash.js')
+  , DataTabletennis = require('./data-tabletennis.js')
+  , DataTennis = require('./data-tennis.js')  
   , mongoose = require('mongoose');
 
 // mongo connection
@@ -18,7 +24,18 @@ mongoose.connect(Conf.get('mongo.url'));
 console.log('connecting to '+Conf.get('mongo.url'));
 
 function start() {
-  Data.generateFakeDataAsync().done(
+
+  var Q = require('q');
+
+  Q.all( [ DataBadminton.generateFakeDataAsync()
+			, DataPadel.generateFakeDataAsync() 
+			, DataRacquetball.generateFakeDataAsync() 
+			, DataSpeedbadminton.generateFakeDataAsync() 
+			, DataSquash.generateFakeDataAsync() 
+			, DataTabletennis.generateFakeDataAsync() 
+			, DataTennis.generateFakeDataAsync() 			
+	] )
+  .done(
     function () { process.exit(0) },
     function () { process.exit(1) }
   );
