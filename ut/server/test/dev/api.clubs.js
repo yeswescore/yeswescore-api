@@ -106,7 +106,7 @@ describe('dev:clubs', function(){
     });
   });
 
-    describe('create random club, read it, sport tennistable', function() {
+    describe('create random club, read it, sport tabletennis', function() {
         it('should create the club', function (done) {
             var options = {
                 host: Conf["http.host"],
@@ -138,7 +138,7 @@ describe('dev:clubs', function(){
                     countTeams: Math.round(Math.random() * 10),
                     countTeams1AN: Math.round(Math.random() * 10),
                     school: "school"+Math.random(),
-                    sport: "tennistable"
+                    sport: "tabletennis"
                 };
                 http.post(options, newClub, function (club) {
                     assert.isClub(club);

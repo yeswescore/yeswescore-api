@@ -154,7 +154,7 @@ describe('dev:games', function(){
   });
 
 
-    describe('create a single game between 2 teams of anonymous players, then read it with sport tennistable', function () {
+    describe('create a single game between 2 teams of anonymous players, then read it with sport tabletennis', function () {
         it('should create & give the game (not empty & valid)', function (done){
             // read a player
             var options = {
@@ -174,11 +174,11 @@ describe('dev:games', function(){
                 var newGame = {
                     teams: [ { id: null, players: [ { name : "toto", email: { address: "foo"+Math.random()+"@yeswescore.com" }, rank: "15/2" } ] },
                         { id: null, players: [ { name : "titi" } ] } ],
-                    sport: "tennistable"
+                    sport: "tabletennis"
                 };
                 http.post(options, newGame, function (game) {
                     assert.isGame(game, "game was correctly created");
-                    assert(game.sport === "tennistable", "sport must be tennistable");
+                    assert(game.sport === "tabletennis", "sport must be tabletennis");
 
                     done();
                 });
