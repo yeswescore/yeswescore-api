@@ -125,7 +125,7 @@ app.get('/v2/players/autocomplete/', function(req, res){
  */
 app.get('/v2/players/:id', function(req, res){
 
-  var fields = req.query.fields || "following,idlicense,language,name,type,rank,type,games,dates.creation,location.currentPos,id,gender,dates.birth,push.platform,club.id,club.name,email.address,token,profile";
+  var fields = req.query.fields || "following,idlicense,language,name,type,rank,type,games,dates.creation,location.currentPos,id,gender,dates.birth,push.platform,club.id,club.name,email.address,token,profile, sport";
   
   Authentication.Query.getPlayer(req.query)
     .then(function (authentifiedPlayer) {

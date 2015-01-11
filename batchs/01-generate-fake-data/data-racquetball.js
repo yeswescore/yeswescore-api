@@ -4,6 +4,8 @@ var DB = require('../../server/db.js')
 // will export only a function.
 var Data = { };
 
+var gSport = "racquectball";
+
 // fonctions de generation de contenu
 var generateFakeId = function () { 
   var s = ""
@@ -32,7 +34,7 @@ var generateFakeComment = function () {
    "Je t'ai ajouté! :D",
    "Lol, c'te gros tocard.",
    "j'arrive pas à faire venir Roger à mon Open 13 et ça me fout les boules.",
-   "C'est EXACTEMENT ça, Franchement pour dire ça faut vraiment être d'une mauvaise foi incomparable ou n'y rien connaitre au racquetball. On peut ne pas aimer Federer mais ne pas reconnaitre qu'il fait le show...",
+   "C'est EXACTEMENT ça, Franchement pour dire ça faut vraiment être d'une mauvaise foi incomparable ou n'y rien connaitre. On peut ne pas aimer Federer mais ne pas reconnaitre qu'il fait le show...",
    "Sous entendu : Désolé de cette interview de merde. je dois vite me retirer et crever très vite. Ciao. ",
    "Haha on sent le mec frustré qui veut se démarquer de la masse en critiquant Federer alors que tout le monde l'adule. \
 \
@@ -75,10 +77,10 @@ var generateFakeDateEnd = function () {
 }
 
 var generateClubsAsync = function () {
-  var names = ["CAEN TC", "CAEN LA BUTTE", "LOUVIGNY TC", "MONDEVILLE USO", "CONDE SUR NOIREAU TC", "ARROMANCHE racquetball PORT WILSON", "FLEURY racquetball CLUB"];
+  var names = ["CAEN TC", "CAEN LA BUTTE", "LOUVIGNY TC", "MONDEVILLE USO", "CONDE SUR NOIREAU TC", "ARROMANCHE", "FLEURY BAD"];
   var clubs = names.map(function (clubName) {
     return new DB.Models.Club({
-      sport: "racquetball",
+      sport: gSport,
       name: clubName,
       location: {
         address: "random adress " + Math.random(),
@@ -120,6 +122,7 @@ var generatePlayersAsync = function () {
           clubInfo = undefined;
         return new DB.Models.Player({
             name: generateFakeFirstName() + " " + generateFakeName(),
+            sport: gSport,
             location: {
               currentPos: generateFakeLocation(),
               city: generateFakeCity(),
@@ -151,6 +154,7 @@ var generatePlayersAsync = function () {
           clubInfo = undefined;
         return new DB.Models.Player({
             name: generateFakeFirstName() + " " + generateFakeName(),
+            sport: gSport,
             location: {
               country: "",
               pos: []
@@ -169,9 +173,9 @@ var generateGamesAsync = function () {
   // generating 20 games
   var players, owned, games = [];
   return Q.all([
-    Q.nfcall(DB.Models.Player.find.bind(DB.Models.Player), {type:"default"})
+    Q.nfcall(DB.Models.Player.find.bind(DB.Models.Player), {type:"default",sport:gSport})
      .then(function (result) { players = result }),
-    Q.nfcall(DB.Models.Player.find.bind(DB.Models.Player), {type:"owned"})
+    Q.nfcall(DB.Models.Player.find.bind(DB.Models.Player), {type:"owned",sport:gSport})
      .then(function (result) { owned = result })
   ]).then(function () {
     var nbGames = 20;
@@ -179,7 +183,7 @@ var generateGamesAsync = function () {
     for (var i = 0; i < nbGames; ++i) {
       var owner = players.random().id;
       var game = new DB.Models.Game({
-        sport: "racquetball",
+        sport: gSport,
         status: ["ongoing", "finished"].random(),
         owner: owner, // utilisateur ayant saisi le match.
         location: {
@@ -245,6 +249,7 @@ var generateGamesAsync = function () {
       var ownedplayer2 = owned[i*2+1];
 
       // sometimes, players are "anonymous"
+        //TODO : add sport
       if (Math.random() < 0.2) {
         if (Math.random() < 0.3) {
           game.teams = [
@@ -329,7 +334,7 @@ var generateTeamsAsync = function () {
     .then(function (clubs) {
       gClubs = clubs;
       return Q.nfcall(DB.Models.Player.find.bind(DB.Models.Player),
-                      {type:"default"});
+                      {type:"default",sport:gSport});
     }).then(function (players) {
       // creating 2 random teams with 1 to N players
       var teams = [], team, teamPlayers;
@@ -342,8 +347,9 @@ var generateTeamsAsync = function () {
             Math.round(Math.random() * players.length / 2) + 1,
             Math.round(Math.random() * players.length / 5)
         );
+
         team = new DB.Models.Team({
-          sport: "racquetball",
+          sport: gSport,
           name: ['Equipe A', 'Equipe B', 'Equipe C'].random(),
           players: teamPlayers,
           captain: teamPlayers.random(),
@@ -352,7 +358,9 @@ var generateTeamsAsync = function () {
           club: gClubs.random().id,
           competition: [true,false].random()
         });
+
         teams.push(team);
+
       }
       return DB.save(teams);
   }, function (err) { console.log('error ' + err); });
