@@ -631,6 +631,7 @@ describe('dev:games', function(){
                     game.infos.numberOfBestSets = 3;
                     game.infos.maxiSets = 6;
                     game.dates.expected = new Date();
+                    game.sport = "tennis";
 
                     http.post(options, game, function (game) {
                         assert.isGame(game);

@@ -520,10 +520,12 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
        }
 
       // detect if game is finished
-      if (game.isFinishedTennis() ) {
-        //if finished one time, we don't autofinish again
-        if (oldstatus!=="finished") {
-          game.status = "finished";
+      if (game.sport=="tennis") {
+        if (game.isFinishedTennis()) {
+          //if finished one time, we don't autofinish again
+          if (oldstatus !== "finished") {
+            game.status = "finished";
+          }
         }
       }
 

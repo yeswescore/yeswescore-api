@@ -413,20 +413,20 @@ Schemas.generate = function (DB) {
       if(scoreTeamA==2) {
         var diff_sets4 = parseInt(sets[4][0], 10)-parseInt(sets[4][1], 10);
 
-        if( ((sets[2][0]==6 && sets[2][1] <5) || sets[2][0]>6)
+        if( (sets[2][0]==this.infos.maxiSets && sets[2][1] <(this.infos.maxiSets-1) || sets[2][0]>this.infos.maxiSets)
               && sets[3][0]==0  && sets[4][0]==0
               && sets[3][1]==0  && sets[4][1]==0
           ) {
           this.infos.score = "3/0";
           return true;
         }
-        else if(((sets[3][0]==6 && sets[3][1] <5) || sets[3][0]>6)
+        else if(((sets[3][0]==this.infos.maxiSets && sets[3][1] <(this.infos.maxiSets-1)) || sets[3][0]>this.infos.maxiSets)
             && sets[4][0]==0  && sets[4][1]==0
         ) {
           this.infos.score = "3/1";
           return true;
         }
-        else if(sets[4][0]>=6 && diff_sets4>=2) {
+        else if(sets[4][0]>=this.infos.maxiSets && diff_sets4>=2) {
           this.infos.score = "3/2";
           return true;
         }
@@ -434,20 +434,20 @@ Schemas.generate = function (DB) {
       if(scoreTeamB==2) {
         var diff_sets4 = parseInt(sets[4][1], 10)-parseInt(sets[4][0], 10);
 
-        if( ((sets[2][1]==6 && sets[2][0] <5) || sets[2][1]>6)
+        if( ((sets[2][1]==this.infos.maxiSets && sets[2][0] <(this.infos.maxiSets-1)) || sets[2][1]>this.infos.maxiSets)
             && sets[3][0]==0  && sets[4][0]==0
             && sets[3][1]==0  && sets[4][1]==0
           ) {
           this.infos.score = "0/3";
           return true;
         }
-        else if(((sets[3][1]==6 && sets[3][0] <5) || sets[3][1]>6)
+        else if(((sets[3][1]==this.infos.maxiSets && sets[3][0] <(this.infos.maxiSets-1)) || sets[3][1]>this.infos.maxiSets)
             && sets[4][0]==0  && sets[4][1]==0
         ) {
             this.infos.score = "1/3";
             return true;
         }
-        else if(sets[4][1]>=6 && diff_sets4>=2) {
+        else if(sets[4][1]>=this.infos.maxiSets && diff_sets4>=2) {
           this.infos.score = "2/3";
           return true;
         }
@@ -457,6 +457,10 @@ Schemas.generate = function (DB) {
 
     return false;
   };
+
+
+
+
 
 };
 
