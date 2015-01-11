@@ -1458,9 +1458,33 @@ describe('dev:games', function(){
     });
   });
 
-    describe('FIXME: read games filtering by sport', function() {
-        it('should read games using filter ?sport=tennis', function (done) {
-            done(/* FIXME */);
+    describe('read games filtering by sport', function() {
+        it('should read games using filter ?sport=speedbadminton', function (done) {
+
+          var options = {
+            host: Conf["http.host"],
+            port: Conf["http.port"],
+            path: Conf["api.games"]+"?sport=speedbadminton"
+          };
+
+          http.getJSON(options, function (games) {
+            assert.isArray(games);
+
+            games.forEach(function (game) {
+              assert(game.sport == "speedbadminton");
+              //console.log(game.teams[0].players[0].sport);
+              assert(game.teams[0].players[0].sport == "speedbadminton");
+              assert(game.teams[1].players[0].sport == "speedbadminton");
+
+            });
+
+            done();
+          });
+
+
         });
     });
+
+
+
 });

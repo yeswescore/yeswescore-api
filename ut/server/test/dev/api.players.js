@@ -881,4 +881,29 @@ describe('dev:players', function(){
         });
     });
 
+  /*
+  describe('read players autocomplete filtering by sport', function() {
+    it('should read players using filter ?sport=speedbadminton', function (done) {
+
+      var options = {
+        host: Conf["http.host"],
+        port: Conf["http.port"],
+        path: Conf["api.players"]+"autocomplete/?q=a&sport=speedbadminton&limit=5"
+      };
+
+      http.getJSON(options, function (players) {
+        assert.isArray(players);
+
+        players.forEach(function (player) {
+          assert(player.sport == "speedbadminton");
+        });
+
+        done();
+      });
+
+
+    });
+  });
+  */
+
 });

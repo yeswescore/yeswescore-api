@@ -239,6 +239,7 @@ assert.isClub = function (club) {
 assert.isPlayerScheme = function (player, m) {
   assert.schema({
     id: { _type: "id" },
+    sport: { _type: "enum", _enum: [ "tennis", "badminton", "padel", "tabletennis", "racquetball", "squash", "speedbadminton" ] },
     name: { _type: "string|undefined" },
     location: {
       currentPos: { _type: "array|undefined" },

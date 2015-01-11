@@ -41,7 +41,7 @@ app.get('/v2/clubs/autocomplete/', function(req, res){
   var longitude = req.query.longitude;
   var latitude = req.query.latitude;
   var distance = req.query.distance;
-  var sport = req.query.sport;
+  var sport = req.query.sport || "tennis";
 
   if (text) {
     // slow
