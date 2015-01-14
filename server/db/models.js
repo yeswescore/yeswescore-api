@@ -105,7 +105,7 @@ Models.generate = function (DB) {
       return "numberOfBestSets should be numeric";
       
     if (game.infos && game.infos.maxiSets &&
-        (parseInt(game.infos.maxiSets, 10) < 0 || parseInt(game.infos.maxiSets, 10) > 10))
+        (parseInt(game.infos.maxiSets, 10) < 0 || parseInt(game.infos.maxiSets, 10) > 21))
       return "maxiSets should be numeric";      
 
     return null;
