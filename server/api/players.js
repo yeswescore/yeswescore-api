@@ -408,7 +408,7 @@ app.post('/v2/players/:id', express.bodyParser(), function(req, res){
       player = playerowned;
         
     // updating player
-    ["name", "rank", "idlicense", "gender"].forEach(function (o) {
+    ["name", "rank", "idlicense", "gender","sport"].forEach(function (o) {
       if (typeof req.body[o] !== "undefined")
         player[o] = req.body[o];
     });
