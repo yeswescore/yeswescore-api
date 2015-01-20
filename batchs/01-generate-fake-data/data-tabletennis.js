@@ -206,7 +206,7 @@ var generateGamesAsync = function () {
           tour: [ "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30"  ].random(),
           pro : [true, false, false, false, false, false, false, false, false, false, false, false].random(),
           official : [true, false].random(),
-          numberOfBestSets: [3,5,undefined].random()
+          numberOfBestSets: "5"
         }
       });
 
@@ -214,10 +214,10 @@ var generateGamesAsync = function () {
         // status finished
         game.dates.end = generateFakeDateEnd();
         if (Math.random() > 0.5) {
-          game.infos.sets = "6/"+Math.floor(Math.random() * 5)+";6/"+Math.floor(Math.random() * 5);
+          game.infos.sets = "11/"+Math.floor(Math.random() * 10)+";11/"+Math.floor(Math.random() * 10);
           game.infos.score = "2/0";
         } else {
-          game.infos.sets = Math.floor(Math.random() * 5)+"/6;"+Math.floor(Math.random() * 5)+"/6";
+          game.infos.sets = Math.floor(Math.random() * 10)+"/11;"+Math.floor(Math.random() * 10)+"/11";
           game.infos.score = "0/2";
         }
       } else {
@@ -225,15 +225,15 @@ var generateGamesAsync = function () {
         if (Math.random() > 0.5) {
           // 2 set
           if (Math.random() > 0.5) {
-            game.infos.sets = "6/"+Math.floor(Math.random() * 5)+";"+Math.floor(Math.random() * 5)+"/"+Math.floor(Math.random() * 5);
+            game.infos.sets = "11/"+Math.floor(Math.random() * 10)+";"+Math.floor(Math.random() * 10)+"/"+Math.floor(Math.random() * 10);
             game.infos.score = "1/0";
           } else {
-            game.infos.sets = Math.floor(Math.random() * 5)+"/6;"+Math.floor(Math.random() * 5)+"/"+Math.floor(Math.random() * 5);
+            game.infos.sets = Math.floor(Math.random() * 10)+"/11;"+Math.floor(Math.random() * 10)+"/"+Math.floor(Math.random() * 10);
             game.infos.score = "0/1";
           }
         } else {
           // 1 set
-          game.infos.sets = Math.floor(Math.random() * 5)+"/"+Math.floor(Math.random() * 5);
+          game.infos.sets = Math.floor(Math.random() * 10)+"/"+Math.floor(Math.random() * 10);
           game.infos.score = "0/0";
         }
       }

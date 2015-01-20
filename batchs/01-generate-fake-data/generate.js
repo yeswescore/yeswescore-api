@@ -28,12 +28,12 @@ function start() {
   var Q = require('q');
 
   Q.all( [ DataTennis.generateFakeDataAsync()
-			//, DataPadel.generateFakeDataAsync()
-			//, DataRacquetball.generateFakeDataAsync()
+			, DataPadel.generateFakeDataAsync()
+			, DataRacquetball.generateFakeDataAsync()
 			, DataSpeedbadminton.generateFakeDataAsync()
-			//, DataSquash.generateFakeDataAsync()
-			//, DataTabletennis.generateFakeDataAsync()
-			//, DataBadminton.generateFakeDataAsync()
+			, DataSquash.generateFakeDataAsync()
+			, DataTabletennis.generateFakeDataAsync()
+			, DataBadminton.generateFakeDataAsync()
 	] )
   .done(
     function () { process.exit(0) },
