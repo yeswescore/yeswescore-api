@@ -41,7 +41,7 @@ app.get('/v2/clubs/autocomplete/', function(req, res){
   var longitude = req.query.longitude;
   var latitude = req.query.latitude;
   var distance = req.query.distance;
-  var sport = req.query.sport;
+  var sport = req.query.sport || "tennis";
 
   if (text) {
     // slow
@@ -165,7 +165,8 @@ app.post('/v2/clubs/', express.bodyParser(), function(req, res){
     Q.ensure(Authentication.Query.getPlayer(req.query))
      .isNot(null, 'unauthorized')
      .inject(data, 'player'),
-    Q.ninvoke(DB.Models.Club, 'findOne', { name: req.body.name, 'location.city': req.body.location.city })
+    /* old filter : { name: req.body.name, 'location.city': req.body.location.city } */
+    Q.ninvoke(DB.Models.Club, 'findOne', { 'location.city': req.body.location.city })
      .inject(data, 'club')
   ]).then(function () {
       if (data.club)

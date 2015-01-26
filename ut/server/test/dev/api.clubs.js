@@ -99,6 +99,8 @@ describe('dev:clubs', function(){
           assert(club.countTeams === newClub.countTeams, "should have same countTeams");
           assert(club.countTeams1AN === newClub.countTeams1AN, "should have same countTeams1AN");
           assert(club.school === newClub.school, "should have same school");
+          assert(club.sport === newClub.sport, "should have same sport");
+
 
           done();
         });
@@ -106,7 +108,7 @@ describe('dev:clubs', function(){
     });
   });
 
-    describe('create random club, read it, sport tennistable', function() {
+    describe('create random club, read it, sport tabletennis', function() {
         it('should create the club', function (done) {
             var options = {
                 host: Conf["http.host"],
@@ -138,7 +140,7 @@ describe('dev:clubs', function(){
                     countTeams: Math.round(Math.random() * 10),
                     countTeams1AN: Math.round(Math.random() * 10),
                     school: "school"+Math.random(),
-                    sport: "tennistable"
+                    sport: "tabletennis"
                 };
                 http.post(options, newClub, function (club) {
                     assert.isClub(club);

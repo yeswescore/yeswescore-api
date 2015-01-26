@@ -211,7 +211,7 @@ assert.schema = function (schema, obj, msg) {
 assert.isClub = function (club) {
   assert.schema({
     id: { _type: "id" },
-    sport: { _type: "enum", _enum: [ "tennis", "badminton", "paddle", "tennistable", "squash", "speedminton" ] },
+    sport: { _type: "enum", _enum: [ "tennis", "badminton", "padel", "tabletennis", "racquetball","squash", "speedbadminton" ] },
     dates: {
       creation: { _type: "date" },
       update: { _type: "date" }
@@ -239,6 +239,7 @@ assert.isClub = function (club) {
 assert.isPlayerScheme = function (player, m) {
   assert.schema({
     id: { _type: "id" },
+    sport: { _type: "enum", _enum: [ "tennis", "badminton", "padel", "tabletennis", "racquetball", "squash", "speedbadminton" ] },
     name: { _type: "string|undefined" },
     location: {
       currentPos: { _type: "array|undefined" },
@@ -322,7 +323,7 @@ assert.isFile = function (file) {
 assert.isGame = function (game) {
   assert.schema({
     id : { _type: "id" },
-    sport: { _type: "enum", _enum: [ "tennis", "badminton", "paddle", "tennistable", "squash", "speedminton" ] },
+    sport: { _type: "enum", _enum: [ "tennis", "badminton", "padel", "tabletennis", "racquetball", "squash", "speedbadminton" ] },
     owner: { _type: "id" },
     status: { _type : "enum|undefined", _enum: ["created", "ongoing", "finished", "canceled", "aborted" ] },
     dates: {

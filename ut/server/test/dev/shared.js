@@ -68,6 +68,8 @@ API.Player.random = function () {
     path: Conf["documents.players"]+"random"
   };
 
+  console.log("API.Player.random "+options);
+
   http.getJSON(options, function (randomPlayer) {
     assert.isObject(randomPlayer, "random player must exist");
 

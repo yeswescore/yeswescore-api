@@ -16,7 +16,7 @@ Definitions.generateClub = function (DB) {
   // =>
   // fedid,name,ligue,zip,city,outdoor,indoor,countPlayers,countPlayers1AN,countTeams,countTeams1AN,school
   Definitions.Club = {
-    sport: String,
+    sport: { type: String, enum: ["tennis", "badminton", "padel", "racquetball", "tabletennis", "squash", "speedbadminton"], default: "tennis" },
     name: String,
     dates : {
       creation: { type: Date, default: Date.now },
@@ -65,7 +65,7 @@ Definitions.generateFile = function (DB) {
 
 Definitions.generateGame = function (DB) {
   Definitions.Game = {
-    sport: { type: String, enum: ["tennis", "badminton", "paddle", "tabletennis", "squash", "speedminton"], default: "tennis" },
+    sport: { type: String, enum: ["tennis", "badminton", "padel", "racquetball", "tabletennis", "squash", "speedbadminton"], default: "tennis" },
     status: { type: String, enum: [ "created", "ongoing", "finished", "canceled", "aborted" ], default: "created" },
     owner: { type: Schema.Types.ObjectId, ref: "Player" },
     dates : {
@@ -162,6 +162,7 @@ Definitions.generateGame = function (DB) {
 Definitions.generatePlayer = function (DB) {
   Definitions.Player = {
     name: String,
+    sport: { type: String, enum: ["tennis", "badminton", "padel", "racquetball", "tabletennis", "squash", "speedbadminton"], default: "tennis" },
     location: {
       currentPos: { type: [Number], index: '2d'},
       city: String,
@@ -242,7 +243,7 @@ Definitions.generateStreamItem = function (DB) {
 
 Definitions.generateTeam = function (DB) {
   Definitions.Team = {
-    sport: { type: String, enum: ["tennis", "badminton", "paddle", "tabletennis", "squash", "speedminton"], default: "tennis" },
+    sport: { type: String, default: "default" },
     name: String,
     dates : {
       creation: { type: Date, default: Date.now },

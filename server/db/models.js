@@ -51,10 +51,10 @@ Models.generate = function (DB) {
   // FIXME: use definition to automate theses tests.
   Models.Game.checkFields = function (game) {
     if (game.sport && game.sport !== "tennis"
-        && game.sport !== "tennistable" && game.sport !== "squash"
-        && game.sport !== "badminton"
+        && game.sport !== "tabletennis" && game.sport !== "squash" && game.sport !== "speedbadminton" 
+        && game.sport !== "badminton" && game.sport !== "padel" && game.sport !== "racquetball"
     )
-      return "wrong sport (tennis, tennistable, squash, badminton only)";
+      return "wrong sport (tennis, tabletennis, squash, badminton, speedbadmiton, racquetball only)";
     // check type
     if (game.type && game.type !== "singles")
       return "wrong type (singles only)";
@@ -105,7 +105,7 @@ Models.generate = function (DB) {
       return "numberOfBestSets should be numeric";
       
     if (game.infos && game.infos.maxiSets &&
-        (parseInt(game.infos.maxiSets, 10) < 0 || parseInt(game.infos.maxiSets, 10) > 10))
+        (parseInt(game.infos.maxiSets, 10) < 0 || parseInt(game.infos.maxiSets, 10) > 21))
       return "maxiSets should be numeric";      
 
     return null;

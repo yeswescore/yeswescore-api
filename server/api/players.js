@@ -31,7 +31,7 @@ app.get('/v2/players/', function(req, res){
   var latitude = req.query.latitude;
   var distance = req.query.distance;
   var text = req.query.q;
-  var sport = req.query.sport;
+  var sport = req.query.sport || "tennis";
 
   var query = DB.Models.Player.find()
   if (fields)
@@ -73,7 +73,7 @@ app.get('/v2/players/', function(req, res){
  *  /v2/players/autocomplete/?owner=:id   (autocomplete centered to an owner)
  */
 app.get('/v2/players/autocomplete/', function(req, res){
-  var fields = req.query.fields || "name,type,club,rank,profile,dates.birth";
+  var fields = req.query.fields || "name,type,club,rank,profile,dates.birth,sport";
   var limit = req.query.limit || 5;
   var owner = req.query.owner;
   var sort = req.query.sort || "name";
@@ -81,7 +81,7 @@ app.get('/v2/players/autocomplete/', function(req, res){
   var longitude = req.query.longitude;
   var latitude = req.query.latitude;
   var distance = req.query.distance;
-  var sport = req.query.sport;
+  var sport = req.query.sport || "tennis";
 
   if (text) {
     // slow
@@ -125,7 +125,7 @@ app.get('/v2/players/autocomplete/', function(req, res){
  */
 app.get('/v2/players/:id', function(req, res){
 
-  var fields = req.query.fields || "following,idlicense,language,name,type,rank,type,games,dates.creation,location.currentPos,id,gender,dates.birth,push.platform,club.id,club.name,email.address,token,profile";
+  var fields = req.query.fields || "following,idlicense,language,name,type,rank,type,games,dates.creation,location.currentPos,id,gender,dates.birth,push.platform,club.id,club.name,email.address,token,profile, sport";
   
   Authentication.Query.getPlayer(req.query)
     .then(function (authentifiedPlayer) {
@@ -408,7 +408,7 @@ app.post('/v2/players/:id', express.bodyParser(), function(req, res){
       player = playerowned;
         
     // updating player
-    ["name", "rank", "idlicense", "gender"].forEach(function (o) {
+    ["name", "rank", "idlicense", "gender","sport"].forEach(function (o) {
       if (typeof req.body[o] !== "undefined")
         player[o] = req.body[o];
     });
