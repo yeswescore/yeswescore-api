@@ -8,34 +8,34 @@ var Conf = require("./conf.js")
 
 var pushLogger = winston.loggers.get('push');
 
-
-
 var Push = {
-// using urbanairship
-// cf. https://github.com/cojohn/node-urban-airship/blob/master/lib/urban-airship.js
+// gamethrive
+
     sendPushMessage: function(payload, callback) {
 
         var response_data="";
         var rd="";
-
+		
+		/*
+		curl --include --request POST --header "Content-Type: application/json" --header "Authorization: Basic Y2ZjMmQ2YzItOWQ4Yy0xMWU0LTlkNWQtODcwNzA1MjMzOWU0" --data-binary '{"app_id": "cfc2d62c-9d8c-11e4-9d5c-17bf4d8b652c","contents": {"en": "Record sur YesWeScore"},"isAndroid": true,"isIos": true,"include_player_ids" : ['7368b9e5-c61c-43dd-bf09-fbcc838db111']}' https://gamethrive.com/api/v1/notifications
+		*/
 
         var opts = {
-            "host": "go.urbanairship.com",
-            "port": 443,
-            "path": "/api/push/",
+            "host": "gamethrive.com",
+			"port": 443,
+            "path": "/api/v1/notifications",
             "method": "POST",
-            "auth": Conf.get("push.urbanairship.key")+":"+Conf.get("push.urbanairship.master"),
+            "auth": "",
             "headers": {
-                "Accept": "application/vnd.urbanairship+json; version=3;",
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+				"Authorization": "Basic Y2ZjMmQ2YzItOWQ4Yy0xMWU0LTlkNWQtODcwNzA1MjMzOWU0"
             }
         };
 
         opts.headers["Content-Type"] = "application/json";
+		
         rd = JSON.stringify(payload);
         opts.headers["Content-Length"] = Buffer.byteLength(rd, "utf8");
-
-
 
         var request = https.request(opts, function (response) {
 
@@ -46,7 +46,7 @@ var Push = {
             });
 
             response.on("end", function () {
-
+			
                 if ([200, 201, 202, 204].indexOf(response.statusCode) >= 0) {
                     try {
                         switch (true) {
@@ -92,7 +92,6 @@ var Push = {
     sendPushs: function (err, push, callback) {
         var that = this;
         var msg = "";
-
 
         if (push.infos.type.indexOf('singles') != -1) {
             if (push.status.indexOf('ongoing') != -1) {
@@ -212,14 +211,33 @@ var Push = {
 
         }
 
-
         if (msg !== "") {
 
             var android = false;
             var android_tab = [];
             var ios = false;
             var ios_tab = [];
+			var playerid_tab = [];
+			
+			/**************************************/
+			var payload = {
+			'app_id' : "cfc2d62c-9d8c-11e4-9d5c-17bf4d8b652c",
+			'isAndroid' : true,
+			'isIos' : true,
+			'isWP' : true,
+			'include_player_ids' : ['7368b9e5-c61c-43dd-bf09-fbcc838db111'],
+			'contents' : {"en":msg,"fr":msg}
+			};
 
+			//console.log('payload',payload);
+			
+			Push.sendPushMessage(payload, function(err,data){
+			  if(err)
+				console.log('err',err);
+			   //console.log('result callback',data);
+			});			
+			/**************************************/
+			
             http.get({
                     host: Conf.get('http.host'),
                     port: Conf.get('http.port'),
@@ -235,10 +253,13 @@ var Push = {
                     //get followers
                     res.on('end', function () {
                         var followers = JSON.parse(data);
-
+						
+						console.log('followers',followers);
 
                         followers.forEach(function (follower) {
                             //register
+							playerid_tab.push(follower.push.token);
+							/*
                             if (follower.push.platform.indexOf('android') != -1) {
                                 android = true;
                                 android_tab.push(follower.push.token);
@@ -250,39 +271,27 @@ var Push = {
                                 ios_tab.push(follower.push.token);
 
                             }
-
+							*/
                         });
 
                         //send
-                        if (android == true) {
 
-                            var payload = {"audience": {
-                                "apid": android_tab },
-                                "notification": {"alert": msg},
-                                "device_types": ["android"]
-                            };
+						var payload = {
+						'app_id' : "cfc2d62c-9d8c-11e4-9d5c-17bf4d8b652c",
+						'isAndroid' : true,
+						'isIos' : true,
+						'isWP' : true,
+						'include_player_ids' : playerid_tab,
+						'contents' : {"en":msg,"fr":msg}
+						};
 
-                            Push.sendPushMessage(payload, function(err){
-                              if(err)
-                                console.log('err',err);
-                            });
-
-
-                        }
-
-                        if (ios == true) {
-
-                            var payload = {"audience": {
-                                "device_tokens": ios_tab },
-                                "notification": {"alert": msg},
-                                "device_types": ["ios"]
-                            };
-
-                            Push.sendPushMessage(payload, function(err){
-                              if(err)
-                                console.log('err',err);
-                            });
-                        }
+						//console.log('payload',payload);
+						
+						Push.sendPushMessage(payload, function(err){
+						  if(err)
+							console.log('err',err);
+						});
+                        
                     });
                 });
 
