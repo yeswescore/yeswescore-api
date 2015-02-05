@@ -15,3 +15,6 @@ scripts/clubs/clubs.out.csv
 # old
 node_modulesOLD
 /bin/deploy-api.sh~alpha
+
+# cloud9
+.c9

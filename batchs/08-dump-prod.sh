@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# shared
+. ./shared.sh
+
+#
 BASEDIR=$(dirname $0)
 
 if [ $# -eq 1 ]
@@ -12,32 +16,32 @@ fi
 # minimum of security
 if [ "$NODE_ENV" = "PROD" ]
 then
-  echo " You are in prod environment, you cannot dump the DB."
+  print " You are in prod environment, you cannot dump the DB."
   exit 1
 fi
 
 if [ "$database" = "" ]
 then
-  echo "database name cannot be empty string"
+  print "database name cannot be empty string"
   exit 1
 fi
 
 if [ "$database" = "prod" ]
 then
-  echo "cannot import 'prod' into 'prod'"
+  print "cannot import 'prod' into 'prod'"
   exit 1
 fi
 
 # this question can be skipped programaticaly
 if [ "$AUTOEXEC" != "true" ]
 then
-  echo    "Importing 'prod' database into '"$database"'"
-  echo -n " Are you sure you want to continue [Y/n]: "
+  print    "Importing 'prod' database into '"$database"'"
+  print -n " Are you sure you want to continue [Y/n]: "
   read o
   # are we ok to continue ?
   if [ $o != "Y" ]
   then
-    echo "bye bye"
+    print "bye bye"
     exit 1
   fi
 fi
