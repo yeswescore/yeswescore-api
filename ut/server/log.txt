@@ -1,279 +1,0 @@
-using port number 1024 from file .port
-mongo db will be dev1024
-
-[0m[0m
-[0m  clubs[0m
-[0m    http status[0m
-    [31m  1) GET should return 404[0m
-    [31m  2) GET should return 404[0m
-
-[0m  players[0m
-[0m    http status[0m
-    [31m  3) GET should return 200 OK[0m
-    [31m  4) GET should return 200 OK[0m
-
-[0m  games[0m
-[0m    http status[0m
-    [31m  5) GET should return 200 OK[0m
-    [31m  6) GET should return 200 OK[0m
-[0m    read[0m
-    [31m  7) should give games (not empty & valid)[0m
-    [31m  8) should give games (not empty & valid)[0m
-[0m    read :id[0m
-    [31m  9) should give a game (not empty & valid)[0m
-    [31m  10) should give a game (not empty & valid)[0m
-
-[0m  dev:auth[0m
-[0m    create a player with password, check auth[0m
-    [31m  11) shoud work![0m
-    [31m  12) shoud work![0m
-
-[0m  dev:clubs[0m
-[0m    read random document club, then read api club should be a valid club[0m
-    [31m  13) should give club (not empty & valid)[0m
-    [31m  14) should give club (not empty & valid)[0m
-[0m    FIXME: read api club using wrong id parameters[0m
-    [32m  ✓[0m[90m should throw an error [0m
-[0m    FIXME: read random document club, then read api club filtering fields[0m
-    [32m  ✓[0m[90m should filter fields using fields= option [0m
-[0m    create random club, read it, sport tennis[0m
-    [31m  15) should create the club[0m
-    [31m  16) should create the club[0m
-[0m    create random club, read it, sport tennistable[0m
-    [31m  17) should create the club[0m
-    [31m  18) should create the club[0m
-[0m    create random club, read it, sport squash[0m
-    [31m  19) should create the club[0m
-    [31m  20) should create the club[0m
-[0m    create random club, read it, sport badminton[0m
-    [31m  21) should create the club[0m
-    [31m  22) should create the club[0m
-[0m    create random club, create a second one with same name+city[0m
-    [31m  23) should create the club[0m
-    [31m  24) should create the club[0m
-[0m    create random club located in borabora, then search it from tupai within 50km & search it from 10km[0m
-    [31m  25) should find the club first then not find it[0m
-    [31m  26) should find the club first then not find it[0m
-[0m    FIXME: read clubs filtering by sport[0m
-    [32m  ✓[0m[90m should read clubs using filter ?sport=tennis [0m
-
-[0m  dev:files[0m
-[0m    upload jpeg (dataURI)[0m
-    [31m  27) should exist on disk, be accessible by http[0m
-    [31m  28) should exist on disk, be accessible by http[0m
-[0m    upload jpeg (dataURI), save in player profile[0m
-    [31m  29) should exist on disk, be accessible by http, & saved in player profile [0m
-    [31m  30) should exist on disk, be accessible by http, & saved in player profile [0m
-[0m    upload jpeg (dataURI)[0m
-    [31m  31) should exist on disk, model readable & good size[0m
-    [31m  32) should exist on disk, model readable & good size[0m
-
-[0m  dev:games[0m
-[0m    read random document game, then read api game should be a valid game[0m
-    [31m  33) should give game (not empty & valid)[0m
-    [31m  34) should give game (not empty & valid)[0m
-[0m    FIXME: test game query[0m
-    [32m  ✓[0m[90m should be able to query games using q=... [0m
-[0m    FIXME: test game query club[0m
-    [32m  ✓[0m[90m should be able to query games using club=... [0m
-[0m    FIXME: create a game with no teams[0m
-    [32m  ✓[0m[90m should be an error teams.players format [0m
-[0m    FIXME: create a game with teams & wrong player format[0m
-    [32m  ✓[0m[90m should be an error teams.players format [0m
-[0m    FIXME: create a game with teams & player with wrong id[0m
-    [32m  ✓[0m[90m should be an error teams.players not exist [0m
-[0m    FIXME: create a game with teams & player with wrong id[0m
-    [32m  ✓[0m[90m should be an error teams.players not exist [0m
-[0m    create a single game without info, without token[0m
-    [31m  35) should be an error[0m
-    [31m  36) should be an error[0m
-[0m    FIXME: create a single game without info, then read it[0m
-    [32m  ✓[0m[90m should be an error missing team info [0m
-[0m    create a single game between 2 teams of anonymous players, then read it[0m
-    [31m  37) should create & give the game (not empty & valid)[0m
-    [31m  38) should create & give the game (not empty & valid)[0m
-[0m    create a single game between 2 teams of anonymous players, then read it with sport badminton[0m
-    [31m  39) should create & give the game (not empty & valid)[0m
-    [31m  40) should create & give the game (not empty & valid)[0m
-[0m    create a single game between 2 teams of anonymous players, then read it with sport squash[0m
-    [31m  41) should create & give the game (not empty & valid)[0m
-    [31m  42) should create & give the game (not empty & valid)[0m
-[0m    create a single game between 2 existing players, then read it[0m
-    [31m  43) should create & give the game (not empty & valid)[0m
-    [31m  44) should create & give the game (not empty & valid)[0m
-[0m    create a single game between 2 teams of anonymous players, with clubs then read it[0m
-    [31m  45) should create & give the game (not empty & valid)[0m
-    [31m  46) should create & give the game (not empty & valid)[0m
-[0m    create a single game, then read it[0m
-    [31m  47) should create & give the game (not empty & valid)[0m
-    [31m  48) should create & give the game (not empty & valid)[0m
-[0m    create a SINGLE game, then modify it[0m
-    [31m  49) should create & give the game (not empty & valid)[0m
-    [31m  50) should create & give the game (not empty & valid)[0m
-[0m    create a single game, then modify it 3/2 to have a winner[0m
-    [31m  51) should create & give the game, have a good winner[0m
-    [31m  52) should create & give the game, have a good winner[0m
-[0m    create a single game, then increment sets 2/1 to set auto winner[0m
-    [31m  53) should create game and increment sets, have a good winner[0m
-    [31m  54) should create game and increment sets, have a good winner[0m
-[0m    find a game, then cancel it[0m
-    [31m  55) shouldnt be referenced again[0m
-    [31m  56) shouldnt be referenced again[0m
-[0m    create a single game, then change status[0m
-    [31m  57) should create & give the game (not empty & valid) with status finished or aborted[0m
-    [31m  58) should create & give the game (not empty & valid) with status finished or aborted[0m
-[0m    create a single game, finish, then try change sets on finished game[0m
-    [31m  59) should create & give the game (not empty & valid)[0m
-    [31m  60) should create & give the game (not empty & valid)[0m
-[0m    create a single game, then change startTeam using 0/1[0m
-    [31m  61) should create & give the game (not empty & valid)[0m
-    [31m  62) should create & give the game (not empty & valid)[0m
-[0m    create a single game, then change startTeam using team id[0m
-    [31m  63) should create & give the game (not empty & valid)[0m
-    [31m  64) should create & give the game (not empty & valid)[0m
-[0m    write a comment on a stream[0m
-    [31m  65) should create a comment, size of stream +1 (not empty & valid)[0m
-    [31m  66) should create a comment, size of stream +1 (not empty & valid)[0m
-[0m    write a comment on a stream, update it[0m
-    [31m  67) should create a comment, beeing updated[0m
-    [31m  68) should create a comment, beeing updated[0m
-[0m    create a single game located in bora bora, then search it from tupai within 50km & search it from 10km[0m
-    [31m  69) should find the game first then not find it[0m
-    [31m  70) should find the game first then not find it[0m
-[0m    create a single game, then delete it[0m
-    [31m  71) should not be able to find / read the game or modify it[0m
-    [31m  72) should not be able to find / read the game or modify it[0m
-[0m    write a comment on a stream, delete it[0m
-    [31m  73) should not be able to read it again / delete it[0m
-    [31m  74) should not be able to read it again / delete it[0m
-[0m    FIXME: read games filtering by sport[0m
-    [32m  ✓[0m[90m should read games using filter ?sport=tennis [0m
-
-[0m  dev:players[0m
-[0m    read random document player, then read api player should be a valid player[0m
-    [31m  75) should give player (not empty & valid)[0m
-    [31m  76) should give player (not empty & valid)[0m
-[0m    create basic player, then read it.[0m
-    [31m  77) should create the player (not empty & valid)[0m
-    [31m  78) should create the player (not empty & valid)[0m
-[0m    create basic player, language is non standard, then read it.[0m
-    [31m  79) should be english by default [0m
-    [31m  80) should be english by default [0m
-[0m    create two player with the same email[0m
-    [31m  81) should be an error on the second player[0m
-    [31m  82) should be an error on the second player[0m
-[0m    create basic player default values, then read it.[0m
-    [31m  83) should create the player (not empty & valid)[0m
-    [31m  84) should create the player (not empty & valid)[0m
-[0m    create player with club, then read it.[0m
-    [31m  85) should create the player (not empty & valid)[0m
-    [31m  86) should create the player (not empty & valid)[0m
-[0m    create player with club, then modify it.[0m
-    [31m  87) should create the player (not empty & valid)[0m
-    [31m  88) should create the player (not empty & valid)[0m
-[0m    create player, then modify its email.[0m
-    [31m  89) should modify the email but not backup it, status should be "pending-confirmation"[0m
-    [31m  90) should modify the email but not backup it, status should be "pending-confirmation"[0m
-[0m    try to modify player without token[0m
-    [31m  91) should generate an unauthrorized error[0m
-    [31m  92) should generate an unauthrorized error[0m
-[0m    try to modify other player (without good token)[0m
-    [31m  93) should generate an unauthrorized error[0m
-    [31m  94) should generate an unauthrorized error[0m
-[0m    update a player (name,rank,password,club,gender,push,birth)[0m
-    [31m  95) should modify the player (name,rank,password,club,gender,push,birth)[0m
-    [31m  96) should modify the player (name,rank,password,club,gender,push,birth)[0m
-[0m    create basic player, located in bora bora, then search it from tupai within 50km & search it from 10km[0m
-    [31m  97) should find the player first (50km) and not find him (10km)[0m
-    [31m  98) should find the player first (50km) and not find him (10km)[0m
-[0m    create a player, confirm its password, reset the password[0m
-    [31m  99) should be ok[0m
-    [31m  100) should be ok[0m
-[0m    create player, then add followings, then remove followings.[0m
-    [31m  101) should create the player, update the followings & remove them[0m
-    [31m  102) should create the player, update the followings & remove them[0m
-[0m    FIXME: read players filtering by club[0m
-    [32m  ✓[0m[90m should read player checking params: security, pregQuote, ... [0m
-[0m    FIXME: read players filtering by club[0m
-    [32m  ✓[0m[90m should read players using filter ?club=:id [0m
-[0m    FIXME: read players filtering by sport[0m
-    [32m  ✓[0m[90m should read players using filter ?sport=tennis [0m
-
-[0m  dev:report[0m
-[0m    read random club, then report it[0m
-    [31m  103) should report the club.[0m
-    [31m  104) should report the club.[0m
-[0m    read random player, then report it[0m
-    [31m  105) should report the player.[0m
-    [31m  106) should report the player.[0m
-[0m    read random game, then report it[0m
-    [31m  107) should report the game.[0m
-    [31m  108) should report the game.[0m
-[0m    read random game, add stream item, report it[0m
-    [31m  109) should report the stream item.[0m
-    [31m  110) should report the stream item.[0m
-
-[0m  dev:teams[0m
-[0m    read random document team, then read api team should be a valid team[0m
-    [31m  111) should give team (not empty & valid)[0m
-    [31m  112) should give team (not empty & valid)[0m
-[0m    create simpliest random team, read it[0m
-    [31m  113) should create the team[0m
-    [31m  114) should create the team[0m
-[0m    create simpliest random team, search it by the playerid[0m
-    [31m  115) should create the team, & be linked to playerid[0m
-    [31m  116) should create the team, & be linked to playerid[0m
-[0m    create simpliest random team, modify it, read it[0m
-    [31m  117) should create the team & save it without errors[0m
-    [31m  118) should create the team & save it without errors[0m
-[0m    write a comment on a team stream[0m
-    [31m  119) should create team, create a comment, size of stream +1 (not empty & valid)[0m
-    [31m  120) should create team, create a comment, size of stream +1 (not empty & valid)[0m
-[0m    write a comment on a stream, delete it[0m
-    [31m  121) should not be able to read it again / delete it[0m
-    [31m  122) should not be able to read it again / delete it[0m
-
-[0m  FIXME: autofields:club[0m
-[0m    update club name[0m
-    [32m  ✓[0m[90m should give correct _searchableName [0m
-
-[0m  autofields:player[0m
-[0m    update game city[0m
-    [31m  123) should update game._searchableCity[0m
-    [31m  124) should update game._searchableCity[0m
-[0m    update player name (1)[0m
-    [31m  125) should update _searchableName[0m
-    [31m  126) should update _searchableName[0m
-[0m    update player name (2)[0m
-    [31m  127) should update player's games _searchablePlayersNames[0m
-    [31m  128) should update player's games _searchablePlayersNames[0m
-[0m    update player club (1)[0m
-    [31m  129) should update player _searchableClubName[0m
-    [31m  130) should update player _searchableClubName[0m
-[0m    update player club (2)[0m
-    [31m  131) should update player's games _searchablePlayersClubsIds, _searchablePlayersClubsNames[0m
-    [31m  132) should update player's games _searchablePlayersClubsIds, _searchablePlayersClubsNames[0m
-[0m    create a game[0m
-    [31m  133) should update _searchable fields [0m
-    [31m  134) should update _searchable fields [0m
-[0m    update game player[0m
-    [31m  135) should update player.games [0m
-    [31m  136) should update player.games [0m
-[0m    update game player[0m
-    [31m  137) should update player.games [0m
-    [31m  138) should update player.games [0m
-
-[0m  documents[0m
-[0m    clubs[0m
-    [31m  139) clubs/random should return 200 OK, and be readable through api[0m
-    [31m  140) clubs/random should return 200 OK, and be readable through api[0m
-[0m    players[0m
-    [31m  141) players/random should return 200 OK, and be readable through api[0m
-    [31m  142) players/random should return 200 OK, and be readable through api[0m
-[0m    games[0m
-    [31m  143) games/random should return 200 OK, and be readable through api[0m
-    [31m  144) games/random should return 200 OK, and be readable through api[0m
-
-
-[92m [0m[32m 15 passing[0m[90m (132ms)[0m
-
