@@ -64,7 +64,7 @@ describe('dev:clubs', function(){
           name : "club-"+Math.random(),
           location: {
             address: "Hotel de ville",
-            city: "Lyon",
+            city: "Lyon"+Math.random(),
             zip: "zip"+Math.random(),
             pos: [ 42, 43 ]
           },
@@ -127,7 +127,7 @@ describe('dev:clubs', function(){
                     name : "club-"+Math.random(),
                     location: {
                         address: "Hotel de ville",
-                        city: "Lyon",
+                        city: "Lyon"+Math.random(),
                         zip: "zip"+Math.random(),
                         pos: [ 42, 43 ]
                     },
@@ -172,7 +172,7 @@ describe('dev:clubs', function(){
                     name : "club-"+Math.random(),
                     location: {
                         address: "Hotel de ville",
-                        city: "Lyon",
+                        city: "Lyon"+Math.random(),
                         zip: "zip"+Math.random(),
                         pos: [ 42, 43 ]
                     },
@@ -217,7 +217,7 @@ describe('dev:clubs', function(){
                     name : "club-"+Math.random(),
                     location: {
                         address: "Hotel de ville",
-                        city: "Lyon",
+                        city: "Lyon"+Math.random(),
                         zip: "zip"+Math.random(),
                         pos: [ 42, 43 ]
                     },
@@ -316,7 +316,7 @@ describe('dev:clubs', function(){
         var newClub = {
           name : nameFilter,
           location: {
-            city: "borabora",
+            city: "borabora"+Math.random(),
             pos: positions.borabora
           }
         };

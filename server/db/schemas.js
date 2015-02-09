@@ -349,6 +349,7 @@ Schemas.generate = function (DB) {
     return sets;
   };
 
+  // TODO : remove this function, now client can detect a finished game
   Schemas.Game.methods.isFinishedTennis = function () {
     if (!this.infos)
       return false;

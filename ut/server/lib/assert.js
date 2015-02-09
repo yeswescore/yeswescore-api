@@ -339,7 +339,7 @@ assert.isGame = function (game) {
       pos: { _type: "pos" }
     },
     infos: {
-      type: { _type: "enum", _enum: ["singles"] },
+      type: { _type: "enum", _enum: ["singles","doubles"] },
       subtype: { _type: "undefined|enum", _enum: [ "A", "B", "C", "D", "E", "F", "G", "H", "I" ] },
       sets: { _type: "undefined|string" },
       score: { _type: "undefined|string" },
