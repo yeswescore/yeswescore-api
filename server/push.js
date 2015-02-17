@@ -219,25 +219,6 @@ var Push = {
             var ios_tab = [];
 			var playerid_tab = [];
 			
-			/**************************************/
-			var payload = {
-			'app_id' : "cfc2d62c-9d8c-11e4-9d5c-17bf4d8b652c",
-			'isAndroid' : true,
-			'isIos' : true,
-			'isWP' : true,
-			'include_player_ids' : ['7368b9e5-c61c-43dd-bf09-fbcc838db111'],
-			'contents' : {"en":msg,"fr":msg}
-			};
-
-			//console.log('payload',payload);
-			
-			Push.sendPushMessage(payload, function(err,data){
-			  if(err)
-				console.log('err',err);
-			   //console.log('result callback',data);
-			});			
-			/**************************************/
-			
             http.get({
                     host: Conf.get('http.host'),
                     port: Conf.get('http.port'),
