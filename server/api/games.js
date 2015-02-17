@@ -521,11 +521,15 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
         
       // auto update
       game.dates.update = Date.now();
+
+
+
       // now all the data is set, we can update push infos.
       if (typeof req.body.infos !== "undefined" &&
           typeof req.body.infos.official === "string") {
         push.official = req.body.infos.official;
         push.win = game.isPlayerWinning(push.player.id) ? "1" : "0";
+
         // FIXME: que remplir le jour ou N oponents > 1
         if (game.infos.type === "singles")
         {
@@ -557,9 +561,27 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
         push.score = game.infos.score;
         push.sets = game.infos.sets;
         push.dates.start = game.dates.start || "";
+
+        //console.log('push  ',push);
+
       }
       return DB.Models.Game.updateTeamsAsync(game, req.body.teams);
     }).then(function update(game) {
+        if (game.status === "finished") {
+        // updating winners, only if possible
+          var winningTeamIndexes = game.getWinningTeamIndexes();
+          game.infos.winners.status = "win";
+          game.infos.winners.teams = [];
+          game.infos.winners.players = [];
+          winningTeamIndexes.forEach(function (winningTeamIndex, i) {
+            if (i == 1)
+              game.infos.winners.status = "draw";
+            game.infos.winners.teams.push(DB.toStringId(this.teams[winningTeamIndex]));
+            game.teams[winningTeamIndex].players.forEach(function (player) {
+              game.infos.winners.players.push(DB.toStringId(player));
+            }, game);
+          }, game);
+        }
       return DB.save(game);
     }).then(function saveStartTeam(game) {
       if (typeof req.body.infos !== "undefined" && 
@@ -580,7 +602,11 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
       
       //push notification
       //if finished, we don't push
+
       if (push.official === "true" && push.status!=="finished") {
+
+        console.log('push notification sendGame  push.status', push.status);
+
         if (typeof req.body.status !== "undefined") {
           //if only new status
           if (push.status !== req.body.status) {
