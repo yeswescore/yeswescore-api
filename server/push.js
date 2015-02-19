@@ -282,7 +282,7 @@ var Push = {
                         var payload = {
                             'app_id': app_id,
                             'isAndroid': true,
-                            'isIos': false,
+                            'isIos': true,
                             'isWP': true,
                             'include_player_ids': playerid_tab,
                             'contents': {'en': msg_en, 'fr': msg_fr}
