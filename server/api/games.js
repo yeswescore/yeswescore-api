@@ -435,10 +435,12 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
   var err = DB.Models.Game.checkFields(req.body);
   var push = {
       //TODO : change by table
-      player: {name:"",id:""}
-    , player2: {name:"",id:""}
-    , opponent: {name:"",rank:""}
-    , opponent2: {name:"",rank:""}
+      player: {name:"",id:"",rank:""}
+    , player2: {name:"",id:"",rank:""}
+    , playertemp: {name:"",id:"",rank:""}
+    , playertemp2: {name:"",id:"",rank:""}
+    , opponent: {name:"",id:"",rank:""}
+    , opponent2: {name:"",id:"",rank:""}
     , language:""
     , status:""
     , dates: {create:"",start:""}
@@ -447,6 +449,7 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
     , score:""
     , sets:""
     , win:"0"
+    , sport:"tennis"
   };
   var oldstatus = '';
   if (err)
@@ -456,9 +459,9 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
     .then(function searchGame(authentifiedPlayer) {
       if (authentifiedPlayer === null)
         throw "unauthorized";
-      push.language = authentifiedPlayer.language;
-      push.player.id = authentifiedPlayer.id;
-      push.player.name = authentifiedPlayer.name;
+      //push.language = authentifiedPlayer.language;
+      //push.player.id = authentifiedPlayer.id;
+      //push.player.name = authentifiedPlayer.name;
       var query = DB.Models.Game.findOne({_id:req.params.id, _deleted: false});
       query.populate("teams.players", fields["teams.players"]);
       return Q.nfcall(query.exec.bind(query));
@@ -522,42 +525,40 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
       // auto update
       game.dates.update = Date.now();
 
-
-
       // now all the data is set, we can update push infos.
       if (typeof req.body.infos !== "undefined" &&
           typeof req.body.infos.official === "string") {
         push.official = req.body.infos.official;
-        push.win = game.isPlayerWinning(push.player.id) ? "1" : "0";
+        push.sport = game.sport;
 
-        // FIXME: que remplir le jour ou N oponents > 1
+        // FIXME: que remplir le joeur ou N oponents > 1
         if (game.infos.type === "singles")
         {
           push.infos.type = "singles";
-          if ( game.teams[0].players[0].id === push.player.id ) {
-            push.opponent.name = game.teams[1].players[0].name;
-            push.opponent.rank = game.teams[1].players[0].rank;
-          } else {
-            push.opponent.name = game.teams[0].players[0].name;
-            push.opponent.rank = game.teams[0].players[0].rank;
-          }
+          push.player.id = game.teams[0].players[0].id;
+          push.player.name = game.teams[0].players[0].name;
+          push.player.rank = game.teams[0].players[0].rank;
+          push.opponent.id = game.teams[1].players[0].id;
+          push.opponent.name = game.teams[1].players[0].name;
+          push.opponent.rank = game.teams[1].players[0].rank;
         }
         else {
-          push.infos.type = "double";
-          if ( game.teams[0].players[0].id === push.player.id ) {
-            push.player2.name  = game.teams[0].players[1].name;
-            push.opponent.name = game.teams[1].players[0].name;
-            push.opponent.rank = game.teams[1].players[0].rank;
-            push.opponent2.name = game.teams[1].players[1].name;
-            push.opponent2.rank = game.teams[1].players[1].rank;
-          } else {
-            push.player2.name  = game.teams[1].players[1].name;
-            push.opponent.name = game.teams[0].players[0].name;
-            push.opponent.rank = game.teams[0].players[0].rank;
-            push.opponent2.name = game.teams[0].players[1].name;
-            push.opponent2.rank = game.teams[0].players[1].rank;
-          }
+          push.infos.type = "doubles";
+          push.player.id = game.teams[0].players[0].id;
+          push.player.name = game.teams[0].players[0].name;
+          push.player.rank = game.teams[0].players[0].rank;
+          push.player2.id  = game.teams[0].players[1].id;
+          push.player2.name  = game.teams[0].players[1].name;
+          push.player2.rank = game.teams[0].players[1].rank;
+          push.opponent.id = game.teams[1].players[0].id;
+          push.opponent.name = game.teams[1].players[0].name;
+          push.opponent.rank = game.teams[1].players[0].rank;
+          push.opponent2.id = game.teams[1].players[1].id;
+          push.opponent2.name = game.teams[1].players[1].name;
+          push.opponent2.rank = game.teams[1].players[1].rank;
         }
+
+        push.win = game.isPlayerWinning(push.player.id) ? "1" : "0";
         push.score = game.infos.score;
         push.sets = game.infos.sets;
         push.dates.start = game.dates.start || "";
@@ -605,16 +606,54 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
 
       if (push.official === "true" && push.status!=="finished") {
 
-        console.log('push notification sendGame  push.status', push.status);
-
         if (typeof req.body.status !== "undefined") {
           //if only new status
           if (push.status !== req.body.status) {
             // change status if finished,created or started, we send notification to followers
             // send new status
             push.status = req.body.status;
-            Push.sendPushs(null,push);   		  
-          }          
+            if (push.infos.type === "singles")
+            {
+              Q.nfcall(Push.sendPushs(null,push,push.player.id));
+              // si on suit adversaire, on inverse
+              push.playertemp = push.player;
+              push.player.id = push.opponent.id;
+              push.player.name = push.opponent.name;
+              push.opponent.id = push.playertemp.id;
+              push.opponent.name = push.playertemp.name;
+              push.opponent.rank = push.playertemp.rank;
+              push.win = !push.win;
+              Q.nfcall(Push.sendPushs(null,push,push.player.id));
+            }
+            else if (push.infos.type === "doubles")
+            {
+              //console.log('on envoie aux amis du JOUEUR 1',push.player.id);
+              //console.log('on envoie aux amis du JOUEUR 2',push.player2.id);
+              Q.nfcall(Push.sendPushs(null,push,push.player.id));
+              Q.nfcall(Push.sendPushs(null,push,push.player2.id));
+
+              // si on suit adversaire, on inverse
+              push.playertemp = push.player;
+              push.playertemp2 = push.player2;
+              push.player.id = push.opponent.id;
+              push.player.name = push.opponent.name;
+              push.player2.id = push.opponent2.id;
+              push.player2.name = push.opponent2.name;
+
+              push.opponent.id = push.playertemp.id;
+              push.opponent.name = push.playertemp.name;
+              push.opponent.rank = push.playertemp.rank;
+              push.opponent2.id = push.playertemp2.id;
+              push.opponent2.name = push.playertemp2.name;
+              push.opponent2.rank = push.playertemp2.rank;
+
+              push.win = !push.win;
+              //console.log('on envoie aux amis du JOUEUR 3',push.player.id);
+              //console.log('on envoie aux amis du JOUEUR 4',push.player2.id);
+              Q.nfcall(Push.sendPushs(null,push,push.player.id));
+              Q.nfcall(Push.sendPushs(null,push,push.player2.id));
+            }
+          }
         }
       }
 

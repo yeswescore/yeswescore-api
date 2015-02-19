@@ -865,10 +865,10 @@ describe('dev:players', function(){
                   };
 
 
-                  Push.sendPushs(null,push,function(err, status){
+                  Push.sendPushs(null,push,push.player.id,function(err, status){
 
                       //console.log('status', status);
-                      assert(status.indexOf('error') === -1, "UrbanAirShip Error. Check configuration or New API");
+                      assert(status.indexOf('error') === -1, "GameThrive Error. Check configuration or New API");
                       // DONE() INSIDE to wait push
 
                       // on supprime le following
