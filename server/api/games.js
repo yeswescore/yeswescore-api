@@ -615,14 +615,24 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
             if (push.infos.type === "singles")
             {
               Q.nfcall(Push.sendPushs(null,push,push.player.id));
+
+              //console.log("AVANT ",push);
               // si on suit adversaire, on inverse
-              push.playertemp = push.player;
+              push.playertemp.id = push.player.id;
+              push.playertemp.name = push.player.name;
+
               push.player.id = push.opponent.id;
               push.player.name = push.opponent.name;
               push.opponent.id = push.playertemp.id;
               push.opponent.name = push.playertemp.name;
               push.opponent.rank = push.playertemp.rank;
-              push.win = !push.win;
+              if (push.win==="1")
+                push.win='0';
+              else
+                push.win='1';
+
+              //console.log("APRES ",push);
+
               Q.nfcall(Push.sendPushs(null,push,push.player.id));
             }
             else if (push.infos.type === "doubles")
@@ -633,8 +643,11 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
               Q.nfcall(Push.sendPushs(null,push,push.player2.id));
 
               // si on suit adversaire, on inverse
-              push.playertemp = push.player;
-              push.playertemp2 = push.player2;
+              push.playertemp.id = push.player.id;
+              push.playertemp.name = push.player.name;
+              push.playertemp2.id = push.player2.id;
+              push.playertemp2.name = push.player2.name;
+
               push.player.id = push.opponent.id;
               push.player.name = push.opponent.name;
               push.player2.id = push.opponent2.id;
@@ -647,7 +660,10 @@ app.post('/v2/games/:id', express.bodyParser(), function(req, res){
               push.opponent2.name = push.playertemp2.name;
               push.opponent2.rank = push.playertemp2.rank;
 
-              push.win = !push.win;
+              if (push.win==="1")
+                push.win='0';
+              else
+                push.win='1';
               //console.log('on envoie aux amis du JOUEUR 3',push.player.id);
               //console.log('on envoie aux amis du JOUEUR 4',push.player2.id);
               Q.nfcall(Push.sendPushs(null,push,push.player.id));

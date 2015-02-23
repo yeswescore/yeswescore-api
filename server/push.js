@@ -229,6 +229,7 @@ var Push = {
         var playerid_tab = [];
 
         //console.log("On envoie sur  /players/" + playerid + "/push");
+        console.log("push ",push);
 
         var req = http.get({
                 host: Conf.get('http.host'),
