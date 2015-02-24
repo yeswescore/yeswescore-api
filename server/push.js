@@ -11,29 +11,27 @@ var pushLogger = winston.loggers.get('push');
 var Push = {
 // gamethrive
 
-    sendPushMessage: function(payload, callback) {
+    sendPushMessage: function (payload, appkey, callback) {
 
-        var response_data="";
-        var rd="";
-		
-		/*
-		curl --include --request POST --header "Content-Type: application/json" --header "Authorization: Basic Y2ZjMmQ2YzItOWQ4Yy0xMWU0LTlkNWQtODcwNzA1MjMzOWU0" --data-binary '{"app_id": "cfc2d62c-9d8c-11e4-9d5c-17bf4d8b652c","contents": {"en": "Record sur YesWeScore"},"isAndroid": true,"isIos": true,"include_player_ids" : ['7368b9e5-c61c-43dd-bf09-fbcc838db111']}' https://gamethrive.com/api/v1/notifications
-		*/
+        var response_data = "";
+        var rd = "";
 
         var opts = {
             "host": "gamethrive.com",
-			"port": 443,
+            "port": 443,
             "path": "/api/v1/notifications",
             "method": "POST",
             "auth": "",
             "headers": {
                 "Content-Type": "application/json",
-				"Authorization": "Basic Y2ZjMmQ2YzItOWQ4Yy0xMWU0LTlkNWQtODcwNzA1MjMzOWU0"
+                "Authorization": "Basic " + appkey
             }
         };
 
+        //console.log('payload ', payload);
+
         opts.headers["Content-Type"] = "application/json";
-		
+
         rd = JSON.stringify(payload);
         opts.headers["Content-Length"] = Buffer.byteLength(rd, "utf8");
 
@@ -46,7 +44,9 @@ var Push = {
             });
 
             response.on("end", function () {
-			
+
+                //console.log('GameThrive response.statusCode  ',response.statusCode);
+
                 if ([200, 201, 202, 204].indexOf(response.statusCode) >= 0) {
                     try {
                         switch (true) {
@@ -76,7 +76,6 @@ var Push = {
         });
 
 
-
         request.on("error", function (error) {
             callback(null, "error");
 
@@ -89,29 +88,31 @@ var Push = {
         request.end();
     },
 
-    sendPushs: function (err, push, callback) {
-        var that = this;
+    createMsg: function (push, language) {
         var msg = "";
 
         if (push.infos.type.indexOf('singles') != -1) {
+
             if (push.status.indexOf('ongoing') != -1) {
-                msg = Resources.getString(push.language, "game.push.started");
+                msg = Resources.getString(language, "game.push.started");
                 msg = msg.replace(/%PLAYER1%/g, push.player.name);
                 if (typeof push.opponent.name !== "undefined")
                     msg = msg.replace(/%PLAYER2%/g, push.opponent.name);
                 if (typeof push.opponent.rank !== "undefined")
                     msg = msg.replace(/%RANK2%/g, push.opponent.rank);
-            } else if (push.status.indexOf('created') != -1) {
-                msg = Resources.getString(push.language, "game.push.created");
+            }
+            else if (push.status.indexOf('created') != -1) {
+                msg = Resources.getString(language, "game.push.created");
                 msg = msg.replace(/%PLAYER1%/g, push.player.name);
                 if (typeof push.opponent.name !== "undefined")
                     msg = msg.replace(/%PLAYER2%/g, push.opponent.name);
                 if (typeof push.opponent.rank !== "undefined")
                     msg = msg.replace(/%RANK2%/g, push.opponent.rank);
                 msg = msg.replace(/%DATE%/g, push.dates.create);
-            } else if (push.status.indexOf('finished') != -1) {
+            }
+            else if (push.status.indexOf('finished') != -1) {
                 if (push.win === "1") {
-                    msg = Resources.getString(push.language, "game.push.finished.win");
+                    msg = Resources.getString(language, "game.push.finished.win");
                     msg = msg.replace(/%PLAYER1%/g, push.player.name);
                     if (typeof push.opponent.name !== "undefined")
                         msg = msg.replace(/%PLAYER2%/g, push.opponent.name);
@@ -120,7 +121,7 @@ var Push = {
                     msg = msg.replace(/%SCORE%/g, push.sets);
                 }
                 else {
-                    msg = Resources.getString(push.language, "game.push.finished.loose");
+                    msg = Resources.getString(language, "game.push.finished.loose");
                     msg = msg.replace(/%PLAYER1%/g, push.player.name);
                     if (typeof push.opponent.name !== "undefined")
                         msg = msg.replace(/%PLAYER2%/g, push.opponent.name);
@@ -134,7 +135,8 @@ var Push = {
         else {
 
             if (push.status.indexOf('ongoing') != -1) {
-                msg = Resources.getString(push.language, "game.push.double.started");
+                msg = Resources.getString(language, "game.push.double.started");
+
                 msg = msg.replace(/%PLAYER1%/g, push.player.name);
 
                 if (typeof push.player2.name !== "undefined")
@@ -152,8 +154,10 @@ var Push = {
 
 
             } else if (push.status.indexOf('created') != -1) {
-                msg = Resources.getString(push.language, "game.push.double.created");
+                msg = Resources.getString(language, "game.push.double.created");
+
                 msg = msg.replace(/%PLAYER1%/g, push.player.name);
+
                 if (typeof push.player2.name !== "undefined")
                     msg = msg.replace(/%PLAYER2%/g, push.player2.name);
                 if (typeof push.player2.rank !== "undefined")
@@ -167,11 +171,11 @@ var Push = {
                 if (typeof push.opponent2.rank !== "undefined")
                     msg = msg.replace(/%RANK4%/g, push.opponent2.rank);
 
-
                 msg = msg.replace(/%DATE%/g, push.dates.create);
+
             } else if (push.status.indexOf('finished') != -1) {
                 if (push.win === "1") {
-                    msg = Resources.getString(push.language, "game.push.double.finished.win");
+                    msg = Resources.getString(language, "game.push.double.finished.win");
                     msg = msg.replace(/%PLAYER1%/g, push.player.name);
                     if (typeof push.player2.name !== "undefined")
                         msg = msg.replace(/%PLAYER2%/g, push.player2.name);
@@ -189,7 +193,7 @@ var Push = {
                     msg = msg.replace(/%SCORE%/g, push.sets);
                 }
                 else {
-                    msg = Resources.getString(push.language, "game.push.double.finished.loose");
+                    msg = Resources.getString(language, "game.push.double.finished.loose");
                     msg = msg.replace(/%PLAYER1%/g, push.player.name);
 
                     if (typeof push.player2.name !== "undefined")
@@ -211,97 +215,90 @@ var Push = {
 
         }
 
-        if (msg !== "") {
+        return msg;
+    },
 
-            var android = false;
-            var android_tab = [];
-            var ios = false;
-            var ios_tab = [];
-			var playerid_tab = [];
-			
-			/**************************************/
-			var payload = {
-			'app_id' : "cfc2d62c-9d8c-11e4-9d5c-17bf4d8b652c",
-			'isAndroid' : true,
-			'isIos' : true,
-			'isWP' : true,
-			'include_player_ids' : ['7368b9e5-c61c-43dd-bf09-fbcc838db111'],
-			'contents' : {"en":msg,"fr":msg}
-			};
+    // Send notifications
+    sendPushs: function (err, push, playerid) {
+        var msg_fr = "", msg_en = "";
+        msg_fr = this.createMsg(push, "fr");
+        msg_en = this.createMsg(push, "en");
+        var android = false,android_tab = [];
+        var ios = false,ios_tab = [];
+        var app_id = "",app_key = "";
+        var playerid_tab = [];
 
-			//console.log('payload',payload);
-			
-			Push.sendPushMessage(payload, function(err,data){
-			  if(err)
-				console.log('err',err);
-			   //console.log('result callback',data);
-			});			
-			/**************************************/
-			
-            http.get({
-                    host: Conf.get('http.host'),
-                    port: Conf.get('http.port'),
-                    path: "/players/" + push.player.id + "/push"
-                },
-                function (res) {
-                    var data = '';
+        //console.log("On envoie sur  /players/" + playerid + "/push");
+        console.log("push ",push);
 
-                    res.on('data', function (chunk) {
-                        data += chunk;
-                    });
+        var req = http.get({
+                host: Conf.get('http.host'),
+                port: Conf.get('http.port'),
+                path: "/players/" + playerid + "/push"
+            },
+            function (res) {
+                var data = '';
 
-                    //get followers
-                    res.on('end', function () {
-                        var followers = JSON.parse(data);
-						
-						console.log('followers',followers);
-
-                        followers.forEach(function (follower) {
-                            //register
-							playerid_tab.push(follower.push.token);
-							/*
-                            if (follower.push.platform.indexOf('android') != -1) {
-                                android = true;
-                                android_tab.push(follower.push.token);
-
-                            }
-
-                            if (follower.push.platform.indexOf('ios') != -1) {
-                                ios = true;
-                                ios_tab.push(follower.push.token);
-
-                            }
-							*/
-                        });
-
-                        //send
-
-						var payload = {
-						'app_id' : "cfc2d62c-9d8c-11e4-9d5c-17bf4d8b652c",
-						'isAndroid' : true,
-						'isIos' : true,
-						'isWP' : true,
-						'include_player_ids' : playerid_tab,
-						'contents' : {"en":msg,"fr":msg}
-						};
-
-						//console.log('payload',payload);
-						
-						Push.sendPushMessage(payload, function(err){
-						  if(err)
-							console.log('err',err);
-						});
-                        
-                    });
+                res.on('data', function (chunk) {
+                    data += chunk;
                 });
 
+                //get followers
+                res.on('end', function () {
+                    var followers = JSON.parse(data);
 
-            /***************/
+                    followers.forEach(function (follower) {
+                        //register
+                        playerid_tab.push(follower.push.token);
+                    });
 
+                    //send
+                    //get sport and good key
+                    if (push.sport === "badminton") {
+                        app_id = Conf.get("push.gamethrive.badminton.appid");
+                        app_key = Conf.get("push.gamethrive.badminton.appkey");
+                    }
+                    if (push.sport === "padel") {
+                        app_id = Conf.get("push.gamethrive.padel.appid");
+                        app_key = Conf.get("push.gamethrive.padel.appkey");
+                    }
+                    if (push.sport === "speedbadminton") {
+                        app_id = Conf.get("push.gamethrive.speedbadminton.appid");
+                        app_key = Conf.get("push.gamethrive.speedbadminton.appkey");
+                    }
+                    if (push.sport === "squash") {
+                        app_id = Conf.get("push.gamethrive.squash.appid");
+                        app_key = Conf.get("push.gamethrive.squash.appkey");
+                    }
+                    if (push.sport === "tabletennis") {
+                        app_id = Conf.get("push.gamethrive.tabletennis.appid");
+                        app_key = Conf.get("push.gamethrive.tabletennis.appkey");
+                    }
+                    if (push.sport === "tennis") {
+                        app_id = Conf.get("push.gamethrive.tennis.appid");
+                        app_key = Conf.get("push.gamethrive.tennis.appkey");
+                    }
 
-        }
+                    if (followers.length > 0) {
+                        var payload = {
+                            'app_id': app_id,
+                            'isAndroid': true,
+                            'isIos': true,
+                            'isWP': true,
+                            'include_player_ids': playerid_tab,
+                            'contents': {'en': msg_en, 'fr': msg_fr}
+                        };
 
+                        Push.sendPushMessage(payload, app_key, function (err) {
+                            if (err)
+                                app.log("GAMETHRIVE: "+err, "error");
+                        });
+                    }
 
+                });
+            });
+
+        req.end();
     }
 
 };

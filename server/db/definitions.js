@@ -116,9 +116,11 @@ Definitions.generateGame = function (DB) {
   };
 
   // SETTERS.
+  // REFACTO : not usefull
   Definitions.Game.status.set = function (status) {
     // handling status.
     var oldStatus = this.status;
+
     this.dates = this.dates || {};
     if (status === "created" && oldStatus === "ongoing")
       this.dates.start = undefined;
@@ -133,22 +135,6 @@ Definitions.generateGame = function (DB) {
         ) {
       // end of game
       this.dates.end = Date.now();
-
-      if (status === "finished") {
-        // updating winners, only if possible
-        var winningTeamIndexes = this.getWinningTeamIndexes();
-        this.infos.winners.status = "win";
-        this.infos.winners.teams = [];
-        this.infos.winners.players = [];
-        winningTeamIndexes.forEach(function (winningTeamIndex, i) {
-          if (i == 1)
-            this.infos.winners.status = "draw";
-          this.infos.winners.teams.push(DB.toStringId(this.teams[winningTeamIndex]));
-          this.teams[winningTeamIndex].players.forEach(function (player) {
-            this.infos.winners.players.push(DB.toStringId(player));
-          }, this);
-        }, this);
-      }
 
       if (status === "aborted") {
         //TODO : choose winner

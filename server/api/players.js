@@ -158,30 +158,24 @@ app.get('/players/:id/push', function(req, res){
   var fields = req.query.fields || "name,type,push.platform,push.token"; 
   var id = req.params.id;
   var sort = req.query.sort || "name";
+  // searching
+  var query = DB.Models.Player
+    .find({
+      $and: [
+        { 'following': id }
+      ]
+    });
 
-  if (id) {
-  
-    // searching
-    var query = DB.Models.Player
-      .find({
-        $and: [
-          { 'following': id }
-        ]
-      });
-      
-    query.where('push.token').exists();    
+    query.where('push.token').exists();
     
     query.select(fields.replace(/,/g, " "))
       .sort(sort.replace(/,/g, " "))
       .exec(function (err, players) {
         if (err)
           return app.defaultError(res)(err);
+
         res.send(JSON.stringifyModels(players));
       });
-  } else {
-    res.send(JSON.stringify([]));
-  }  
-
 });
 
 /**
