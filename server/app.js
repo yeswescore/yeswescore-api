@@ -110,6 +110,13 @@ var logs = {
       timestamp: true
     }
   },
+  push: {
+    file: {
+      filename: logsPath+'push.log',
+      maxsize: 104857600, // = 100 Mo
+      timestamp: true
+    }
+  },
   report: {
     file: {
       filename: logsPath+'report.log',

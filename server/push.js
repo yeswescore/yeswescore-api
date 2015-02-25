@@ -28,8 +28,6 @@ var Push = {
             }
         };
 
-        //console.log('payload ', payload);
-
         opts.headers["Content-Type"] = "application/json";
 
         rd = JSON.stringify(payload);
@@ -44,8 +42,6 @@ var Push = {
             });
 
             response.on("end", function () {
-
-                //console.log('GameThrive response.statusCode  ',response.statusCode);
 
                 if ([200, 201, 202, 204].indexOf(response.statusCode) >= 0) {
                     try {
@@ -64,8 +60,8 @@ var Push = {
                     }
                 }
                 else {
+                    pushLogger.info('GameThrive Error Response  ' + JSON.stringify(response));
                     callback(null, "error");
-
                 }
             });
 
@@ -229,7 +225,7 @@ var Push = {
         var playerid_tab = [];
 
         //console.log("On envoie sur  /players/" + playerid + "/push");
-        console.log("push ",push);
+        //console.log("push ",push);
 
         var req = http.get({
                 host: Conf.get('http.host'),
@@ -289,9 +285,13 @@ var Push = {
                             'contents': {'en': msg_en, 'fr': msg_fr}
                         };
 
+                        //pushLogger.info("gamethrive payload: "+JSON.stringify(payload));
+
                         Push.sendPushMessage(payload, app_key, function (err) {
-                            if (err)
+                            if (err) {
                                 app.log("GAMETHRIVE: "+err, "error");
+                                pushLogger.error("GAMETHRIVE: "+err);
+                            }
                         });
                     }
 
