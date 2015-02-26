@@ -243,11 +243,6 @@ var Push = {
                 res.on('end', function () {
                     var followers = JSON.parse(data);
 
-                    followers.forEach(function (follower) {
-                        //register
-                        playerid_tab.push(follower.push.token);
-                    });
-
                     //send
                     //get sport and good key
                     if (push.sport === "badminton") {
@@ -275,24 +270,38 @@ var Push = {
                         app_key = Conf.get("push.gamethrive.tennis.appkey");
                     }
 
+                    /*
+                    followers.forEach(function (follower) {
+                        //register
+                        playerid_tab.push(follower.push.token);
+                    });*/
+
+                    //patch send one by one
+                    //because if one player is not registered, all blocked
                     if (followers.length > 0) {
-                        var payload = {
-                            'app_id': app_id,
-                            'isAndroid': true,
-                            'isIos': true,
-                            'isWP': true,
-                            'include_player_ids': playerid_tab,
-                            'contents': {'en': msg_en, 'fr': msg_fr}
-                        };
 
-                        //pushLogger.info("gamethrive payload: "+JSON.stringify(payload));
+                        followers.forEach(function (follower) {
 
-                        Push.sendPushMessage(payload, app_key, function (err) {
-                            if (err) {
-                                app.log("GAMETHRIVE: "+err, "error");
-                                pushLogger.error("GAMETHRIVE: "+err);
-                            }
+                            playerid_tab = [];
+                            playerid_tab.push(follower.push.token);
+
+                            var payload = {
+                                'app_id': app_id,
+                                'isAndroid': true,
+                                'isIos': true,
+                                'isWP': true,
+                                'include_player_ids': playerid_tab,
+                                'contents': {'en': msg_en, 'fr': msg_fr}
+                            };
+
+                            Push.sendPushMessage(payload, app_key, function (err) {
+                                if (err) {
+                                    app.log("GAMETHRIVE: "+err, "error");
+                                    pushLogger.error("GAMETHRIVE: "+err);
+                                }
+                            });
                         });
+
                     }
 
                 });
