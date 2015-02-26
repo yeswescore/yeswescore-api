@@ -60,7 +60,7 @@ var Push = {
                     }
                 }
                 else {
-                    pushLogger.info('GameThrive Error Response  ' + JSON.stringify(response));
+                    pushLogger.error('GameThrive Error Response  ' + response);
                     callback(null, "error");
                 }
             });
