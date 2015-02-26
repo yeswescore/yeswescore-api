@@ -28,8 +28,6 @@ var Push = {
             }
         };
 
-        //console.log('payload ', payload);
-
         opts.headers["Content-Type"] = "application/json";
 
         rd = JSON.stringify(payload);
@@ -44,8 +42,6 @@ var Push = {
             });
 
             response.on("end", function () {
-
-                //console.log('GameThrive response.statusCode  ',response.statusCode);
 
                 if ([200, 201, 202, 204].indexOf(response.statusCode) >= 0) {
                     try {
@@ -64,8 +60,8 @@ var Push = {
                     }
                 }
                 else {
+                    pushLogger.error('GameThrive Error Response  ' + response);
                     callback(null, "error");
-
                 }
             });
 
@@ -229,7 +225,7 @@ var Push = {
         var playerid_tab = [];
 
         //console.log("On envoie sur  /players/" + playerid + "/push");
-        console.log("push ",push);
+        //console.log("push ",push);
 
         var req = http.get({
                 host: Conf.get('http.host'),
@@ -246,11 +242,6 @@ var Push = {
                 //get followers
                 res.on('end', function () {
                     var followers = JSON.parse(data);
-
-                    followers.forEach(function (follower) {
-                        //register
-                        playerid_tab.push(follower.push.token);
-                    });
 
                     //send
                     //get sport and good key
@@ -279,20 +270,38 @@ var Push = {
                         app_key = Conf.get("push.gamethrive.tennis.appkey");
                     }
 
-                    if (followers.length > 0) {
-                        var payload = {
-                            'app_id': app_id,
-                            'isAndroid': true,
-                            'isIos': true,
-                            'isWP': true,
-                            'include_player_ids': playerid_tab,
-                            'contents': {'en': msg_en, 'fr': msg_fr}
-                        };
+                    /*
+                    followers.forEach(function (follower) {
+                        //register
+                        playerid_tab.push(follower.push.token);
+                    });*/
 
-                        Push.sendPushMessage(payload, app_key, function (err) {
-                            if (err)
-                                app.log("GAMETHRIVE: "+err, "error");
+                    //patch send one by one
+                    //because if one player is not registered, all blocked
+                    if (followers.length > 0) {
+
+                        followers.forEach(function (follower) {
+
+                            playerid_tab = [];
+                            playerid_tab.push(follower.push.token);
+
+                            var payload = {
+                                'app_id': app_id,
+                                'isAndroid': true,
+                                'isIos': true,
+                                'isWP': true,
+                                'include_player_ids': playerid_tab,
+                                'contents': {'en': msg_en, 'fr': msg_fr}
+                            };
+
+                            Push.sendPushMessage(payload, app_key, function (err) {
+                                if (err) {
+                                    app.log("GAMETHRIVE: "+err, "error");
+                                    pushLogger.error("GAMETHRIVE: "+err);
+                                }
+                            });
                         });
+
                     }
 
                 });
