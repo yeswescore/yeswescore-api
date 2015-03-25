@@ -202,6 +202,7 @@ Definitions.generatePlayer = function (DB) {
     type: { type: String, enum: [ "default", "owned" ], default: "default" },
     // private
     _deleted: { type: Boolean, default: false },  // FIXME: unused
+    _admin: { type: Boolean, default: false },
     _reported: { type: Boolean, default: false },
     // private searchable fields
     _searchableName: String,      // AUTO-FIELD (Player pre save)

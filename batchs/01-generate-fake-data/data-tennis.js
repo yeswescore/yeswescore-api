@@ -169,6 +169,57 @@ var generatePlayersAsync = function () {
    });
 };
 
+var generateAdminAsync = function () {
+    // reading random club
+    var nbPlayers = 1;
+    var randomClubs = [];
+    for (var i = 0; i < nbPlayers; ++i) {
+        randomClubs.push(DB.Models.Club.getRandomModel());
+    }
+    var gClubs;
+
+    return Q.all(randomClubs)
+        .then(function (clubs) {
+            gClubs = clubs;
+            var players = clubs.map(function (club) {
+                var clubInfo = {
+                    id: club.id,
+                    name: club.name
+                };
+                if (Math.random() > 0.7)
+                    clubInfo = undefined;
+                return new DB.Models.Player({
+                    name: "Vincent",
+                    uncryptedPassword: "vincent",
+                    _admin : true,
+                    sport: gSport,
+                    location: {
+                        currentPos: generateFakeLocation(),
+                        city: generateFakeCity(),
+                        address: "random adress " + Math.random(),
+                        zip: "zip"+Math.random()
+                    },
+                    email: {
+                        address: "vincent@yeswescore.com"
+                    },
+                    dates: {
+                        birth : generateFakeDateBirth()
+                    },
+                    push: {
+                        platform : [ "android", "ios", "wp8", "bb" ].random(),
+                        token :  generateFakeId()
+                    },
+                    gender : "man",
+                    rank: "15/2",
+                    club: clubInfo,
+                    games: [],
+                    type: "default"
+                });
+            });
+            return DB.save(players);
+        });
+};
+
 var generateGamesAsync = function () {
   // generating 20 games
   var players, owned, games = [];
@@ -287,7 +338,8 @@ var generateGamesAsync = function () {
           type: "comment",
           owner: { player: players.random().id },
           data: { text: generateFakeComment() },
-          dates: { creation: Date.now() + 10 * j }
+          dates: { creation: Date.now() + 10 * j },
+          _reported : [true, false].random()
         }
         game.stream.push(comment);
       }
@@ -369,6 +421,7 @@ var generateTeamsAsync = function () {
 Data.generateFakeDataAsync = function () {
   return generateClubsAsync().then(function () { console.log('generate clubs finished'); })
    .then(generatePlayersAsync).then(function () { console.log('generate players finished'); })
+   .then(generateAdminAsync).then(function () { console.log('generate admin finished'); })
    .then(generateGamesAsync).then(function () { console.log('generate games finished'); })
    .then(generateTeamsAsync).then(function () { console.log('generate teams finished'); })
    .then(function () {
