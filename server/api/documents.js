@@ -23,6 +23,7 @@ app.get('/v2/admin/players/', function(req, res){
     var distance = req.query.distance;
     var text = req.query.q;
     var sport = req.query.sport || "tennis";
+    var sort = req.query.sort || "name";
 
     var query = DB.Models.Player.find()
     if (fields)
@@ -37,7 +38,9 @@ app.get('/v2/admin/players/', function(req, res){
         query.where("_searchableName", text);
     }
     query.where("type", "default");
-    query.skip(offset)
+    query
+        .sort(sort.replace(/,/g, " "))
+        .skip(offset)
         .limit(limit)
         .exec(function (err, players) {
             if (err)
