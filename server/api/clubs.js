@@ -48,7 +48,7 @@ app.get('/v2/clubs/autocomplete/', function(req, res){
     text = new RegExp("("+text.searchable().pregQuote()+")");
     // searching
     var query = DB.Models.Club
-      .find({_searchableName: text})
+      .find({_searchableName: text, _deleted:false})
       .select(fields.replace(/,/g, " "));
 
     if (longitude && latitude && distance)

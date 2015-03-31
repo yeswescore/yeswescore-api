@@ -32,6 +32,27 @@ Authentication.init = function (DB) {
     return Q.resolve(null);
   };
 
+    /**
+     * @param object query string ex: ?playerid=...&token=...
+     * @return promise(object player/null)
+     *
+     * options:
+     *  facebook: true    allowing facebook auth (facebookid + token)
+     */
+    Authentication.Query.getAdmin = function (query) {
+        // default auth: using our system (playerid & token)
+        return Authentication.Query.getPlayer(query)
+            .then(function (player) {
+                    if (player._admin != true) {
+                        return null;
+                    }
+                    else {
+                        return {_id: query.playerid, token: query.token}
+                    }
+            });
+
+    };
+
   /**
   * @param object query string ex: ?playerid=...&token=...
   * return promise player / throw exception elseif

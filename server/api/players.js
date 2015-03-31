@@ -38,8 +38,10 @@ app.get('/v2/players/', function(req, res){
     query.select(fields.replace(/,/g, " "))
   if (longitude && latitude && distance)
     query.where({'location.currentPos': {$within:{ $centerSphere :[[ parseFloat(longitude), parseFloat(latitude) ], parseFloat(distance) / 6378.137]}}});
-  if (club)
+  if (club) {
     query.where("club.id", club);
+    limit = 100;
+  }
   if (sport)
     query.where('sport', sport);
   if (text) {
@@ -91,6 +93,7 @@ app.get('/v2/players/autocomplete/', function(req, res){
       .find({
         $and: [
           { _searchableName: text },
+          // and not deleted
           { $or: [ {type: "default"}, {type: "owned", owner: owner} ] }
         ]
       });
@@ -99,6 +102,8 @@ app.get('/v2/players/autocomplete/', function(req, res){
 
     if (sport)
       query.where('sport', sport);
+
+    query.where('_deleted', false);
 
     query.select(fields.replace(/,/g, " "))
       .sort(sort.replace(/,/g, " "))
