@@ -467,17 +467,16 @@ app.get('/v2/admin/streams/', function(req, res){
     var limit = req.query.limit || 100;
     var offset = req.query.offset || 0;
     var text = req.query.q;
-    var sport = req.query.sport || "tennis";
+    var sort = "-dates.start";
 
     var query = DB.Models.Game.find({$and: [{"stream._reported":true},{"stream._deleted":false}]})
 
-    if (sport)
-        query.where('sport', sport);
     if (text) {
         text = new RegExp("("+text.searchable().pregQuote()+")");
         query.where("_searchableName", text);
     }
-    query.skip(offset)
+    query.sort(sort.replace(/,/g, " "))
+        .skip(offset)
         .limit(limit)
         .exec(function (err, streams) {
             if (err)
