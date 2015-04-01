@@ -23,6 +23,7 @@ app.get('/v2/admin/players/', function(req, res){
     var distance = req.query.distance;
     var text = req.query.q;
     var sport = req.query.sport || "tennis";
+    var sort = req.query.sort || "name";
 
     var query = DB.Models.Player.find()
     if (fields)
@@ -37,7 +38,9 @@ app.get('/v2/admin/players/', function(req, res){
         query.where("_searchableName", text);
     }
     query.where("type", "default");
-    query.skip(offset)
+    query
+        .sort(sort.replace(/,/g, " "))
+        .skip(offset)
         .limit(limit)
         .exec(function (err, players) {
             if (err)
@@ -272,16 +275,18 @@ app.delete('/v2/admin/players/:id/', express.bodyParser(), function(req, res) {
     if (typeof req.params.id !== "string")
         return app.defaultError(res)("missing id");
 
+    app.log(req.params.id);
+
     Authentication.Query.getAdmin(req.query)
-        .then(function searchGame(authentifiedPlayer) {
+        .then(function search(authentifiedPlayer) {
             if (authentifiedPlayer === null)
                 throw "unauthorized";
-                Q.nfcall(DB.Models.Player.findById.bind(DB.Models.Player),
-                    req.params.id)
+            return Q.nfcall(DB.Models.Player.findById.bind(DB.Models.Player),req.params.id);
+
         }
-        ).then(function (qall) {
-            var player = qall[0];
-            //var following = qall[1];
+        ).then(function (player) {
+
+            app.log(player.id);
 
             return Q.nfcall(DB.Models.Player.update.bind(DB.Models.Player),
                 { _id: player.id },
@@ -291,6 +296,7 @@ app.delete('/v2/admin/players/:id/', express.bodyParser(), function(req, res) {
         }).then(function () {
             res.send('{}');
         }, app.defaultError(res));
+
 });
 
 /**
@@ -467,17 +473,16 @@ app.get('/v2/admin/streams/', function(req, res){
     var limit = req.query.limit || 100;
     var offset = req.query.offset || 0;
     var text = req.query.q;
-    var sport = req.query.sport || "tennis";
+    var sort = "-dates.start";
 
     var query = DB.Models.Game.find({$and: [{"stream._reported":true},{"stream._deleted":false}]})
 
-    if (sport)
-        query.where('sport', sport);
     if (text) {
         text = new RegExp("("+text.searchable().pregQuote()+")");
         query.where("_searchableName", text);
     }
-    query.skip(offset)
+    query.sort(sort.replace(/,/g, " "))
+        .skip(offset)
         .limit(limit)
         .exec(function (err, streams) {
             if (err)
