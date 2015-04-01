@@ -33,7 +33,7 @@ app.get('/v2/players/', function(req, res){
   var text = req.query.q;
   var sport = req.query.sport || "tennis";
 
-  var query = DB.Models.Player.find()
+  var query = DB.Models.Player.find({_deleted: false})
   if (fields)
     query.select(fields.replace(/,/g, " "))
   if (longitude && latitude && distance)

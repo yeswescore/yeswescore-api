@@ -275,16 +275,18 @@ app.delete('/v2/admin/players/:id/', express.bodyParser(), function(req, res) {
     if (typeof req.params.id !== "string")
         return app.defaultError(res)("missing id");
 
+    app.log(req.params.id);
+
     Authentication.Query.getAdmin(req.query)
-        .then(function searchGame(authentifiedPlayer) {
+        .then(function search(authentifiedPlayer) {
             if (authentifiedPlayer === null)
                 throw "unauthorized";
-                Q.nfcall(DB.Models.Player.findById.bind(DB.Models.Player),
-                    req.params.id)
+            return Q.nfcall(DB.Models.Player.findById.bind(DB.Models.Player),req.params.id);
+
         }
-        ).then(function (qall) {
-            var player = qall[0];
-            //var following = qall[1];
+        ).then(function (player) {
+
+            app.log(player.id);
 
             return Q.nfcall(DB.Models.Player.update.bind(DB.Models.Player),
                 { _id: player.id },
@@ -294,6 +296,7 @@ app.delete('/v2/admin/players/:id/', express.bodyParser(), function(req, res) {
         }).then(function () {
             res.send('{}');
         }, app.defaultError(res));
+
 });
 
 /**
