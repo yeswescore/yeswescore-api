@@ -25,7 +25,7 @@ app.get('/v2/admin/players/', function(req, res){
     var sport = req.query.sport || "tennis";
     var sort = req.query.sort || "name";
 
-    var query = DB.Models.Player.find()
+    var query = DB.Models.Player.find({_deleted: false})
     if (fields)
         query.select(fields.replace(/,/g, " "))
 
@@ -275,8 +275,6 @@ app.delete('/v2/admin/players/:id/', express.bodyParser(), function(req, res) {
     if (typeof req.params.id !== "string")
         return app.defaultError(res)("missing id");
 
-    app.log(req.params.id);
-
     Authentication.Query.getAdmin(req.query)
         .then(function search(authentifiedPlayer) {
             if (authentifiedPlayer === null)
@@ -285,9 +283,6 @@ app.delete('/v2/admin/players/:id/', express.bodyParser(), function(req, res) {
 
         }
         ).then(function (player) {
-
-            app.log(player.id);
-
             return Q.nfcall(DB.Models.Player.update.bind(DB.Models.Player),
                 { _id: player.id },
                 { $set: { "_deleted" : true }}
