@@ -1,5 +1,6 @@
 var Conf = require("../conf.js"),
-    app = require("../app.js");
+    app = require("../app.js"),
+    DB = require("../db.js");
 
 /*
 * client will call :
@@ -12,11 +13,17 @@ app.get('/bootstrap/conf.json', function(req, res){
   switch (req.query.version) {
     default:
       var baseUrl = "http://"+Conf.get("http.host")+":"+Conf.get("http.port")+"/";
-      
+
+      /* On affiche le dernier code saisi dans l'admin */
       conf = [
         { key: 'version.latest', value: latest, metadata: {} },
-        { key: 'bootstrap.update_interval', value: 24 * 3600 * 1000, metadata: {} } // every day
+        { key: 'bootstrap.update_interval', value: 24 * 3600 * 1000, metadata: {} }, // every day
+        { key: 'tennis.promo.code', value: 'DECATHLON', metadata: {} },
+        { key: 'tennis.promo.img', value: '', metadata: {} },
+        { key: 'tennis.promo.width', value: '100', metadata: {} },
+        { key: 'tennis.promo.height', value: '100', metadata: {} }
       ];
+
       break;
   }
   // 
