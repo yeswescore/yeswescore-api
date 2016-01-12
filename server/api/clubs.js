@@ -99,6 +99,7 @@ app.get('/v2/clubs/:id', function(req, res){
  *  /v2/clubs/:id/games/?sort=name   (default=-dates.start)
  * 
  * Specific options:
+ *  /v2/clubs/?q=text                (Mandatory)
  *  /v2/clubs/:id/games/?status=ongoing   (default=created,ongoing,finished)
  * 
  * NON STANDARD URL, used by facebook app
@@ -111,12 +112,20 @@ app.get('/v2/clubs/:id/games/', function(req, res){
   var sort = req.query.sort || "-dates.start";
   var limit = req.query.limit || 10;
   var offset = req.query.offset || 0;
+  var text = req.query.q;
+
   DB.Models.Club.findById(req.params.id, function (err, club) {
     if (err)
       return app.defaultError(res)(err);
     if (club === null)
       return app.defaultError(res)("no club found");
     var query = DB.Models.Game.find({});
+    if (text) {
+     text = new RegExp("("+text.searchable().pregQuote()+")");
+     query.or([
+      { _searchableCity: text }
+     ]);
+    }
     query.where('_searchablePlayersClubsIds', club);
     if (status)
       query.where('status').in(status.split(","));
