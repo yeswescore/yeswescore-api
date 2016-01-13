@@ -25,8 +25,8 @@ var generateFakeFirstName = function () {
            "Maya","Romane","Rose","Roxane","Violette","Zélie","Zoé"].random();
 }
 var generateFakeCity = function () {
-  return [ "Bayeux", "Falaise", "Caen", "Honfleur", "Deauville", "Arromanches les Bains", "Lisieux", "Cabourg",
-           "Trouville sur Mer", "Mont Saint Michel", "Cherbourg" ].random();
+  return [ "Interclub Bayeux", "Interclub Falaise", "Caen Interclub", "Interclub Honfleur", "Interclub Deauville", "Arromanches les Bains", "Interclub Lisieux", "Interclub Cabourg",
+           "Interclub Trouville sur Mer", "Interclub Mont Saint Michel", "Interclub Cherbourg" ].random();
 }
 var generateFakeComment = function () {
   return [

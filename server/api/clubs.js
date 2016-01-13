@@ -113,6 +113,7 @@ app.get('/v2/clubs/:id/games/', function(req, res){
   var limit = req.query.limit || 10;
   var offset = req.query.offset || 0;
   var text = req.query.q;
+  var fields = req.query.fields
 
   DB.Models.Club.findById(req.params.id, function (err, club) {
     if (err)
@@ -127,17 +128,23 @@ app.get('/v2/clubs/:id/games/', function(req, res){
      ]);
     }
     query.where('_searchablePlayersClubsIds', club);
+
     if (status)
       query.where('status').in(status.split(","));
-    query.populate("teams.players")
-         .sort(sort.replace(/,/g, " "))
-         .skip(offset)
-         .limit(limit)
-         .exec(function (err, games) {
-         if (err)
-            return app.defaultError(res)(err);
-         res.send(JSON.stringifyModels(games));
-       });
+
+    if (fields)
+      query.select(fields.replace(/,/g, " "));
+
+    query.populate("teams.players");
+
+    query.sort(sort.replace(/,/g, " "))
+      .skip(offset)
+      .limit(limit)
+      .exec(function (err, games) {
+      if (err)
+        return app.defaultError(res)(err);
+        res.send(JSON.stringifyModels(games));
+      });
     });
 });
 
