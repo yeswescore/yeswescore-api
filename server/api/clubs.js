@@ -101,7 +101,7 @@ app.get('/v2/clubs/:id', function(req, res){
  * Specific options:
  *  /v2/clubs/?q=text                (Mandatory)
  *  /v2/clubs/:id/games/?status=ongoing   (default=created,ongoing,finished)
- * 
+ *  /v2/clubs/:id/games/?date=1
  * NON STANDARD URL, used by facebook app
  * default behaviour is to include the stream
  * 
@@ -113,7 +113,8 @@ app.get('/v2/clubs/:id/games/', function(req, res){
   var limit = req.query.limit || 10;
   var offset = req.query.offset || 0;
   var text = req.query.q;
-  var fields = req.query.fields
+  var fields = req.query.fields;
+  var date = req.query.date;
 
   DB.Models.Club.findById(req.params.id, function (err, club) {
     if (err)
@@ -131,6 +132,14 @@ app.get('/v2/clubs/:id/games/', function(req, res){
 
     if (status)
       query.where('status').in(status.split(","));
+
+    if (date) {
+        var dateDay = new Date();
+        /* we find games after 1H AM */
+        dateDay.setHours(1);
+        /*console.log('dateDay',dateDay);*/
+        query.find('dates.start', {$gt: dateDay});
+    }
 
     if (fields)
       query.select(fields.replace(/,/g, " "));
